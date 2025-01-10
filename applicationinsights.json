@@ -1,6 +1,6 @@
 {
   "role": {
-    "name": "hmpps-template-kotlin"
+    "name": "hmpps-health-and-medication-api"
   },
   "customDimensions": {
     "service.version": "${BUILD_NUMBER}"
