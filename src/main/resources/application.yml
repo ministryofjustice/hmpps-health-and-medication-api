@@ -1,10 +1,11 @@
 info.app:
-  name: HMPPS Health And Medication Api
+  name: HMPPS Health and Medication API
   version: 1.0
 
 spring:
   application:
     name: hmpps-health-and-medication-api
+
   codec:
     max-in-memory-size: 10MB
 
@@ -13,27 +14,28 @@ spring:
     serialization:
       WRITE_DATES_AS_TIMESTAMPS: false
 
-  # TODO: This security section can be removed if your service doesn't call out to other services
   security:
     oauth2:
       resourceserver:
         jwt:
           jwk-set-uri: ${hmpps-auth.url}/.well-known/jwks.json
 
-      client:
-        provider:
-          hmpps-auth:
-            token-uri: ${hmpps-auth.url}/oauth/token
+  jpa:
+    open-in-view: false
+    show-sql: false
+    generate-ddl: false
+    hibernate:
+      ddl-auto: none
 
-        registration:
-          # example client registration for calling out to other services
-          # TODO: Remove / replace this registration
-          example-api:
-            provider: hmpps-auth
-            client-id: ${example-api.client.id}
-            client-secret: ${example-api.client.secret}
-            authorization-grant-type: client_credentials
-            scope: read
+  datasource:
+    url: 'jdbc:postgresql://${DATABASE_ENDPOINT}/${DATABASE_NAME}?sslmode=verify-full'
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    hikari:
+      pool-name: HEALTH-AND-MEDICATION-DB-CP
+      maximum-pool-size: 10
+      connection-timeout: 1000
+      validation-timeout: 500
 
 server:
   port: 8080
