@@ -73,5 +73,5 @@ class ExampleResource(private val exampleApiService: ExampleApiService) {
       ),
     ],
   )
-  fun getMessage(@PathVariable parameter: String) = exampleApiService.exampleGetExternalApiCall(parameter)
+  fun getMessage(@PathVariable parameter: String) = "{ message: \"Hello $parameter\"}"
 }
