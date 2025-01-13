@@ -13,8 +13,6 @@ services:
     environment:
       - SERVER_PORT=8080
       - HMPPS_AUTH_URL=http://hmpps-auth:8080/auth
-      # TODO: Remove this URL and replace with outgoing service URLs
-      - EXAMPLE_URL=http://hmpps-health-and-medication-api:8080
       - SPRING_PROFILES_ACTIVE=dev
 
   hmpps-auth:
@@ -31,5 +29,18 @@ services:
       - SPRING_PROFILES_ACTIVE=dev
       - APPLICATION_AUTHENTICATION_UI_ALLOWLIST=0.0.0.0/0
 
+  health-and-medication-data-db:
+    image: postgres
+    networks:
+      - hmpps
+    container_name: health-and-medication-data-db
+    restart: unless-stopped
+    ports:
+      - "9432:5432"
+    environment:
+      - POSTGRES_PASSWORD=health-and-medication-data
+      - POSTGRES_USER=health-and-medication-data
+      - POSTGRES_DB=health-and-medication-data
+      - TZ="Europe/London"
 networks:
   hmpps:

@@ -27,10 +27,17 @@ spring:
     hibernate:
       ddl-auto: none
 
+  flyway:
+    enabled: true
+    url: ${spring.datasource.url}
+    user: ${database.username}
+    password: ${database.password}
+    locations: classpath:/db/migration/common
+
   datasource:
-    url: 'jdbc:postgresql://${DATABASE_ENDPOINT}/${DATABASE_NAME}?sslmode=verify-full'
-    username: ${DATABASE_USERNAME}
-    password: ${DATABASE_PASSWORD}
+    url: 'jdbc:postgresql://${database.endpoint}/${database.name}?sslmode=verify-full'
+    username: ${database.username}
+    password: ${database.password}
     hikari:
       pool-name: HEALTH-AND-MEDICATION-DB-CP
       maximum-pool-size: 10
