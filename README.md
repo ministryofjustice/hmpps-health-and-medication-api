@@ -5,7 +5,7 @@
 [![Docker Repository on Quay](https://img.shields.io/badge/quay.io-repository-2496ED.svg?logo=docker)](https://quay.io/repository/hmpps/hmpps-health-and-medication-api)
 [![API docs](https://img.shields.io/badge/API_docs_-view-85EA2D.svg?logo=swagger)](https://health-and-medication-api-dev.prison.service.justice.gov.uk/swagger-ui/index.html)
 
-This is a Spring Boot service, written in Kotlin, which owns a subset of data about a person in prison (migrated from NOMIS).
+This is a Spring Boot service, written in Kotlin, which owns health and medication data about a person in prison.
 
 ## Contents
 
