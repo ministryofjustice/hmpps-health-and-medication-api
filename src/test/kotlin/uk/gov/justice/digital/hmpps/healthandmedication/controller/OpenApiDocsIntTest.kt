@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.healthandmedication.integration
+package uk.gov.justice.digital.hmpps.healthandmedication.controller
 
 import io.swagger.v3.parser.OpenAPIV3Parser
 import net.minidev.json.JSONArray
@@ -9,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDO
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
+import uk.gov.justice.digital.hmpps.healthandmedication.integration.IntegrationTestBase
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter.ISO_DATE
 

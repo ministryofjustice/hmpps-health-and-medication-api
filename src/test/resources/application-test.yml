@@ -9,9 +9,6 @@ api:
   hmpps-auth.base-url: http://localhost:8090/auth
   prisoner-search.base-url: http://localhost:8112
 
-hmpps-auth:
-  url: "http://localhost:8090/auth"
-
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/health-and-medication-data

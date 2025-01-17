@@ -1,15 +1,24 @@
 package uk.gov.justice.digital.hmpps.healthandmedication.integration
 
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import uk.gov.justice.digital.hmpps.healthandmedication.config.FixedClock
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.testcontainers.PostgresContainer
+import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.FieldHistoryRepository
+import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.FieldMetadataRepository
 import java.time.Instant
 import java.time.ZoneId
 
 @ActiveProfiles("test")
 abstract class TestBase {
+
+  @Autowired
+  lateinit var fieldHistoryRepository: FieldHistoryRepository
+
+  @Autowired
+  lateinit var fieldMetadataRepository: FieldMetadataRepository
 
   companion object {
     val clock: FixedClock = FixedClock(

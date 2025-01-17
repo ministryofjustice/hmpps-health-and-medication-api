@@ -41,6 +41,10 @@ class MedicalDietaryRequirement(
     result = 31 * result + dietaryRequirement.hashCode()
     return result
   }
+
+  override fun toString(): String {
+    return "MedicalDietaryRequirement(prisonerNumber='$prisonerNumber', dietaryRequirement=$dietaryRequirement, id=$id)"
+  }
 }
 
 data class MedicalDietaryRequirements(val medicalDietaryRequirements: List<String>) {

@@ -3,7 +3,7 @@ package uk.gov.justice.digital.hmpps.healthandmedication.dto.response
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.healthandmedication.dto.ReferenceDataSimpleDto
 
-@Schema(description = "Prison person health")
+@Schema(description = "Health data")
 data class HealthDto(
   @Schema(description = "Smoker or vaper")
   val smokerOrVaper: ValueWithMetadata<ReferenceDataSimpleDto?>? = null,
