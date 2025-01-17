@@ -9,7 +9,8 @@ generic-service:
 
   env:
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: "applicationinsights.dev.json"
-    HMPPS_AUTH_URL: "https://sign-in-dev.hmpps.service.justice.gov.uk/auth"
+    API_HMPPS_AUTH_BASE_URL: "https://sign-in-dev.hmpps.service.justice.gov.uk/auth"
+    API_PRISONER_SEARCH_BASE_URL: "https://prisoner-search-dev.prison.service.justice.gov.uk"
 
   scheduledDowntime:
     enabled: true
