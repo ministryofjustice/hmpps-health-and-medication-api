@@ -39,6 +39,10 @@ class FoodAllergy(
     result = 31 * result + allergy.hashCode()
     return result
   }
+
+  override fun toString(): String {
+    return "FoodAllergy(prisonerNumber='$prisonerNumber', allergy=$allergy, id=$id)"
+  }
 }
 
 data class FoodAllergies(val allergies: List<String>) {

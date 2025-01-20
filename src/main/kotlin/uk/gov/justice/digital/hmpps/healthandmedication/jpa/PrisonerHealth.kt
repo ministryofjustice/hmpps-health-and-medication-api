@@ -5,8 +5,6 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType.LAZY
 import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.ManyToOne
 import jakarta.persistence.MapKey
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
@@ -29,10 +27,6 @@ class PrisonerHealth(
   @Id
   @Column(name = "prisoner_number", updatable = false, nullable = false)
   override val prisonerNumber: String,
-
-  @ManyToOne
-  @JoinColumn(name = "smoker_or_vaper", referencedColumnName = "id")
-  var smokerOrVaper: ReferenceDataCode? = null,
 
   @OneToMany(mappedBy = "prisonerNumber", cascade = [ALL], orphanRemoval = true)
   var foodAllergies: MutableSet<FoodAllergy> = mutableSetOf(),
