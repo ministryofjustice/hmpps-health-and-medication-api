@@ -7,10 +7,10 @@ import io.swagger.v3.oas.annotations.media.Schema
 @Schema(description = "Reference Data Simple DTO - for use in dropdowns")
 @JsonInclude(NON_NULL)
 data class ReferenceDataSimpleDto(
-  @Schema(description = "Id", example = "FACIAL_HAIR_BEARDED")
+  @Schema(description = "Id", example = "FOOD_ALLERGY_MILK")
   val id: String,
 
-  @Schema(description = "Description of the reference data code", example = "Full Beard")
+  @Schema(description = "Description of the reference data code", example = "Milk")
   val description: String,
 
   @Schema(

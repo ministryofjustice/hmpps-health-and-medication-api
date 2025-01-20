@@ -4,7 +4,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.springframework.dao.DataIntegrityViolationException
-import org.springframework.orm.jpa.JpaObjectRetrievalFailureException
+import org.springframework.dao.InvalidDataAccessApiUsageException
 import org.springframework.test.context.transaction.TestTransaction
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField.FOOD_ALLERGY
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.FieldHistory
@@ -71,7 +71,7 @@ class FieldHistoryRepositoryTest : RepositoryTest() {
       createdBy = USER1,
     )
 
-    assertThrows(JpaObjectRetrievalFailureException::class.java) {
+    assertThrows(InvalidDataAccessApiUsageException::class.java) {
       fieldHistoryRepository.save(fieldHistory).fieldHistoryId
 
       TestTransaction.flagForCommit()

@@ -8,16 +8,16 @@ import java.time.ZonedDateTime
 @Schema(description = "Reference Data Code")
 @JsonInclude(NON_NULL)
 data class ReferenceDataCodeDto(
-  @Schema(description = "Id", example = "FACIAL_HAIR_BEARDED")
+  @Schema(description = "Id", example = "FOOD_ALLERGY_MILK")
   val id: String,
 
-  @Schema(description = "Short code for the reference data code", example = "FACIAL_HAIR")
+  @Schema(description = "Short code for the reference data domain", example = "FOOD_ALLERGY")
   val domain: String,
 
-  @Schema(description = "Short code for reference data code", example = "BEARDED")
+  @Schema(description = "Short code for reference data code", example = "MILK")
   val code: String,
 
-  @Schema(description = "Description of the reference data code", example = "Full Beard")
+  @Schema(description = "Description of the reference data code", example = "Milk")
   val description: String,
 
   @Schema(

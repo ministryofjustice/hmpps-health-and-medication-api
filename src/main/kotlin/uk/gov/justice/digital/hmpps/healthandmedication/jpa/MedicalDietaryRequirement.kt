@@ -22,7 +22,7 @@ class MedicalDietaryRequirement(
 ) {
   @Id
   @GeneratedValue(strategy = IDENTITY)
-  val id: Long = -1
+  val id: Long = 0
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

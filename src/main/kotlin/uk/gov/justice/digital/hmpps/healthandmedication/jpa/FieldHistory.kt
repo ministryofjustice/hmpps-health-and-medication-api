@@ -19,7 +19,7 @@ import java.time.ZonedDateTime
 class FieldHistory(
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  val fieldHistoryId: Long = -1,
+  val fieldHistoryId: Long = 0,
 
   // Allow this to mutate in order to handle merges
   var prisonerNumber: String,
