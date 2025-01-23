@@ -12,18 +12,8 @@ import uk.gov.justice.digital.hmpps.healthandmedication.mapper.toDto
 class ReferenceDataCodeService(
   private val referenceDataCodeRepository: ReferenceDataCodeRepository,
 ) {
-
-  /*
-   * Exclude certain reference data codes
-   */
-  private val excludedCodes = setOf(
-    Pair("FACIAL_HAIR", "NA"),
-    Pair("EYE", "MISSING"),
-  )
-
   fun getReferenceDataCodes(domain: String, includeInactive: Boolean): Collection<ReferenceDataCodeDto> =
     referenceDataCodeRepository.findAllByDomainAndIncludeInactive(domain, includeInactive)
-      .filterNot { excludedCodes.contains(Pair(it.domain.code, it.code)) }
       .map { it.toDto() }
 
   fun getReferenceDataCode(code: String, domain: String): ReferenceDataCodeDto =

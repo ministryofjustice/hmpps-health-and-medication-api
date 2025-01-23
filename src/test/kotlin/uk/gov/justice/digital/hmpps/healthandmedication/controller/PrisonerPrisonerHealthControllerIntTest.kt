@@ -207,7 +207,7 @@ class PrisonerPrisonerHealthControllerIntTest : IntegrationTestBase() {
         ).expectBody().json(
           // language=json
           """
-            { "smokerOrVaper": null,
+            {
               "foodAllergies": {
                 "value": [], 
                 "lastModifiedAt":"2024-06-14T09:10:11+0100",
@@ -263,7 +263,6 @@ class PrisonerPrisonerHealthControllerIntTest : IntegrationTestBase() {
       // language=json
       """
       {
-        "smokerOrVaper": null,
         "foodAllergies": {
           "value": [
             {
@@ -288,7 +287,6 @@ class PrisonerPrisonerHealthControllerIntTest : IntegrationTestBase() {
       // language=json
       """
       {
-        "smokerOrVaper": null,
         "foodAllergies": {
           "value": [
             {
