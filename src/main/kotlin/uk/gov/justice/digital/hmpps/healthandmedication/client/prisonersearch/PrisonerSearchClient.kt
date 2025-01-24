@@ -7,6 +7,10 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.healthandmedication.config.DownstreamServiceException
 
+data class PrisonerSearchResult(
+  val content: List<PrisonerDto>,
+)
+
 @Component
 class PrisonerSearchClient(@Qualifier("prisonerSearchWebClient") private val webClient: WebClient) {
   fun getPrisoner(prisonerNumber: String): PrisonerDto? = try {
@@ -20,5 +24,20 @@ class PrisonerSearchClient(@Qualifier("prisonerSearchWebClient") private val web
     null
   } catch (e: Exception) {
     throw DownstreamServiceException("Get prisoner request failed", e)
+  }
+
+  fun getPrisonersForPrison(prisonId: String, sort: String? = null): List<PrisonerDto>? {
+    try {
+      var query = "size=9999"
+      if(!sort.isNullOrEmpty()) query += "&sort=$sort"
+
+      return webClient.get().uri("/prison/{prisonId}/prisoners?${query}", prisonId).retrieve()
+        .bodyToMono(PrisonerSearchResult::class.java)
+        .block()?.content
+    } catch (e: NotFound) {
+      return null
+    } catch (e: Exception) {
+      throw DownstreamServiceException("Get prisoners for prison request failed", e)
+    }
   }
 }
