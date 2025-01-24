@@ -13,6 +13,8 @@ interface PrisonerHealthRepository : JpaRepository<PrisonerHealth, String> {
   fun findAllByPrisonerNumberIn(prisonerNumbers: MutableCollection<String>, pageable: Pageable): Page<PrisonerHealth>
   fun findAllByPrisonerNumberInAndFoodAllergiesIsNotEmptyOrMedicalDietaryRequirementsIsNotEmpty(
     prisonerNumbers: MutableCollection<String>,
-    pageable: Pageable
+    pageable: Pageable,
   ): Page<PrisonerHealth>
+
+  fun findAllByPrisonerNumberInAndFoodAllergiesIsNotEmptyOrMedicalDietaryRequirementsIsNotEmpty(prisonerNumbers: MutableCollection<String>): List<PrisonerHealth>
 }
