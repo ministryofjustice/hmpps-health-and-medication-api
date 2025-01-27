@@ -42,6 +42,7 @@ class PrisonerHealthService(
     val prisoners = when (request.sort.isEmpty()) {
       true -> prisonerSearchClient.getPrisonersForPrison(prisonId)
       false -> {
+        // This would be nice to move into request validation rather than having to validate here
         val sort = request.sort.split(",")
         if (sort[0] == "prisonerName") {
           prisonerSearchClient.getPrisonersForPrison(prisonId, "firstName,lastName," + sort[1])
@@ -55,15 +56,19 @@ class PrisonerHealthService(
 
     if (!prisoners.isNullOrEmpty()) {
       val prisonerNumbers = prisoners.map { it.prisonerNumber }.toMutableList()
+
+      // Fetch all non-empty health data for the given prisoner numbers
       val healthData =
         prisonerHealthRepository.findAllByPrisonerNumberInAndFoodAllergiesIsNotEmptyOrMedicalDietaryRequirementsIsNotEmpty(prisonerNumbers)
 
-      // This maintains the order from the prisoner search API
+      // This maintains the order from the prisoner search API so that we're able to have sorting
       val overlappingIds = prisonerNumbers.intersect(healthData.map { it.prisonerNumber }.toSet()).toList()
 
+      // Pagination specific code to be moved out
       val startIndex = (request.page - 1) * request.size
       val lastIndex = (startIndex + request.size - 1).coerceAtMost(overlappingIds.size - 1)
       val idsForPage = overlappingIds.slice(startIndex..lastIndex)
+      // End pagination specific code
 
       return HealthAndMedicationForPrisonResponse(
         content = idsForPage.map { id ->
@@ -77,9 +82,10 @@ class PrisonerHealthService(
             health = health.toDto(),
           )
         }.toList(),
+        // Pagination metadata, should be returned from the same class that returns the IDs calculated
         metadata = PageMeta(
           first = startIndex == 0,
-          last = lastIndex >= overlappingIds.size,
+          last = (lastIndex + 1) >= overlappingIds.size,
           numberOfElements = idsForPage.size,
           offset = startIndex,
           pageNumber = request.page - 1,
