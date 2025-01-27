@@ -52,7 +52,7 @@ class PrisonsHealthControllerIntTest : IntegrationTestBase() {
     val VALID_REQUEST_BODY =
       // language=json
       """
-    { "page": 1, "size": 10 }  
-    """.trimIndent()
+      { "page": 1, "size": 10 }  
+      """.trimIndent()
   }
 }

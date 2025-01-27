@@ -29,9 +29,9 @@ class PrisonerSearchClient(@Qualifier("prisonerSearchWebClient") private val web
   fun getPrisonersForPrison(prisonId: String, sort: String? = null): List<PrisonerDto>? {
     try {
       var query = "size=9999"
-      if(!sort.isNullOrEmpty()) query += "&sort=$sort"
+      if (!sort.isNullOrEmpty()) query += "&sort=$sort"
 
-      return webClient.get().uri("/prison/{prisonId}/prisoners?${query}", prisonId).retrieve()
+      return webClient.get().uri("/prison/{prisonId}/prisoners?$query", prisonId).retrieve()
         .bodyToMono(PrisonerSearchResult::class.java)
         .block()?.content
     } catch (e: NotFound) {

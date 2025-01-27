@@ -1,12 +1,7 @@
 package uk.gov.justice.digital.hmpps.healthandmedication.resource.requests
 
 import io.swagger.v3.oas.annotations.Parameter
-import jakarta.validation.ValidationException
 import jakarta.validation.constraints.Min
-import org.springframework.data.domain.PageRequest
-import org.springframework.data.domain.Pageable
-import org.springframework.data.domain.Sort
-import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PrisonerHealth
 
 interface PagedRequest {
   @get:Parameter(description = "The page to request, starting at 1", example = "1")
@@ -19,8 +14,6 @@ interface PagedRequest {
   val sort: String?
 
   fun validSortFields(): Set<String> = setOf("prisonerName", "location")
-
-  fun pageable(): Pageable = PageRequest.of(page - 1, size)
 }
 
 data class PageMeta(

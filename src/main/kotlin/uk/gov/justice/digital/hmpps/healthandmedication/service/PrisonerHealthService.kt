@@ -22,7 +22,6 @@ import java.time.Clock
 import java.time.ZonedDateTime
 import kotlin.jvm.optionals.getOrNull
 
-
 @Service
 @Transactional(readOnly = true)
 class PrisonerHealthService(

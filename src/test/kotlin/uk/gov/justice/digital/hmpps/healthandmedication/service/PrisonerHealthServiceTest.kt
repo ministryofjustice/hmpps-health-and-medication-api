@@ -310,9 +310,10 @@ class PrisonerHealthServiceTest {
       fun `getting health for prison sorting by prisonerName`(direction: String) {
         underTest.getHealthForPrison(
           PRISON_ID,
-          HealthAndMedicationForPrisonRequest(1, 10, sort = "prisonerName,${direction}"),
+          HealthAndMedicationForPrisonRequest(1, 10, sort = "prisonerName,$direction"),
         )
-        verify(prisonerSearchClient).getPrisonersForPrison(PRISON_ID, "firstName,lastName,${direction}")
+
+        verify(prisonerSearchClient).getPrisonersForPrison(PRISON_ID, "firstName,lastName,$direction")
       }
 
       @ParameterizedTest
@@ -320,9 +321,9 @@ class PrisonerHealthServiceTest {
       fun `getting health for prison sorting by location`(direction: String) {
         underTest.getHealthForPrison(
           PRISON_ID,
-          HealthAndMedicationForPrisonRequest(1, 10, sort = "location,${direction}"),
+          HealthAndMedicationForPrisonRequest(1, 10, sort = "location,$direction"),
         )
-        verify(prisonerSearchClient).getPrisonersForPrison(PRISON_ID, "cellLocation,${direction}")
+        verify(prisonerSearchClient).getPrisonersForPrison(PRISON_ID, "cellLocation,$direction")
       }
 
       @Test
@@ -381,8 +382,6 @@ class PrisonerHealthServiceTest {
             ),
           ),
         )
-
-
       }
     }
   }
