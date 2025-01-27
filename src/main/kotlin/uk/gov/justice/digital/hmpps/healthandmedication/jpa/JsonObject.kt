@@ -11,8 +11,9 @@ data class JsonObject(
 
   @JsonTypeInfo(use = NAME, property = "field", include = EXTERNAL_PROPERTY)
   @JsonSubTypes(
-    JsonSubTypes.Type(value = FoodAllergies::class, name = "FOOD_ALLERGY"),
-    JsonSubTypes.Type(value = MedicalDietaryRequirements::class, name = "MEDICAL_DIET"),
+    JsonSubTypes.Type(value = FoodAllergyHistory::class, name = "FOOD_ALLERGY"),
+    JsonSubTypes.Type(value = MedicalDietaryRequirementHistory::class, name = "MEDICAL_DIET"),
+    JsonSubTypes.Type(value = PersonalisedDietaryRequirementHistory::class, name = "PERSONALISED_DIET"),
   )
   val value: Any?,
 )

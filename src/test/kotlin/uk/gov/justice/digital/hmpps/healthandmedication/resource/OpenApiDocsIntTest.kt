@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.healthandmedication.controller
+package uk.gov.justice.digital.hmpps.healthandmedication.resource
 
 import io.swagger.v3.parser.OpenAPIV3Parser
 import net.minidev.json.JSONArray
@@ -73,7 +73,8 @@ class OpenApiDocsIntTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.components.schemas.ReferenceDataCodeDto.properties.lastModifiedAt.example").isEqualTo("2024-06-14T10:35:17+0100")
+      .jsonPath("$.components.schemas.ReferenceDataCodeDto.properties.lastModifiedAt.example")
+      .isEqualTo("2024-06-14T10:35:17+0100")
       .jsonPath("$.components.schemas.ReferenceDataCodeDto.properties.lastModifiedAt.description")
       .isEqualTo("The date and time the reference data code was last modified")
       .jsonPath("$.components.schemas.ReferenceDataCodeDto.properties.lastModifiedAt.type").isEqualTo("string")

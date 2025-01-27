@@ -1,11 +1,11 @@
-package uk.gov.justice.digital.hmpps.healthandmedication.controller
+package uk.gov.justice.digital.hmpps.healthandmedication.resource
 
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.IntegrationTestBase
 
-class ReferenceDataDomainControllerIntTest : IntegrationTestBase() {
+class ReferenceDataDomainResourceIntTest : IntegrationTestBase() {
 
   @DisplayName("GET /reference-data/domains")
   @Nested
@@ -40,7 +40,7 @@ class ReferenceDataDomainControllerIntTest : IntegrationTestBase() {
           .exchange()
           .expectStatus().isOk
           .expectBody()
-          .jsonPath("$.length()").isEqualTo(2)
+          .jsonPath("$.length()").isEqualTo(3)
           .jsonPath("$[?(@.code == 'FOOD_ALLERGY')].description").isEqualTo("Food allergy")
           .jsonPath("$[?(@.code == 'FOOD_ALLERGY')].listSequence").isEqualTo(0)
           .jsonPath("$[?(@.code == 'FOOD_ALLERGY')].isActive").isEqualTo(true)
@@ -59,7 +59,8 @@ class ReferenceDataDomainControllerIntTest : IntegrationTestBase() {
           .jsonPath("$[?(@.code == 'FOOD_ALLERGY')].referenceDataCodes[9].id").isEqualTo("FOOD_ALLERGY_PEANUTS")
           .jsonPath("$[?(@.code == 'FOOD_ALLERGY')].referenceDataCodes[10].id").isEqualTo("FOOD_ALLERGY_SESAME")
           .jsonPath("$[?(@.code == 'FOOD_ALLERGY')].referenceDataCodes[11].id").isEqualTo("FOOD_ALLERGY_SOYA")
-          .jsonPath("$[?(@.code == 'FOOD_ALLERGY')].referenceDataCodes[12].id").isEqualTo("FOOD_ALLERGY_SULPHUR_DIOXIDE")
+          .jsonPath("$[?(@.code == 'FOOD_ALLERGY')].referenceDataCodes[12].id")
+          .isEqualTo("FOOD_ALLERGY_SULPHUR_DIOXIDE")
           .jsonPath("$[?(@.code == 'FOOD_ALLERGY')].referenceDataCodes[13].id").isEqualTo("FOOD_ALLERGY_TREE_NUTS")
           .jsonPath("$[?(@.code == 'FOOD_ALLERGY')].referenceDataCodes[14].id").isEqualTo("FOOD_ALLERGY_OTHER")
           .jsonPath("$[?(@.code == 'MEDICAL_DIET')].description").isEqualTo("Medical diet")
@@ -68,6 +69,12 @@ class ReferenceDataDomainControllerIntTest : IntegrationTestBase() {
           .jsonPath("$[?(@.code == 'MEDICAL_DIET')].createdAt").isEqualTo("2025-01-16T00:00:00+0000")
           .jsonPath("$[?(@.code == 'MEDICAL_DIET')].createdBy").isEqualTo("CONNECT_DPS")
           .jsonPath("$[?(@.code == 'MEDICAL_DIET')].referenceDataCodes.length()").isEqualTo(10)
+          .jsonPath("$[?(@.code == 'PERSONALISED_DIET')].description").isEqualTo("Personalised diet")
+          .jsonPath("$[?(@.code == 'PERSONALISED_DIET')].listSequence").isEqualTo(0)
+          .jsonPath("$[?(@.code == 'PERSONALISED_DIET')].isActive").isEqualTo(true)
+          .jsonPath("$[?(@.code == 'PERSONALISED_DIET')].createdAt").isEqualTo("2025-01-16T00:00:00+0000")
+          .jsonPath("$[?(@.code == 'PERSONALISED_DIET')].createdBy").isEqualTo("CONNECT_DPS")
+          .jsonPath("$[?(@.code == 'PERSONALISED_DIET')].referenceDataCodes.length()").isEqualTo(3)
       }
     }
 
@@ -78,7 +85,7 @@ class ReferenceDataDomainControllerIntTest : IntegrationTestBase() {
         .exchange()
         .expectStatus().isOk
         .expectBody()
-        .jsonPath("$.length()").isEqualTo(2)
+        .jsonPath("$.length()").isEqualTo(3)
         .jsonPath("$[?(@.code == 'FOOD_ALLERGY')].isActive").isEqualTo(true)
     }
   }

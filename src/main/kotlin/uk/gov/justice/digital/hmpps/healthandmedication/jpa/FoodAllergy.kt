@@ -17,10 +17,14 @@ class FoodAllergy(
   @ManyToOne
   @JoinColumn(name = "allergy", referencedColumnName = "id")
   var allergy: ReferenceDataCode,
+
+  var commentText: String? = null,
 ) {
   @Id
   @GeneratedValue(strategy = IDENTITY)
   val id: Long = 0
+
+  fun toHistoryObject() = FoodAllergyHistoryItem(allergy.id, commentText)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -30,6 +34,7 @@ class FoodAllergy(
 
     if (prisonerNumber != other.prisonerNumber) return false
     if (allergy != other.allergy) return false
+    if (commentText != other.commentText) return false
 
     return true
   }
@@ -37,14 +42,7 @@ class FoodAllergy(
   override fun hashCode(): Int {
     var result = prisonerNumber.hashCode()
     result = 31 * result + allergy.hashCode()
+    result = 31 * result + commentText.hashCode()
     return result
   }
-
-  override fun toString(): String {
-    return "FoodAllergy(prisonerNumber='$prisonerNumber', allergy=$allergy, id=$id)"
-  }
-}
-
-data class FoodAllergies(val allergies: List<String>) {
-  constructor(allergies: Collection<FoodAllergy>) : this(allergies.map { it.allergy.id }.sorted())
 }
