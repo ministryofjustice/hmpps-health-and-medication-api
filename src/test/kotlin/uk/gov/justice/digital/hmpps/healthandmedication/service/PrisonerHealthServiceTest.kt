@@ -454,7 +454,7 @@ class PrisonerHealthServiceTest {
               last = true,
               numberOfElements = 1,
               offset = 0,
-              pageNumber = 0,
+              pageNumber = 1,
               size = 10,
               totalElements = 1,
               totalPages = 1,

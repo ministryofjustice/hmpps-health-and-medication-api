@@ -89,7 +89,7 @@ class PrisonerHealthService(
           last = (lastIndex + 1) >= overlappingIds.size,
           numberOfElements = idsForPage.size,
           offset = startIndex,
-          pageNumber = request.page - 1,
+          pageNumber = Math.ceilDiv(startIndex, idsForPage.size) + 1,
           size = request.size,
           totalElements = overlappingIds.size,
           totalPages = Math.ceilDiv(overlappingIds.size, request.size),
