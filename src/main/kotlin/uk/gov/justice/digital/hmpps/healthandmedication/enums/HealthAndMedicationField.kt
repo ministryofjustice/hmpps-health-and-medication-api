@@ -1,10 +1,12 @@
 package uk.gov.justice.digital.hmpps.healthandmedication.enums
 
-import uk.gov.justice.digital.hmpps.healthandmedication.jpa.FoodAllergies
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.FoodAllergy
+import uk.gov.justice.digital.hmpps.healthandmedication.jpa.FoodAllergyHistory
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.JsonObject
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.MedicalDietaryRequirement
-import uk.gov.justice.digital.hmpps.healthandmedication.jpa.MedicalDietaryRequirements
+import uk.gov.justice.digital.hmpps.healthandmedication.jpa.MedicalDietaryRequirementHistory
+import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PersonalisedDietaryRequirement
+import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PersonalisedDietaryRequirementHistory
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.ReferenceDataCode
 
 private val getInt: (FieldValues) -> Int? = { it.valueInt }
@@ -31,10 +33,10 @@ enum class HealthAndMedicationField(
     { values, value ->
       run {
         value as MutableSet<FoodAllergy>
-        values.valueJson = JsonObject(FOOD_ALLERGY, FoodAllergies(value))
+        values.valueJson = JsonObject(FOOD_ALLERGY, FoodAllergyHistory(value))
       }
     },
-    { old, new -> old.valueJson?.value != FoodAllergies(new as MutableSet<FoodAllergy>) },
+    { old, new -> old.valueJson?.value != FoodAllergyHistory(new as MutableSet<FoodAllergy>) },
     "FOOD_ALLERGY",
   ),
 
@@ -43,11 +45,23 @@ enum class HealthAndMedicationField(
     { values, value ->
       run {
         value as MutableSet<MedicalDietaryRequirement>
-        values.valueJson = JsonObject(MEDICAL_DIET, MedicalDietaryRequirements(value))
+        values.valueJson = JsonObject(MEDICAL_DIET, MedicalDietaryRequirementHistory(value))
       }
     },
-    { old, new -> old.valueJson?.value != MedicalDietaryRequirements(new as MutableSet<MedicalDietaryRequirement>) },
+    { old, new -> old.valueJson?.value != MedicalDietaryRequirementHistory(new as MutableSet<MedicalDietaryRequirement>) },
     "MEDICAL_DIET",
+  ),
+
+  PERSONALISED_DIET(
+    getJson,
+    { values, value ->
+      run {
+        value as MutableSet<PersonalisedDietaryRequirement>
+        values.valueJson = JsonObject(PERSONALISED_DIET, PersonalisedDietaryRequirementHistory(value))
+      }
+    },
+    { old, new -> old.valueJson?.value != PersonalisedDietaryRequirementHistory(new as MutableSet<PersonalisedDietaryRequirement>) },
+    "PERSONALISED_DIET",
   ),
 }
 

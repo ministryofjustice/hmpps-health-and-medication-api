@@ -6,15 +6,17 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.transaction.TestTransaction
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.FoodAllergy
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.MedicalDietaryRequirement
+import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PersonalisedDietaryRequirement
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PrisonerHealth
-import uk.gov.justice.digital.hmpps.healthandmedication.jpa.ReferenceDataCode
-import uk.gov.justice.digital.hmpps.healthandmedication.jpa.ReferenceDataDomain
-import java.time.ZonedDateTime
+import uk.gov.justice.digital.hmpps.healthandmedication.utils.toReferenceDataCode
 
 class PrisonerHealthRepositoryTest : RepositoryTest() {
 
   @Autowired
   lateinit var repository: PrisonerHealthRepository
+
+  @Autowired
+  lateinit var referenceDataCodeRepository: ReferenceDataCodeRepository
 
   fun save(prisonerHealth: PrisonerHealth) {
     repository.save(prisonerHealth)
@@ -25,21 +27,33 @@ class PrisonerHealthRepositoryTest : RepositoryTest() {
 
   @Test
   fun `can persist health`() {
+    val eggAllergy = generateAllergy("FOOD_ALLERGY_EGG")
+    val milkAllergy = generateAllergy("FOOD_ALLERGY_MILK")
+
+    val nutrientDeficiency = generateMedicalDietaryRequirement("MEDICAL_DIET_NUTRIENT_DEFICIENCY")
+    val lactoseIntolerance = generateMedicalDietaryRequirement("MEDICAL_DIET_LACTOSE_INTOLERANT")
+
+    val vegan = generatePersonalisedDietaryRequirement("PERSONALISED_DIET_VEGAN")
+
     val prisonerHealth = PrisonerHealth(
-      PRISONER_NUMBER,
-      mutableSetOf(EGG_ALLERGY, MILK_ALLERGY),
-      mutableSetOf(MEDICAL_DIET_LACTOSE_INTOLERANT, MEDICAL_DIET_NUTRIENT_DEFICIENCY),
+      prisonerNumber = PRISONER_NUMBER,
+      foodAllergies = mutableSetOf(eggAllergy, milkAllergy),
+      medicalDietaryRequirements = mutableSetOf(nutrientDeficiency, lactoseIntolerance),
+      personalisedDietaryRequirements = mutableSetOf(vegan),
     )
+
     save(prisonerHealth)
 
     with(repository.getReferenceById(PRISONER_NUMBER)) {
       assertThat(prisonerNumber).isEqualTo(PRISONER_NUMBER)
       assertThat(foodAllergies).hasSize(2)
-      assertThat(foodAllergies).contains(EGG_ALLERGY)
-      assertThat(foodAllergies).contains(MILK_ALLERGY)
+      assertThat(foodAllergies).contains(eggAllergy)
+      assertThat(foodAllergies).contains(milkAllergy)
       assertThat(medicalDietaryRequirements).hasSize(2)
-      assertThat(medicalDietaryRequirements).contains(MEDICAL_DIET_LACTOSE_INTOLERANT)
-      assertThat(medicalDietaryRequirements).contains(MEDICAL_DIET_NUTRIENT_DEFICIENCY)
+      assertThat(medicalDietaryRequirements).contains(lactoseIntolerance)
+      assertThat(medicalDietaryRequirements).contains(nutrientDeficiency)
+      assertThat(personalisedDietaryRequirements).hasSize(1)
+      assertThat(personalisedDietaryRequirements).contains(vegan)
     }
   }
 
@@ -57,14 +71,19 @@ class PrisonerHealthRepositoryTest : RepositoryTest() {
 
   @Test
   fun `can update health`() {
+    val eggAllergy = generateAllergy("FOOD_ALLERGY_EGG")
+    val nutrientDeficiency = generateMedicalDietaryRequirement("MEDICAL_DIET_NUTRIENT_DEFICIENCY")
+    val vegan = generatePersonalisedDietaryRequirement("PERSONALISED_DIET_VEGAN")
+
     repository.save(PrisonerHealth(PRISONER_NUMBER))
     TestTransaction.flagForCommit()
     TestTransaction.end()
     TestTransaction.start()
 
     val health = repository.getReferenceById(PRISONER_NUMBER)
-    health.foodAllergies.add(EGG_ALLERGY)
-    health.medicalDietaryRequirements.add(MEDICAL_DIET_LACTOSE_INTOLERANT)
+    health.foodAllergies.add(eggAllergy)
+    health.medicalDietaryRequirements.add(nutrientDeficiency)
+    health.personalisedDietaryRequirements.add(vegan)
 
     repository.save(health)
     TestTransaction.flagForCommit()
@@ -73,26 +92,36 @@ class PrisonerHealthRepositoryTest : RepositoryTest() {
 
     with(repository.getReferenceById(PRISONER_NUMBER)) {
       assertThat(prisonerNumber).isEqualTo(PRISONER_NUMBER)
-      assertThat(foodAllergies).hasSize(1)
-      assertThat(foodAllergies.first()).isEqualTo(EGG_ALLERGY)
-      assertThat(medicalDietaryRequirements).hasSize(1)
-      assertThat(medicalDietaryRequirements.first()).isEqualTo(MEDICAL_DIET_LACTOSE_INTOLERANT)
+      assertThat(foodAllergies).containsExactly(eggAllergy)
+      assertThat(medicalDietaryRequirements).containsExactly(nutrientDeficiency)
+      assertThat(personalisedDietaryRequirements).containsExactly(vegan)
     }
   }
 
   @Test
   fun `can test for equality`() {
+    val eggAllergy = generateAllergy("FOOD_ALLERGY_EGG")
+    val milkAllergy = generateAllergy("FOOD_ALLERGY_MILK")
+
+    val nutrientDeficiency = generateMedicalDietaryRequirement("MEDICAL_DIET_NUTRIENT_DEFICIENCY")
+    val lactoseIntolerance = generateMedicalDietaryRequirement("MEDICAL_DIET_LACTOSE_INTOLERANT")
+
+    val veganDiet = generatePersonalisedDietaryRequirement("PERSONALISED_DIET_VEGAN")
+    val kosherDiet = generatePersonalisedDietaryRequirement("PERSONALISED_DIET_KOSHER")
+
     assertThat(
       PrisonerHealth(
         prisonerNumber = PRISONER_NUMBER,
-        foodAllergies = mutableSetOf(EGG_ALLERGY),
-        medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_NUTRIENT_DEFICIENCY),
+        foodAllergies = mutableSetOf(eggAllergy),
+        medicalDietaryRequirements = mutableSetOf(nutrientDeficiency),
+        personalisedDietaryRequirements = mutableSetOf(veganDiet),
       ),
     ).isEqualTo(
       PrisonerHealth(
         prisonerNumber = PRISONER_NUMBER,
-        foodAllergies = mutableSetOf(EGG_ALLERGY),
-        medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_NUTRIENT_DEFICIENCY),
+        foodAllergies = mutableSetOf(eggAllergy),
+        medicalDietaryRequirements = mutableSetOf(nutrientDeficiency),
+        personalisedDietaryRequirements = mutableSetOf(veganDiet),
       ),
     )
 
@@ -100,90 +129,52 @@ class PrisonerHealthRepositoryTest : RepositoryTest() {
     assertThat(PrisonerHealth(PRISONER_NUMBER)).isNotEqualTo(PrisonerHealth("Example"))
 
     // Allergies
-    assertThat(PrisonerHealth(PRISONER_NUMBER, mutableSetOf(EGG_ALLERGY))).isNotEqualTo(
-      PrisonerHealth(PRISONER_NUMBER, mutableSetOf(MILK_ALLERGY)),
-    )
+    assertThat(PrisonerHealth(PRISONER_NUMBER, mutableSetOf(eggAllergy)))
+      .isNotEqualTo(PrisonerHealth(PRISONER_NUMBER, mutableSetOf(milkAllergy)))
 
     // Medical diet
     assertThat(
-      PrisonerHealth(PRISONER_NUMBER, mutableSetOf(EGG_ALLERGY), mutableSetOf(MEDICAL_DIET_LACTOSE_INTOLERANT)),
+      PrisonerHealth(prisonerNumber = PRISONER_NUMBER, medicalDietaryRequirements = mutableSetOf(nutrientDeficiency)),
     ).isNotEqualTo(
-      PrisonerHealth(PRISONER_NUMBER, mutableSetOf(EGG_ALLERGY), mutableSetOf(MEDICAL_DIET_NUTRIENT_DEFICIENCY)),
+      PrisonerHealth(prisonerNumber = PRISONER_NUMBER, medicalDietaryRequirements = mutableSetOf(lactoseIntolerance)),
+    )
+
+    // Personalised diet
+    assertThat(
+      PrisonerHealth(prisonerNumber = PRISONER_NUMBER, personalisedDietaryRequirements = mutableSetOf(veganDiet)),
+    ).isNotEqualTo(
+      PrisonerHealth(prisonerNumber = PRISONER_NUMBER, personalisedDietaryRequirements = mutableSetOf(kosherDiet)),
     )
   }
 
   @Test
   fun `toString does not cause stack overflow`() {
     assertThat(
-      PrisonerHealth(PRISONER_NUMBER, mutableSetOf(EGG_ALLERGY), mutableSetOf(MEDICAL_DIET_LACTOSE_INTOLERANT)).toString(),
+      PrisonerHealth(
+        prisonerNumber = PRISONER_NUMBER,
+        foodAllergies = mutableSetOf(generateAllergy("FOOD_ALLERGY_EGG")),
+        medicalDietaryRequirements = mutableSetOf(generateMedicalDietaryRequirement("MEDICAL_DIET_LACTOSE_INTOLERANT")),
+        personalisedDietaryRequirements = mutableSetOf(generatePersonalisedDietaryRequirement("PERSONALISED_DIET_VEGAN")),
+      ).toString(),
     ).isInstanceOf(String::class.java)
   }
 
+  private fun generateAllergy(id: String) = FoodAllergy(
+    prisonerNumber = PRISONER_NUMBER,
+    allergy = toReferenceDataCode(referenceDataCodeRepository, id)!!,
+  )
+
+  private fun generateMedicalDietaryRequirement(id: String) = MedicalDietaryRequirement(
+    prisonerNumber = PRISONER_NUMBER,
+    dietaryRequirement = toReferenceDataCode(referenceDataCodeRepository, id)!!,
+  )
+
+  private fun generatePersonalisedDietaryRequirement(id: String) = PersonalisedDietaryRequirement(
+    prisonerNumber = PRISONER_NUMBER,
+    dietaryRequirement = toReferenceDataCode(referenceDataCodeRepository, id)!!,
+  )
+
   private companion object {
-    const val PRISONER_NUMBER = "A1234AA"
-
-    val FOOD_ALLERGY_DOMAIN = ReferenceDataDomain("FOOD_ALLERGY", "Food allergy", 0, ZonedDateTime.now(), "OMS_OWNER")
-    val EGG_ALLERGY = FoodAllergy(
-      prisonerNumber = PRISONER_NUMBER,
-      allergy = ReferenceDataCode(
-        id = "FOOD_ALLERGY_EGG",
-        domain = FOOD_ALLERGY_DOMAIN,
-        code = "EGG",
-        description = "Egg",
-        listSequence = 3,
-        createdAt = ZonedDateTime.now(),
-        createdBy = "OMS_OWNER",
-      ),
-    )
-
-    val MILK_ALLERGY =
-      FoodAllergy(
-        prisonerNumber = PRISONER_NUMBER,
-        allergy = ReferenceDataCode(
-          id = "FOOD_ALLERGY_MILK",
-          domain = FOOD_ALLERGY_DOMAIN,
-          code = "MILK",
-          description = "Milk",
-          listSequence = 6,
-          createdAt = ZonedDateTime.now(),
-          createdBy = "OMS_OWNER",
-        ),
-      )
-
-    val MEDICAL_DIET_DOMAIN = ReferenceDataDomain(
-      "MEDICAL_DIET",
-      "Medical diet",
-      0,
-      ZonedDateTime.now(),
-      "CONNECT_DPS",
-    )
-
-    val MEDICAL_DIET_NUTRIENT_DEFICIENCY =
-      MedicalDietaryRequirement(
-        prisonerNumber = PRISONER_NUMBER,
-        dietaryRequirement = ReferenceDataCode(
-          id = "MEDICAL_DIET_NUTRIENT_DEFICIENCY",
-          domain = MEDICAL_DIET_DOMAIN,
-          code = "NUTRIENT_DEFICIENCY",
-          description = "Nutrient deficiency",
-          listSequence = 7,
-          createdAt = ZonedDateTime.now(),
-          createdBy = "CONNECT_DPS",
-        ),
-      )
-
-    val MEDICAL_DIET_LACTOSE_INTOLERANT =
-      MedicalDietaryRequirement(
-        prisonerNumber = PRISONER_NUMBER,
-        dietaryRequirement = ReferenceDataCode(
-          id = "MEDICAL_DIET_LACTOSE_INTOLERANT",
-          domain = MEDICAL_DIET_DOMAIN,
-          code = "LACTOSE_INTOLERANT",
-          description = "Lactose intolerant",
-          listSequence = 5,
-          createdAt = ZonedDateTime.now(),
-          createdBy = "CONNECT_DPS",
-        ),
-      )
+    const val PRISONER_NUMBER = "Z1234ZZ"
   }
 }

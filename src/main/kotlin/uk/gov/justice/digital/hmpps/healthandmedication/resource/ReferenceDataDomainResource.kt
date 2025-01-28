@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.healthandmedication.controller
+package uk.gov.justice.digital.hmpps.healthandmedication.resource
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -57,8 +57,7 @@ class ReferenceDataDomainResource(
       description = "Include sub-domains at the top level. Defaults to false",
     )
     includeSubDomains: Boolean = false,
-  ): Collection<ReferenceDataDomainDto> =
-    referenceDataDomainService.getReferenceDataDomains(includeInactive, includeSubDomains)
+  ): Collection<ReferenceDataDomainDto> = referenceDataDomainService.getReferenceDataDomains(includeInactive, includeSubDomains)
 
   @GetMapping("/{domain}")
   @ResponseStatus(HttpStatus.OK)

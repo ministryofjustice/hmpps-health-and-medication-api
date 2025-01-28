@@ -10,7 +10,7 @@ import jakarta.persistence.ManyToOne
 import org.hibernate.Hibernate
 
 @Entity
-class MedicalDietaryRequirement(
+class PersonalisedDietaryRequirement(
   @Column(name = "prisoner_number", updatable = false, nullable = false)
   val prisonerNumber: String,
 
@@ -26,13 +26,12 @@ class MedicalDietaryRequirement(
   @GeneratedValue(strategy = IDENTITY)
   val id: Long = 0
 
-  fun toHistoryObject() = MedicalDietaryRequirementItem(dietaryRequirement.id, commentText)
-
+  fun toHistoryObject() = PersonalisedDietaryRequirementItem(dietaryRequirement.id, commentText)
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
 
-    other as MedicalDietaryRequirement
+    other as PersonalisedDietaryRequirement
 
     if (prisonerNumber != other.prisonerNumber) return false
     if (dietaryRequirement != other.dietaryRequirement) return false
@@ -47,4 +46,6 @@ class MedicalDietaryRequirement(
     result = 31 * result + commentText.hashCode()
     return result
   }
+
+  override fun toString(): String = "PersonalisedDietaryRequirement(prisonerNumber='$prisonerNumber', dietaryRequirement=$dietaryRequirement, commentText=$commentText, id=$id)"
 }

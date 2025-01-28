@@ -1,11 +1,11 @@
-package uk.gov.justice.digital.hmpps.healthandmedication.controller
+package uk.gov.justice.digital.hmpps.healthandmedication.resource
 
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.IntegrationTestBase
 
-class ReferenceDataCodeControllerIntTest : IntegrationTestBase() {
+class ReferenceDataCodeResourceIntTest : IntegrationTestBase() {
 
   @DisplayName("GET /reference-data/domains/{domain}/codes")
   @Nested
