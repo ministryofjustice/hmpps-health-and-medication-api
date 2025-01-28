@@ -10,12 +10,14 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import org.hibernate.Hibernate
 import org.hibernate.annotations.SortNatural
-import uk.gov.justice.digital.hmpps.healthandmedication.dto.ReferenceDataSimpleDto
+import uk.gov.justice.digital.hmpps.healthandmedication.dto.response.DietAndAllergyDto
 import uk.gov.justice.digital.hmpps.healthandmedication.dto.response.HealthDto
+import uk.gov.justice.digital.hmpps.healthandmedication.dto.response.ReferenceDataSelection
 import uk.gov.justice.digital.hmpps.healthandmedication.dto.response.ValueWithMetadata
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField.FOOD_ALLERGY
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField.MEDICAL_DIET
+import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField.PERSONALISED_DIET
 import uk.gov.justice.digital.hmpps.healthandmedication.mapper.toSimpleDto
 import java.time.ZonedDateTime
 import java.util.SortedSet
@@ -34,6 +36,9 @@ class PrisonerHealth(
   @OneToMany(mappedBy = "prisonerNumber", cascade = [ALL], orphanRemoval = true)
   var medicalDietaryRequirements: MutableSet<MedicalDietaryRequirement> = mutableSetOf(),
 
+  @OneToMany(mappedBy = "prisonerNumber", cascade = [ALL], orphanRemoval = true)
+  var personalisedDietaryRequirements: MutableSet<PersonalisedDietaryRequirement> = mutableSetOf(),
+
   // Stores snapshots of each update to a prisoner's health information
   @OneToMany(mappedBy = "prisonerNumber", fetch = LAZY, cascade = [ALL], orphanRemoval = true)
   @SortNatural
@@ -48,44 +53,50 @@ class PrisonerHealth(
   override fun fieldAccessors(): Map<HealthAndMedicationField, KMutableProperty0<*>> = mapOf(
     FOOD_ALLERGY to ::foodAllergies,
     MEDICAL_DIET to ::medicalDietaryRequirements,
+    PERSONALISED_DIET to ::personalisedDietaryRequirements,
   )
 
-  fun toDto(): HealthDto = HealthDto(
+  fun toHealthDto(): HealthDto = HealthDto(toDietAndAllergyDto())
+
+  fun toDietAndAllergyDto(): DietAndAllergyDto = DietAndAllergyDto(
     foodAllergies = getReferenceDataListValueWithMetadata(
       foodAllergies,
-      { allergies -> allergies.map { it.allergy } },
+      { allergies ->
+        allergies.map {
+          ReferenceDataSelection(it.allergy.toSimpleDto(), it.commentText)
+        }
+      },
       FOOD_ALLERGY,
     ),
     medicalDietaryRequirements = getReferenceDataListValueWithMetadata(
       medicalDietaryRequirements,
-      { dietaryRequirements -> dietaryRequirements.map { it.dietaryRequirement } },
+      { dietaryRequirements ->
+        dietaryRequirements.map {
+          ReferenceDataSelection(it.dietaryRequirement.toSimpleDto(), it.commentText)
+        }
+      },
       MEDICAL_DIET,
+    ),
+    personalisedDietaryRequirements = getReferenceDataListValueWithMetadata(
+      personalisedDietaryRequirements,
+      { dietaryRequirements ->
+        dietaryRequirements.map {
+          ReferenceDataSelection(it.dietaryRequirement.toSimpleDto(), it.commentText)
+        }
+      },
+      PERSONALISED_DIET,
     ),
   )
 
-  override fun updateFieldHistory(
-    lastModifiedAt: ZonedDateTime,
-    lastModifiedBy: String,
-  ) = updateFieldHistory(lastModifiedAt, lastModifiedBy, allFields)
-
-  private fun getRefDataValueWithMetadata(
-    value: KMutableProperty0<ReferenceDataCode?>,
-    field: HealthAndMedicationField,
-  ): ValueWithMetadata<ReferenceDataSimpleDto?>? = fieldMetadata[field]?.let {
-    ValueWithMetadata(
-      value.get()?.toSimpleDto(),
-      it.lastModifiedAt,
-      it.lastModifiedBy,
-    )
-  }
+  override fun updateFieldHistory(lastModifiedAt: ZonedDateTime, lastModifiedBy: String) = updateFieldHistory(lastModifiedAt, lastModifiedBy, allFields)
 
   private fun <T> getReferenceDataListValueWithMetadata(
     value: T,
-    mapper: (T) -> List<ReferenceDataCode>,
+    mapper: (T) -> List<ReferenceDataSelection>,
     field: HealthAndMedicationField,
-  ): ValueWithMetadata<List<ReferenceDataSimpleDto>>? = fieldMetadata[field]?.let {
+  ): ValueWithMetadata<List<ReferenceDataSelection>>? = fieldMetadata[field]?.let {
     ValueWithMetadata(
-      mapper(value).map { code -> code.toSimpleDto() },
+      mapper(value),
       it.lastModifiedAt,
       it.lastModifiedBy,
     )
@@ -100,6 +111,7 @@ class PrisonerHealth(
     if (prisonerNumber != other.prisonerNumber) return false
     if (foodAllergies != other.foodAllergies) return false
     if (medicalDietaryRequirements != other.medicalDietaryRequirements) return false
+    if (personalisedDietaryRequirements != other.personalisedDietaryRequirements) return false
 
     return true
   }
@@ -108,13 +120,15 @@ class PrisonerHealth(
     var result = prisonerNumber.hashCode()
     result = 31 * result + foodAllergies.hashCode()
     result = 31 * result + medicalDietaryRequirements.hashCode()
+    result = 31 * result + personalisedDietaryRequirements.hashCode()
     return result
   }
 
   companion object {
     val allFields = listOf(
-      MEDICAL_DIET,
       FOOD_ALLERGY,
+      MEDICAL_DIET,
+      PERSONALISED_DIET,
     )
   }
 }
