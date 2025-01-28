@@ -80,7 +80,7 @@ class PrisonerHealthService(
             lastName = prisoner.lastName,
             location = prisoner.cellLocation,
             prisonerNumber = health.prisonerNumber,
-            health = health.toDto(),
+            health = health.toHealthDto(),
           )
         }.toList(),
         // Pagination metadata, should be returned from the same class that returns the IDs calculated

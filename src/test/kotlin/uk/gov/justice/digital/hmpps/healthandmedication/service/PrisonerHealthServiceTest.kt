@@ -446,7 +446,7 @@ class PrisonerHealthServiceTest {
                 firstName = PRISONER_FIRST_NAME,
                 lastName = PRISONER_LAST_NAME,
                 location = PRISONER_LOCATION,
-                health = PRISONER_HEALTH.toDto(),
+                health = PRISONER_HEALTH.toHealthDto(),
               ),
             ),
             metadata = PageMeta(
@@ -475,13 +475,6 @@ class PrisonerHealthServiceTest {
     const val USER2 = "USER2"
 
     val NOW = ZonedDateTime.now()
-
-    val FOOD_REFERENCE_DATA_CODE_ID = "FOOD_EXAMPLE_CODE"
-    val FOOD_REFERENCE_DATA_CODE = "FOOD_CODE"
-    val FOOD_REFERENCE_DATA_CODE_DESCRPTION = "Example food code"
-    val FOOD_REFERENCE_DATA_LIST_SEQUENCE = 0
-    val FOOD_REFERENCE_DATA_DOMAIN_CODE = "FOOD_EXAMPLE"
-    val FOOD_REFERENCE_DATA_DOMAIN_DESCRIPTION = "Food Example"
 
     val FOOD_ALLERGY_CODE = ReferenceDataCode(
       id = "FOOD_ALLERGY_PEANUTS",
@@ -563,14 +556,14 @@ class PrisonerHealthServiceTest {
       medicalDietaryRequirements = emptyList(),
       personalisedDietaryRequirements = emptyList(),
     )
-    val HEALTH_UPDATE_REQUEST_WITH_NULL = PrisonerHealthUpdateRequest(attributes_undefined)
+
     val PRISONER_HEALTH = PrisonerHealth(
       prisonerNumber = PRISONER_NUMBER,
       medicalDietaryRequirements = mutableSetOf(
-        LOW_FAT_DIET_REQUIREMENT,
+        MEDICAL_DIET_DBO,
       ),
       foodAllergies = mutableSetOf(
-        EGG_FOOD_ALLERGY,
+        FOOD_ALLERGY_DBO,
       ),
       fieldMetadata = mutableMapOf(
         MEDICAL_DIET to FieldMetadata(
