@@ -60,7 +60,9 @@ class PrisonerHealthService(
 
       // Fetch all non-empty health data for the given prisoner numbers
       val healthData =
-        prisonerHealthRepository.findAllByPrisonerNumberInAndFoodAllergiesIsNotEmptyOrMedicalDietaryRequirementsIsNotEmpty(prisonerNumbers)
+        prisonerHealthRepository.findAllByPrisonerNumberInAndFoodAllergiesIsNotEmptyOrMedicalDietaryRequirementsIsNotEmpty(
+          prisonerNumbers,
+        )
 
       // This maintains the order from the prisoner search API so that we're able to have sorting
       val overlappingIds = prisonerNumbers.intersect(healthData.map { it.prisonerNumber }.toSet()).toList()
@@ -89,10 +91,14 @@ class PrisonerHealthService(
           last = (lastIndex + 1) >= overlappingIds.size,
           numberOfElements = idsForPage.size,
           offset = startIndex,
-          pageNumber = Math.ceilDiv(startIndex, idsForPage.size) + 1,
+          pageNumber = if (idsForPage.isNotEmpty()) {
+            Math.ceilDiv(startIndex, idsForPage.size) + 1
+          } else {
+            1
+          },
           size = request.size,
           totalElements = overlappingIds.size,
-          totalPages = Math.ceilDiv(overlappingIds.size, request.size),
+          totalPages = Math.ceilDiv(overlappingIds.size, request.size).coerceAtLeast(1),
         ),
       )
     }

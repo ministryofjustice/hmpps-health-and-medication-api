@@ -435,6 +435,35 @@ class PrisonerHealthServiceTest {
       }
 
       @Test
+      fun `it doesnt crash with 0 prisoners`() {
+        whenever(
+          prisonerHealthRepository.findAllByPrisonerNumberInAndFoodAllergiesIsNotEmptyOrMedicalDietaryRequirementsIsNotEmpty(
+            mutableListOf(
+              PRISONER_NUMBER,
+            ),
+          ),
+        ).thenReturn(emptyList())
+
+        assertThat(
+          underTest.getHealthForPrison(PRISON_ID, HealthAndMedicationForPrisonRequest(1, 10)),
+        ).isEqualTo(
+          HealthAndMedicationForPrisonResponse(
+            content = emptyList(),
+            metadata = PageMeta(
+              first = true,
+              last = true,
+              numberOfElements = 0,
+              offset = 0,
+              pageNumber = 1,
+              size = 10,
+              totalElements = 0,
+              totalPages = 1,
+            ),
+          ),
+        )
+      }
+
+      @Test
       fun `it fetches the health information for the returned prisoners`() {
         assertThat(
           underTest.getHealthForPrison(PRISON_ID, HealthAndMedicationForPrisonRequest(1, 10)),
