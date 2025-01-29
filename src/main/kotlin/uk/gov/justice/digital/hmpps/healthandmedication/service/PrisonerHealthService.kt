@@ -46,7 +46,7 @@ class PrisonerHealthService(
         // This would be nice to move into request validation rather than having to validate here
         val sort = request.sort.split(",")
         if (sort[0] == "prisonerName") {
-          prisonerSearchClient.getPrisonersForPrison(prisonId, "firstName,lastName," + sort[1])
+          prisonerSearchClient.getPrisonersForPrison(prisonId, "lastName,firstName," + sort[1])
         } else if (sort[0] == "location") {
           prisonerSearchClient.getPrisonersForPrison(prisonId, "cellLocation," + sort[1])
         } else {

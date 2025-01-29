@@ -392,7 +392,7 @@ class PrisonerHealthServiceTest {
           HealthAndMedicationForPrisonRequest(1, 10, sort = "prisonerName,$direction"),
         )
 
-        verify(prisonerSearchClient).getPrisonersForPrison(PRISON_ID, "firstName,lastName,$direction")
+        verify(prisonerSearchClient).getPrisonersForPrison(PRISON_ID, "lastName,firstName,$direction")
       }
 
       @ParameterizedTest
