@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
 import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.dto.PrisonerDto
+import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.dto.PrisonerSearchResultDto
 import uk.gov.justice.digital.hmpps.healthandmedication.config.DownstreamServiceException
 
 @Component
@@ -20,5 +21,20 @@ class PrisonerSearchClient(@Qualifier("prisonerSearchWebClient") private val web
     null
   } catch (e: Exception) {
     throw DownstreamServiceException("Get prisoner request failed", e)
+  }
+
+  fun getPrisonersForPrison(prisonId: String, sort: String? = null): List<PrisonerDto>? {
+    try {
+      var query = "size=9999"
+      if (!sort.isNullOrEmpty()) query += "&sort=$sort"
+
+      return webClient.get().uri("/prison/{prisonId}/prisoners?$query", prisonId).retrieve()
+        .bodyToMono(PrisonerSearchResultDto::class.java)
+        .block()?.content
+    } catch (e: NotFound) {
+      return null
+    } catch (e: Exception) {
+      throw DownstreamServiceException("Get prisoners for prison request failed", e)
+    }
   }
 }

@@ -5,4 +5,8 @@ import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PrisonerHealth
 
 @Repository
-interface PrisonerHealthRepository : JpaRepository<PrisonerHealth, String>
+interface PrisonerHealthRepository : JpaRepository<PrisonerHealth, String> {
+  fun findAllByPrisonerNumberInAndFoodAllergiesIsNotEmptyOrMedicalDietaryRequirementsIsNotEmpty(
+    prisonerNumbers: MutableCollection<String>,
+  ): List<PrisonerHealth>
+}

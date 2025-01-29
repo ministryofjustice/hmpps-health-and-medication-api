@@ -1,16 +1,21 @@
 package uk.gov.justice.digital.hmpps.healthandmedication.service
 
+import jakarta.validation.ValidationException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.Spy
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.junit.jupiter.MockitoSettings
 import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.mockito.quality.Strictness.LENIENT
 import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.PrisonerSearchClient
@@ -41,6 +46,10 @@ import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.Reference
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.utils.HistoryComparison
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.utils.expectFieldHistory
 import uk.gov.justice.digital.hmpps.healthandmedication.mapper.toSimpleDto
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.requests.HealthAndMedicationForPrisonRequest
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.requests.PageMeta
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.responses.HealthAndMedicationForPrisonDto
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.responses.HealthAndMedicationForPrisonResponse
 import uk.gov.justice.digital.hmpps.healthandmedication.utils.AuthenticationFacade
 import java.time.Clock
 import java.time.ZonedDateTime
@@ -360,8 +369,108 @@ class PrisonerHealthServiceTest {
     }
   }
 
+  @Nested
+  inner class GetHealthForPrison {
+    @Nested
+    inner class PrisonerSearchRequests {
+      @BeforeEach
+      fun beforeEach() {
+        whenever(prisonerSearchClient.getPrisonersForPrison(PRISON_ID)).thenReturn(emptyList())
+      }
+
+      @Test
+      fun `getting health for prison without sorting`() {
+        underTest.getHealthForPrison(PRISON_ID, HealthAndMedicationForPrisonRequest(1, 10))
+        verify(prisonerSearchClient).getPrisonersForPrison(PRISON_ID)
+      }
+
+      @ParameterizedTest
+      @ValueSource(strings = ["asc", "desc"])
+      fun `getting health for prison sorting by prisonerName`(direction: String) {
+        underTest.getHealthForPrison(
+          PRISON_ID,
+          HealthAndMedicationForPrisonRequest(1, 10, sort = "prisonerName,$direction"),
+        )
+
+        verify(prisonerSearchClient).getPrisonersForPrison(PRISON_ID, "firstName,lastName,$direction")
+      }
+
+      @ParameterizedTest
+      @ValueSource(strings = ["asc", "desc"])
+      fun `getting health for prison sorting by location`(direction: String) {
+        underTest.getHealthForPrison(
+          PRISON_ID,
+          HealthAndMedicationForPrisonRequest(1, 10, sort = "location,$direction"),
+        )
+        verify(prisonerSearchClient).getPrisonersForPrison(PRISON_ID, "cellLocation,$direction")
+      }
+
+      @Test
+      fun `it throws a validation exception when an invalid sort field is passed`() {
+        assertThrows<ValidationException> {
+          underTest.getHealthForPrison(PRISON_ID, HealthAndMedicationForPrisonRequest(1, 10, "invalid,sort"))
+        }
+      }
+    }
+
+    @Nested
+    inner class PrisonerHealthFetching {
+      @BeforeEach
+      fun beforeEach() {
+        whenever(prisonerSearchClient.getPrisonersForPrison(PRISON_ID)).thenReturn(
+          listOf(PRISONER_SEARCH_RESPONSE),
+        )
+
+        whenever(
+          prisonerHealthRepository.findAllByPrisonerNumberInAndFoodAllergiesIsNotEmptyOrMedicalDietaryRequirementsIsNotEmpty(
+            mutableListOf(
+              PRISONER_NUMBER,
+            ),
+          ),
+        ).thenReturn(
+          listOf(
+            PRISONER_HEALTH,
+          ),
+        )
+      }
+
+      @Test
+      fun `it fetches the health information for the returned prisoners`() {
+        assertThat(
+          underTest.getHealthForPrison(PRISON_ID, HealthAndMedicationForPrisonRequest(1, 10)),
+        ).isEqualTo(
+          HealthAndMedicationForPrisonResponse(
+            content = listOf(
+              HealthAndMedicationForPrisonDto(
+                prisonerNumber = PRISONER_NUMBER,
+                firstName = PRISONER_FIRST_NAME,
+                lastName = PRISONER_LAST_NAME,
+                location = PRISONER_LOCATION,
+                health = PRISONER_HEALTH.toHealthDto(),
+              ),
+            ),
+            metadata = PageMeta(
+              first = true,
+              last = true,
+              numberOfElements = 1,
+              offset = 0,
+              pageNumber = 1,
+              size = 10,
+              totalElements = 1,
+              totalPages = 1,
+            ),
+          ),
+        )
+      }
+    }
+  }
+
   private companion object {
+    const val PRISON_ID = "LEI"
     const val PRISONER_NUMBER = "A1234AA"
+    const val PRISONER_FIRST_NAME = "First"
+    const val PRISONER_LAST_NAME = "Last"
+    const val PRISONER_LOCATION = "Recp"
     const val USER1 = "USER1"
     const val USER2 = "USER2"
 
@@ -427,7 +536,13 @@ class PrisonerHealthServiceTest {
       dietaryRequirement = PERSONALISED_DIET_CODE,
     )
 
-    val PRISONER_SEARCH_RESPONSE = PrisonerDto(PRISONER_NUMBER)
+    val PRISONER_SEARCH_RESPONSE = PrisonerDto(
+      prisonerNumber = PRISONER_NUMBER,
+      prisonId = PRISON_ID,
+      firstName = PRISONER_FIRST_NAME,
+      lastName = PRISONER_LAST_NAME,
+      cellLocation = PRISONER_LOCATION,
+    )
 
     val DIET_AND_ALLERGY_UPDATE_REQUEST =
       UpdateDietAndAllergyRequest(
@@ -440,6 +555,30 @@ class PrisonerHealthServiceTest {
       foodAllergies = emptyList(),
       medicalDietaryRequirements = emptyList(),
       personalisedDietaryRequirements = emptyList(),
+    )
+
+    val PRISONER_HEALTH = PrisonerHealth(
+      prisonerNumber = PRISONER_NUMBER,
+      medicalDietaryRequirements = mutableSetOf(
+        MEDICAL_DIET_DBO,
+      ),
+      foodAllergies = mutableSetOf(
+        FOOD_ALLERGY_DBO,
+      ),
+      fieldMetadata = mutableMapOf(
+        MEDICAL_DIET to FieldMetadata(
+          PRISONER_NUMBER,
+          MEDICAL_DIET,
+          NOW,
+          USER1,
+        ),
+        FOOD_ALLERGY to FieldMetadata(
+          PRISONER_NUMBER,
+          MEDICAL_DIET,
+          NOW,
+          USER1,
+        ),
+      ),
     )
   }
 }
