@@ -384,7 +384,7 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
               "value": {
                 "id": "MEDICAL_DIET_OTHER",
                 "description": "Other",
-                "listSequence": 8,
+                "listSequence": 9,
                 "isActive": true
               },
               "comment" : "Some other diet" 
