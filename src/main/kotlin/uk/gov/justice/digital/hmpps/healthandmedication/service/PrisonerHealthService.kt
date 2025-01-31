@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.healthandmedication.resource.requests.PageMe
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.responses.HealthAndMedicationForPrisonDto
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.responses.HealthAndMedicationForPrisonResponse
 import uk.gov.justice.digital.hmpps.healthandmedication.utils.AuthenticationFacade
+import uk.gov.justice.digital.hmpps.healthandmedication.utils.Pagination
 import uk.gov.justice.digital.hmpps.healthandmedication.utils.toReferenceDataCode
 import uk.gov.justice.digital.hmpps.healthandmedication.utils.validatePrisonerNumber
 import java.time.Clock
@@ -65,40 +66,33 @@ class PrisonerHealthService(
         )
 
       // This maintains the order from the prisoner search API so that we're able to have sorting
-      val overlappingIds = prisonerNumbers.intersect(healthData.map { it.prisonerNumber }.toSet()).toList()
-
-      // Pagination specific code to be moved out
-      val startIndex = (request.page - 1) * request.size
-      val lastIndex = (startIndex + request.size - 1).coerceAtMost(overlappingIds.size - 1)
-      val idsForPage = overlappingIds.slice(startIndex..lastIndex)
-      // End pagination specific code
-
-      return HealthAndMedicationForPrisonResponse(
-        content = idsForPage.map { id ->
-          val health = healthData.find { it.prisonerNumber == id }!!
-          val prisoner = prisoners.find { prisoner -> prisoner.prisonerNumber == health.prisonerNumber }!!
+      val healthForPrison =
+        prisonerNumbers.intersect(healthData.map { it.prisonerNumber }.toSet()).toList().map { prisonerNumber ->
+          val health = healthData.find { it.prisonerNumber == prisonerNumber }!!
+          val prisoner = prisoners.find { prisoner -> prisoner.prisonerNumber == prisonerNumber }!!
           HealthAndMedicationForPrisonDto(
             firstName = prisoner.firstName,
             lastName = prisoner.lastName,
             location = prisoner.cellLocation,
-            prisonerNumber = health.prisonerNumber,
+            prisonerNumber = prisonerNumber,
             health = health.toHealthDto(),
           )
-        }.toList(),
+        }
+
+      val (content, metadata) = Pagination.paginateCollection(request.page, request.size, healthForPrison)
+
+      return HealthAndMedicationForPrisonResponse(
+        content = content,
         // Pagination metadata, should be returned from the same class that returns the IDs calculated
         metadata = PageMeta(
-          first = startIndex == 0,
-          last = (lastIndex + 1) >= overlappingIds.size,
-          numberOfElements = idsForPage.size,
-          offset = startIndex,
-          pageNumber = if (idsForPage.isNotEmpty()) {
-            Math.ceilDiv(startIndex, idsForPage.size) + 1
-          } else {
-            1
-          },
-          size = request.size,
-          totalElements = overlappingIds.size,
-          totalPages = Math.ceilDiv(overlappingIds.size, request.size).coerceAtLeast(1),
+          first = metadata.first,
+          last = metadata.last,
+          numberOfElements = metadata.numberOfElements,
+          offset = metadata.offset,
+          pageNumber = metadata.pageNumber,
+          size = metadata.size,
+          totalElements = metadata.totalElements,
+          totalPages = metadata.totalPages,
         ),
       )
     }
