@@ -422,7 +422,7 @@ class PrisonerHealthServiceTest {
         )
 
         whenever(
-          prisonerHealthRepository.findAllByPrisonerNumberInAndFoodAllergiesIsNotEmptyOrMedicalDietaryRequirementsIsNotEmpty(
+          prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(
             mutableListOf(
               PRISONER_NUMBER,
             ),
@@ -437,7 +437,7 @@ class PrisonerHealthServiceTest {
       @Test
       fun `it doesnt crash with 0 prisoners`() {
         whenever(
-          prisonerHealthRepository.findAllByPrisonerNumberInAndFoodAllergiesIsNotEmptyOrMedicalDietaryRequirementsIsNotEmpty(
+          prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(
             mutableListOf(
               PRISONER_NUMBER,
             ),
