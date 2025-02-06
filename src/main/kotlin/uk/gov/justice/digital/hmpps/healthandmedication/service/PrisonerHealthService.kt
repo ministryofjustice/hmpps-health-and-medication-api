@@ -60,10 +60,7 @@ class PrisonerHealthService(
       val prisonerNumbers = prisoners.map { it.prisonerNumber }.toMutableList()
 
       // Fetch all non-empty health data for the given prisoner numbers
-      val healthData =
-        prisonerHealthRepository.findAllByPrisonerNumberInAndFoodAllergiesIsNotEmptyOrMedicalDietaryRequirementsIsNotEmpty(
-          prisonerNumbers,
-        )
+      val healthData = prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(prisonerNumbers)
 
       // This maintains the order from the prisoner search API so that we're able to have sorting
       val healthForPrison =
