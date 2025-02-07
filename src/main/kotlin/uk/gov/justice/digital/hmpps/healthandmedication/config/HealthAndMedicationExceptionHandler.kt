@@ -254,6 +254,8 @@ class HealthAndMedicationExceptionHandler {
 class HealthAndMedicationDataNotFoundException(prisonerNumber: String) : Exception("No data for '$prisonerNumber'")
 class ReferenceDataDomainNotFoundException(code: String) : Exception("No data for domain '$code'")
 class ReferenceDataCodeNotFoundException(code: String, domain: String) : Exception("No data for code '$code' in domain '$domain'")
+
 class GenericNotFoundException(message: String) : Exception(message)
 class IllegalFieldHistoryException(prisonerNumber: String) : Exception("Cannot update field history for prisoner: '$prisonerNumber'")
+
 class DownstreamServiceException(message: String, cause: Throwable) : Exception(message, cause)

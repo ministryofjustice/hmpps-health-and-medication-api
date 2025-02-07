@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.healthandmedication.dto.request
+package uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request
 
 import io.swagger.v3.oas.annotations.media.Schema
 

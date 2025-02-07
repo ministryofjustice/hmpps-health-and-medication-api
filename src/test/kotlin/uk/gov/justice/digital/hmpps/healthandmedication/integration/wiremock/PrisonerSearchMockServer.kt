@@ -11,16 +11,11 @@ import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
-import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.dto.PrisonerDto
-
-internal const val PRISONER_NUMBER = "A1234AA"
-internal const val PRISON_ID = "MDI"
-internal const val PRISONER_NUMBER_NOT_FOUND = "NOT_FOUND"
-internal const val PRISONER_NUMBER_THROW_EXCEPTION = "THROW"
+import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.response.PrisonerDto
 
 class PrisonerSearchServer : WireMockServer(WIREMOCK_PORT) {
   companion object {
-    private const val WIREMOCK_PORT = 8112
+    private const val WIREMOCK_PORT = 8092
   }
 
   private val mapper: ObjectMapper = jacksonObjectMapper().registerModule(JavaTimeModule())
@@ -36,21 +31,19 @@ class PrisonerSearchServer : WireMockServer(WIREMOCK_PORT) {
     )
   }
 
-  fun stubGetPrisoner(prisonNumber: String = PRISONER_NUMBER): StubMapping =
-    stubFor(
-      get("/prisoner/$prisonNumber")
-        .willReturn(
-          aResponse()
-            .withHeader("Content-Type", "application/json")
-            .withBody(
-              mapper.writeValueAsString(PrisonerDto(prisonerNumber = prisonNumber, prisonId = PRISON_ID)),
-            )
-            .withStatus(200),
-        ),
-    )
+  fun stubGetPrisoner(prisonNumber: String = PRISONER_NUMBER): StubMapping = stubFor(
+    get("/prisoner/$prisonNumber")
+      .willReturn(
+        aResponse()
+          .withHeader("Content-Type", "application/json")
+          .withBody(
+            mapper.writeValueAsString(PrisonerDto(prisonerNumber = prisonNumber, prisonId = PRISON_ID)),
+          )
+          .withStatus(200),
+      ),
+  )
 
-  fun stubGetPrisonerException(prisonNumber: String = PRISONER_NUMBER_THROW_EXCEPTION): StubMapping =
-    stubFor(get("/prisoner/$prisonNumber").willReturn(aResponse().withStatus(500)))
+  fun stubGetPrisonerException(prisonNumber: String = PRISONER_NUMBER_THROW_EXCEPTION): StubMapping = stubFor(get("/prisoner/$prisonNumber").willReturn(aResponse().withStatus(500)))
 }
 
 class PrisonerSearchExtension :

@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.dto
+package uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.response
 
 data class PrisonerDto(
   val prisonerNumber: String,

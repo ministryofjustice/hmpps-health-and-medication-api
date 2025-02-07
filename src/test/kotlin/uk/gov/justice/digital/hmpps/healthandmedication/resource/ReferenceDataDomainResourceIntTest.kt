@@ -40,7 +40,7 @@ class ReferenceDataDomainResourceIntTest : IntegrationTestBase() {
           .exchange()
           .expectStatus().isOk
           .expectBody()
-          .jsonPath("$.length()").isEqualTo(3)
+          .jsonPath("$.length()").isEqualTo(4)
           .jsonPath("$[?(@.code == 'FOOD_ALLERGY')].description").isEqualTo("Food allergy")
           .jsonPath("$[?(@.code == 'FOOD_ALLERGY')].listSequence").isEqualTo(0)
           .jsonPath("$[?(@.code == 'FOOD_ALLERGY')].isActive").isEqualTo(true)
@@ -75,6 +75,12 @@ class ReferenceDataDomainResourceIntTest : IntegrationTestBase() {
           .jsonPath("$[?(@.code == 'PERSONALISED_DIET')].createdAt").isEqualTo("2025-01-16T00:00:00+0000")
           .jsonPath("$[?(@.code == 'PERSONALISED_DIET')].createdBy").isEqualTo("CONNECT_DPS")
           .jsonPath("$[?(@.code == 'PERSONALISED_DIET')].referenceDataCodes.length()").isEqualTo(3)
+          .jsonPath("$[?(@.code == 'SMOKER')].description").isEqualTo("Smoker or vaper")
+          .jsonPath("$[?(@.code == 'SMOKER')].listSequence").isEqualTo(0)
+          .jsonPath("$[?(@.code == 'SMOKER')].isActive").isEqualTo(true)
+          .jsonPath("$[?(@.code == 'SMOKER')].createdAt").isEqualTo("2025-02-07T00:00:00+0000")
+          .jsonPath("$[?(@.code == 'SMOKER')].createdBy").isEqualTo("CONNECT_DPS")
+          .jsonPath("$[?(@.code == 'SMOKER')].referenceDataCodes.length()").isEqualTo(3)
       }
     }
 
@@ -85,7 +91,7 @@ class ReferenceDataDomainResourceIntTest : IntegrationTestBase() {
         .exchange()
         .expectStatus().isOk
         .expectBody()
-        .jsonPath("$.length()").isEqualTo(3)
+        .jsonPath("$.length()").isEqualTo(4)
         .jsonPath("$[?(@.code == 'FOOD_ALLERGY')].isActive").isEqualTo(true)
     }
   }

@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.healthandmedication.dto
+package uk.gov.justice.digital.hmpps.healthandmedication.resource.dto
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL

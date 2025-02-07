@@ -17,8 +17,9 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.healthandmedication.config.HealthAndMedicationDataNotFoundException
-import uk.gov.justice.digital.hmpps.healthandmedication.dto.request.UpdateDietAndAllergyRequest
-import uk.gov.justice.digital.hmpps.healthandmedication.dto.response.DietAndAllergyDto
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.UpdateDietAndAllergyRequest
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.UpdateSmokerStatusRequest
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.DietAndAllergyResponse
 import uk.gov.justice.digital.hmpps.healthandmedication.service.PrisonerHealthService
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
@@ -84,7 +85,7 @@ class HealthAndMedicationResource(private val prisonerHealthService: PrisonerHea
     description = "Requires role `ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RW`",
     responses = [
       ApiResponse(
-        responseCode = "201",
+        responseCode = "200",
         description = "Returns the updated diet and allergy data",
       ),
       ApiResponse(
@@ -126,5 +127,56 @@ class HealthAndMedicationResource(private val prisonerHealthService: PrisonerHea
     @RequestBody
     @Valid
     updateDietAndAllergyRequest: UpdateDietAndAllergyRequest,
-  ): DietAndAllergyDto = prisonerHealthService.updateDietAndAllergyData(prisonerNumber, updateDietAndAllergyRequest)
+  ): DietAndAllergyResponse = prisonerHealthService.updateDietAndAllergyData(prisonerNumber, updateDietAndAllergyRequest)
+
+  @PutMapping("/smoker")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @PreAuthorize("hasRole('ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RW')")
+  @Operation(
+    summary = "Updates the smoker status for a prisoner",
+    description = "Requires role `ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RW`",
+    responses = [
+      ApiResponse(
+        responseCode = "204",
+        description = "No content",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Bad request",
+        content = [
+          Content(
+            mediaType = "application/json",
+            schema = Schema(implementation = ErrorResponse::class),
+          ),
+        ],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [
+          Content(
+            mediaType = "application/json",
+            schema = Schema(implementation = ErrorResponse::class),
+          ),
+        ],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Missing required role. Requires ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RW",
+        content = [
+          Content(
+            mediaType = "application/json",
+            schema = Schema(implementation = ErrorResponse::class),
+          ),
+        ],
+      ),
+    ],
+  )
+  fun updateSmokerStatus(
+    @Schema(description = "The prisoner number", example = "A1234AA", required = true)
+    @PathVariable prisonerNumber: String,
+    @RequestBody(required = true) @Valid request: UpdateSmokerStatusRequest,
+  ) {
+    prisonerHealthService.updateSmokerStatus(prisonerNumber, request)
+  }
 }

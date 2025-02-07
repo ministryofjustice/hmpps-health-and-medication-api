@@ -11,14 +11,17 @@ import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicatio
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.wiremock.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.wiremock.HmppsAuthApiExtension.Companion.hmppsAuth
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.wiremock.PRISONER_NUMBER
+import uk.gov.justice.digital.hmpps.healthandmedication.integration.wiremock.PrisonApiExtension
+import uk.gov.justice.digital.hmpps.healthandmedication.integration.wiremock.PrisonApiExtension.Companion.prisonApi
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.wiremock.PrisonerSearchExtension
+import uk.gov.justice.digital.hmpps.healthandmedication.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.FieldMetadata
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.utils.HistoryComparison
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.utils.expectFieldHistory
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.utils.expectNoFieldHistoryFor
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 
-@ExtendWith(HmppsAuthApiExtension::class, PrisonerSearchExtension::class)
+@ExtendWith(HmppsAuthApiExtension::class, PrisonApiExtension::class, PrisonerSearchExtension::class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 abstract class IntegrationTestBase : TestBase() {
 
@@ -34,8 +37,7 @@ abstract class IntegrationTestBase : TestBase() {
     scopes: List<String> = listOf("read"),
   ): (HttpHeaders) -> Unit = jwtAuthHelper.setAuthorisationHeader(username = username, scope = scopes, roles = roles)
 
-  protected fun <T> expectFieldHistory(field: HealthAndMedicationField, vararg comparison: HistoryComparison<T>) =
-    expectFieldHistory(field, fieldHistoryRepository.findAllByPrisonerNumber(PRISONER_NUMBER), *comparison)
+  protected fun <T> expectFieldHistory(field: HealthAndMedicationField, vararg comparison: HistoryComparison<T>) = expectFieldHistory(field, fieldHistoryRepository.findAllByPrisonerNumber(PRISONER_NUMBER), *comparison)
 
   protected fun expectNoFieldHistoryFor(vararg field: HealthAndMedicationField) {
     val history = fieldHistoryRepository.findAllByPrisonerNumber(PRISONER_NUMBER)
@@ -46,10 +48,11 @@ abstract class IntegrationTestBase : TestBase() {
     assertThat(fieldMetadataRepository.findAllByPrisonerNumber(prisonerNumber)).containsExactlyInAnyOrder(*comparison)
   }
 
-  protected fun expectFieldMetadata(vararg comparison: FieldMetadata) =
-    expectFieldMetadata(PRISONER_NUMBER, *comparison)
+  protected fun expectFieldMetadata(vararg comparison: FieldMetadata) = expectFieldMetadata(PRISONER_NUMBER, *comparison)
 
   protected fun stubPingWithResponse(status: Int) {
     hmppsAuth.stubHealthPing(status)
+    prisonApi.stubHealthPing(status)
+    prisonerSearch.stubHealthPing(status)
   }
 }

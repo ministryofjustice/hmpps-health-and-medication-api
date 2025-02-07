@@ -8,7 +8,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
-import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.dto.PrisonerDto
+import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.response.PrisonerDto
 import uk.gov.justice.digital.hmpps.healthandmedication.config.DownstreamServiceException
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.wiremock.PRISONER_NUMBER
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.wiremock.PRISONER_NUMBER_NOT_FOUND
@@ -50,7 +50,7 @@ class PrisonerSearchClientTest {
       .isInstanceOf(DownstreamServiceException::class.java)
       .hasMessage("Get prisoner request failed")
       .hasCauseInstanceOf(WebClientResponseException::class.java)
-      .hasRootCauseMessage("500 Internal Server Error from GET http://localhost:8112/prisoner/${PRISONER_NUMBER_THROW_EXCEPTION}")
+      .hasRootCauseMessage("500 Internal Server Error from GET http://localhost:8092/prisoner/${PRISONER_NUMBER_THROW_EXCEPTION}")
   }
 
   companion object {

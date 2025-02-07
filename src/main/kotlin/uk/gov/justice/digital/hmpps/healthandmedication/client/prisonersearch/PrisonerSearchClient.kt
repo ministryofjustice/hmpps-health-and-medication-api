@@ -4,8 +4,8 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
-import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.dto.PrisonerDto
-import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.dto.PrisonerSearchResultDto
+import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.response.PrisonerDto
+import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.response.PrisonerSearchResultDto
 import uk.gov.justice.digital.hmpps.healthandmedication.config.DownstreamServiceException
 
 @Component
