@@ -512,6 +512,8 @@ class PrisonerHealthServiceTest {
         .thenReturn(ResponseEntity.noContent().build())
 
       underTest.updateSmokerStatus(PRISONER_NUMBER, UpdateSmokerStatusRequest(smokerStatus = SMOKER_CODE.id))
+
+      verify(prisonApiClient).updateSmokerStatus(PRISONER_NUMBER, PrisonApiSmokerStatusUpdate(Y))
     }
   }
 
