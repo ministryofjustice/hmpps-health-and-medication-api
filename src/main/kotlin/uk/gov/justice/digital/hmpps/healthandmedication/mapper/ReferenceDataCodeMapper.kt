@@ -1,8 +1,8 @@
 package uk.gov.justice.digital.hmpps.healthandmedication.mapper
 
-import uk.gov.justice.digital.hmpps.healthandmedication.dto.ReferenceDataCodeDto
-import uk.gov.justice.digital.hmpps.healthandmedication.dto.ReferenceDataSimpleDto
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.ReferenceDataCode
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.ReferenceDataCodeDto
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.ReferenceDataSimpleDto
 import java.time.ZonedDateTime
 
 fun ReferenceDataCode.toDto(): ReferenceDataCodeDto = ReferenceDataCodeDto(

@@ -10,15 +10,15 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import org.hibernate.Hibernate
 import org.hibernate.annotations.SortNatural
-import uk.gov.justice.digital.hmpps.healthandmedication.dto.response.DietAndAllergyDto
-import uk.gov.justice.digital.hmpps.healthandmedication.dto.response.HealthDto
-import uk.gov.justice.digital.hmpps.healthandmedication.dto.response.ReferenceDataSelection
-import uk.gov.justice.digital.hmpps.healthandmedication.dto.response.ValueWithMetadata
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField.FOOD_ALLERGY
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField.MEDICAL_DIET
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField.PERSONALISED_DIET
 import uk.gov.justice.digital.hmpps.healthandmedication.mapper.toSimpleDto
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.DietAndAllergyResponse
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.HealthAndMedicationResponse
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.ReferenceDataSelection
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.ValueWithMetadata
 import java.time.ZonedDateTime
 import java.util.SortedSet
 import kotlin.reflect.KMutableProperty0
@@ -56,9 +56,9 @@ class PrisonerHealth(
     PERSONALISED_DIET to ::personalisedDietaryRequirements,
   )
 
-  fun toHealthDto(): HealthDto = HealthDto(toDietAndAllergyDto())
+  fun toHealthDto(): HealthAndMedicationResponse = HealthAndMedicationResponse(toDietAndAllergyDto())
 
-  fun toDietAndAllergyDto(): DietAndAllergyDto = DietAndAllergyDto(
+  fun toDietAndAllergyDto(): DietAndAllergyResponse = DietAndAllergyResponse(
     foodAllergies = getReferenceDataListValueWithMetadata(
       foodAllergies,
       { allergies ->

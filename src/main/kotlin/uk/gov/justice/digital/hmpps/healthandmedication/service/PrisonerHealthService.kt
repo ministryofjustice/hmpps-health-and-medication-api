@@ -3,20 +3,24 @@ package uk.gov.justice.digital.hmpps.healthandmedication.service
 import jakarta.validation.ValidationException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.PrisonApiClient
+import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.request.PrisonApiSmokerStatus
+import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.request.PrisonApiSmokerStatusUpdate
 import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.PrisonerSearchClient
-import uk.gov.justice.digital.hmpps.healthandmedication.dto.request.UpdateDietAndAllergyRequest
-import uk.gov.justice.digital.hmpps.healthandmedication.dto.response.DietAndAllergyDto
-import uk.gov.justice.digital.hmpps.healthandmedication.dto.response.HealthDto
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.FoodAllergy
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.MedicalDietaryRequirement
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PersonalisedDietaryRequirement
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PrisonerHealth
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.PrisonerHealthRepository
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.ReferenceDataCodeRepository
-import uk.gov.justice.digital.hmpps.healthandmedication.resource.requests.HealthAndMedicationForPrisonRequest
-import uk.gov.justice.digital.hmpps.healthandmedication.resource.requests.PageMeta
-import uk.gov.justice.digital.hmpps.healthandmedication.resource.responses.HealthAndMedicationForPrisonDto
-import uk.gov.justice.digital.hmpps.healthandmedication.resource.responses.HealthAndMedicationForPrisonResponse
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.HealthAndMedicationForPrisonRequest
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.PageMeta
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.UpdateDietAndAllergyRequest
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.UpdateSmokerStatusRequest
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.DietAndAllergyResponse
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.HealthAndMedicationForPrisonDto
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.HealthAndMedicationForPrisonResponse
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.HealthAndMedicationResponse
 import uk.gov.justice.digital.hmpps.healthandmedication.utils.AuthenticationFacade
 import uk.gov.justice.digital.hmpps.healthandmedication.utils.Pagination
 import uk.gov.justice.digital.hmpps.healthandmedication.utils.toReferenceDataCode
@@ -29,13 +33,13 @@ import kotlin.jvm.optionals.getOrNull
 @Transactional(readOnly = true)
 class PrisonerHealthService(
   private val prisonerSearchClient: PrisonerSearchClient,
+  private val prisonApiClient: PrisonApiClient,
   private val prisonerHealthRepository: PrisonerHealthRepository,
   private val referenceDataCodeRepository: ReferenceDataCodeRepository,
   private val authenticationFacade: AuthenticationFacade,
   private val clock: Clock,
 ) {
-  fun getHealth(prisonerNumber: String): HealthDto? =
-    prisonerHealthRepository.findById(prisonerNumber).getOrNull()?.toHealthDto()
+  fun getHealth(prisonerNumber: String): HealthAndMedicationResponse? = prisonerHealthRepository.findById(prisonerNumber).getOrNull()?.toHealthDto()
 
   fun getHealthForPrison(
     prisonId: String,
@@ -101,7 +105,7 @@ class PrisonerHealthService(
   fun updateDietAndAllergyData(
     prisonerNumber: String,
     request: UpdateDietAndAllergyRequest,
-  ): DietAndAllergyDto {
+  ): DietAndAllergyResponse {
     val now = ZonedDateTime.now(clock)
     val health = prisonerHealthRepository.findById(prisonerNumber).orElseGet {
       newHealthFor(prisonerNumber)
@@ -138,6 +142,19 @@ class PrisonerHealthService(
     }.also { it.updateFieldHistory(now, authenticationFacade.getUserOrSystemInContext()) }
 
     return prisonerHealthRepository.save(health).toDietAndAllergyDto()
+  }
+
+  fun UpdateSmokerStatusRequest.convertToPrisonApiRequest(): PrisonApiSmokerStatusUpdate = PrisonApiSmokerStatusUpdate(
+    when (this.smokerStatus) {
+      "SMOKER_YES" -> PrisonApiSmokerStatus.Y
+      "SMOKER_VAPER" -> PrisonApiSmokerStatus.V
+      "SMOKER_NO" -> PrisonApiSmokerStatus.N
+      else -> throw IllegalArgumentException("Invalid smoker status: $this")
+    },
+  )
+
+  fun updateSmokerStatus(prisonerNumber: String, request: UpdateSmokerStatusRequest) {
+    prisonApiClient.updateSmokerStatus(prisonerNumber, request.convertToPrisonApiRequest())
   }
 
   private fun newHealthFor(prisonerNumber: String): PrisonerHealth {

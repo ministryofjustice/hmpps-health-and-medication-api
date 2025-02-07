@@ -4,7 +4,6 @@ CREATE TABLE medical_dietary_requirement
     prisoner_number     VARCHAR(7)  NOT NULL,
     dietary_requirement VARCHAR(81) NOT NULL,
     comment_text        VARCHAR(255),
-
     CONSTRAINT medical_dietary_requirement_pk PRIMARY KEY (id),
     CONSTRAINT dietary_requirement_fk FOREIGN KEY (dietary_requirement) REFERENCES reference_data_code (id)
 );

@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import uk.gov.justice.digital.hmpps.healthandmedication.dto.ReferenceDataCodeDto
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.ReferenceDataCodeDto
 import uk.gov.justice.digital.hmpps.healthandmedication.service.ReferenceDataCodeService
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 

@@ -7,7 +7,7 @@ import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.PrisonerSearchClient
-import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.dto.PrisonerDto
+import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.response.PrisonerDto
 
 @ExtendWith(MockitoExtension::class)
 class PrisonerNumberUtilsTest {

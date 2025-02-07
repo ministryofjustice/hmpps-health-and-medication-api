@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.healthandmedication.resource.requests
+package uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request
 
 import io.swagger.v3.oas.annotations.Parameter
 import jakarta.validation.constraints.Min

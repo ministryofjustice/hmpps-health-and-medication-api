@@ -1,9 +1,9 @@
-package uk.gov.justice.digital.hmpps.healthandmedication.dto.response
+package uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response
 
 import io.swagger.v3.oas.annotations.media.Schema
 
 @Schema(description = "Diet and allergy data")
-data class DietAndAllergyDto(
+data class DietAndAllergyResponse(
   @Schema(description = "Food allergies")
   val foodAllergies: ValueWithMetadata<List<ReferenceDataSelection>>? = null,
 

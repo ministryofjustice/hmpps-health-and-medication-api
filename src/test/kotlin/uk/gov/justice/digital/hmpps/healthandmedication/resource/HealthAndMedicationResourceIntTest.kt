@@ -43,7 +43,9 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
       fun `access forbidden when no authority`() {
         webTestClient.put().uri("/prisoners/${PRISONER_NUMBER}/diet-and-allergy")
           .header("Content-Type", "application/json")
-          .bodyValue(VALID_REQUEST_BODY).exchange().expectStatus().isUnauthorized
+          .bodyValue(VALID_DIET_AND_FOOD_ALLERGY_REQUEST)
+          .exchange()
+          .expectStatus().isUnauthorized
       }
 
       @Test
@@ -51,15 +53,18 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
         webTestClient.put().uri("/prisoners/${PRISONER_NUMBER}/diet-and-allergy")
           .headers(setAuthorisation(roles = listOf()))
           .header("Content-Type", "application/json")
-          .bodyValue(VALID_REQUEST_BODY).exchange()
+          .bodyValue(VALID_DIET_AND_FOOD_ALLERGY_REQUEST)
+          .exchange()
           .expectStatus().isForbidden
       }
 
       @Test
       fun `access forbidden with wrong role`() {
         webTestClient.put().uri("/prisoners/${PRISONER_NUMBER}/diet-and-allergy")
-          .headers(setAuthorisation(roles = listOf("ROLE_IS_WRONG"))).header("Content-Type", "application/json")
-          .bodyValue(VALID_REQUEST_BODY).exchange()
+          .headers(setAuthorisation(roles = listOf("ROLE_IS_WRONG")))
+          .header("Content-Type", "application/json")
+          .bodyValue(VALID_DIET_AND_FOOD_ALLERGY_REQUEST)
+          .exchange()
           .expectStatus().isForbidden
       }
     }
@@ -81,7 +86,7 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
       fun `bad request when prisoner not found`() {
         expectBadRequestFrom(
           prisonerNumber = "PRISONER_NOT_FOUND",
-          requestBody = VALID_REQUEST_BODY,
+          requestBody = VALID_DIET_AND_FOOD_ALLERGY_REQUEST,
           message = "Validation failure: Prisoner number 'PRISONER_NOT_FOUND' not found",
         )
       }
@@ -155,6 +160,15 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
           .expectStatus().isBadRequest
           .expectBody().jsonPath("userMessage").isEqualTo(message)
       }
+
+      private fun expectNotFoundFrom(prisonerNumber: String, requestBody: String, message: String) {
+        webTestClient.put().uri("/prisoners/$prisonerNumber/diet-and-allergy")
+          .headers(setAuthorisation(roles = listOf("ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RW")))
+          .header("Content-Type", "application/json")
+          .bodyValue(requestBody)
+          .exchange()
+          .expectStatus().isNotFound
+      }
     }
 
     @Nested
@@ -163,7 +177,7 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
       @Test
       @Sql("classpath:jpa/repository/reset.sql")
       fun `can create new diet and allergy data`() {
-        expectSuccessfulUpdateFrom(VALID_REQUEST_BODY).expectBody().json(
+        expectSuccessfulUpdateFrom(VALID_DIET_AND_FOOD_ALLERGY_REQUEST).expectBody().json(
           DIET_AND_ALLERGY_UPDATED_RESPONSE,
           STRICT,
         )
@@ -238,7 +252,7 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
           ),
         )
 
-        expectSuccessfulUpdateFrom(VALID_REQUEST_BODY).expectBody().json(
+        expectSuccessfulUpdateFrom(VALID_DIET_AND_FOOD_ALLERGY_REQUEST).expectBody().json(
           DIET_AND_ALLERGY_UPDATED_RESPONSE,
           STRICT,
         )
@@ -343,13 +357,107 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
     }
   }
 
+  @DisplayName("PUT /prisoners/{prisonerNumber}/smoker")
+  @Nested
+  inner class UpdateSmokerStatusTest {
+
+    @Nested
+    inner class Security {
+
+      @Test
+      fun `access forbidden when no authority`() {
+        webTestClient.put().uri("/prisoners/${PRISONER_NUMBER}/smoker")
+          .header("Content-Type", "application/json")
+          .bodyValue(VALID_SMOKER_STATUS_REQUEST)
+          .exchange()
+          .expectStatus().isUnauthorized
+      }
+
+      @Test
+      fun `access forbidden when no role`() {
+        webTestClient.put().uri("/prisoners/${PRISONER_NUMBER}/smoker")
+          .headers(setAuthorisation(roles = listOf()))
+          .header("Content-Type", "application/json")
+          .bodyValue(VALID_SMOKER_STATUS_REQUEST)
+          .exchange()
+          .expectStatus().isForbidden
+      }
+
+      @Test
+      fun `access forbidden with wrong role`() {
+        webTestClient.put().uri("/prisoners/${PRISONER_NUMBER}/smoker")
+          .headers(setAuthorisation(roles = listOf("ROLE_IS_WRONG")))
+          .header("Content-Type", "application/json")
+          .bodyValue(VALID_SMOKER_STATUS_REQUEST)
+          .exchange()
+          .expectStatus().isForbidden
+      }
+    }
+
+    @Nested
+    @Sql("classpath:jpa/repository/reset.sql")
+    inner class Validation {
+
+      @Test
+      fun `bad request when field type is not as expected`() {
+        expectBadRequestFrom(
+          prisonerNumber = PRISONER_NUMBER,
+          requestBody = """{ "smokerStatus": [] }""",
+          message = "Validation failure: Couldn't read request body",
+        )
+      }
+
+      @Test
+      fun `bad request when incorrect domain for smoker status`() {
+        expectBadRequestFrom(
+          PRISONER_NUMBER,
+          // language=json
+          requestBody = """
+          { 
+            "smokerStatus": "MEDICAL_DIET_COELIAC"
+          }
+          """.trimMargin(),
+          message = "Validation failure(s): The supplied code must either be null or match a valid reference data code of the correct domain.",
+        )
+      }
+
+      private fun expectBadRequestFrom(prisonerNumber: String, requestBody: String, message: String) {
+        webTestClient.put().uri("/prisoners/$prisonerNumber/smoker")
+          .headers(setAuthorisation(roles = listOf("ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RW")))
+          .header("Content-Type", "application/json")
+          .bodyValue(requestBody)
+          .exchange()
+          .expectStatus().isBadRequest
+          .expectBody().jsonPath("userMessage").isEqualTo(message)
+      }
+    }
+
+    @Nested
+    inner class HappyPath {
+      @Test
+      fun `can update smoker status`() {
+        webTestClient.put().uri("/prisoners/${PRISONER_NUMBER}/smoker")
+          .headers(
+            setAuthorisation(
+              USER1,
+              roles = listOf("ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RW"),
+            ),
+          )
+          .header("Content-Type", "application/json")
+          .bodyValue(VALID_SMOKER_STATUS_REQUEST)
+          .exchange()
+          .expectStatus().isNoContent
+      }
+    }
+  }
+
   private companion object {
     const val PRISONER_NUMBER = "A1234AA"
     const val USER1 = "USER1"
     val NOW = ZonedDateTime.now(clock)
     val THEN = ZonedDateTime.of(2024, 1, 2, 9, 10, 11, 123000000, ZoneId.of("Europe/London"))
 
-    val VALID_REQUEST_BODY =
+    val VALID_DIET_AND_FOOD_ALLERGY_REQUEST =
       // language=json
       """
         { 
@@ -399,6 +507,14 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
           "lastModifiedBy": "USER1"
         } 
       }
+      """.trimIndent()
+
+    val VALID_SMOKER_STATUS_REQUEST =
+      // language=json
+      """
+        { 
+          "smokerStatus": "SMOKER_YES"
+        }
       """.trimIndent()
   }
 }

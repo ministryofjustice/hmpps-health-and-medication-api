@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.healthandmedication.mapper
 
-import uk.gov.justice.digital.hmpps.healthandmedication.dto.ReferenceDataDomainDto
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.ReferenceDataDomain
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.ReferenceDataDomainDto
 import java.time.ZonedDateTime
 
 fun ReferenceDataDomain.toDto(): ReferenceDataDomainDto = ReferenceDataDomainDto(
