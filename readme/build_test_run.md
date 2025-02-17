@@ -23,10 +23,14 @@ docker build -t quay.io/hmpps/hmpps-health-and-medication-api:latest .
 
 ## Running Locally
 
-First, start the database and other required services via docker-compose with:
+The API currently depends on HMPPS Auth, Prisoner Search and Prison API.
+When using the DEV profile the API points to the dependant services deployed in the
+development environment.
+
+The API also requires a PostgreSQL database which can be started via docker compose with:
 
 ```shell
-docker compose -f docker-compose-local.yml up
+docker compose up health-and-medication-data-db
 ```
 
 The service can then be run in the following ways:
@@ -41,9 +45,6 @@ Run the main class with the following VM options:
 ```
 -Dspring.profiles.active=dev
 ```
-
-In both of the above sections, `dev` can be replaced with `dev-postgres` to run against the postgres docker container
-instead of h2.
 
 ### Running with docker-compose
 ```
