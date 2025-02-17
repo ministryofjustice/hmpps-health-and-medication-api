@@ -20,6 +20,11 @@ spring:
   jpa:
     show-sql: true
 
+  flyway:
+    placeholders:
+      dpr_user: dpr_user
+      dpr_password: dpr_password
+
 database:
   username: health-and-medication-data
   password: health-and-medication-data
