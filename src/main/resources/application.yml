@@ -48,6 +48,9 @@ spring:
     user: ${database.username}
     password: ${database.password}
     locations: classpath:/db/migration/common
+    placeholders:
+      dpr_user: ${DPR_USER}
+      dpr_password: ${DPR_PASSWORD}
 
   datasource:
     url: 'jdbc:postgresql://${database.endpoint}/${database.name}?sslmode=verify-full'

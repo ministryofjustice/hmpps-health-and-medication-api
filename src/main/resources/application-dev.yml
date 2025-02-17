@@ -1,9 +1,6 @@
 server:
   shutdown: immediate
 
-hmpps-auth:
-  url: "http://localhost:8090/auth"
-
 spring:
   devtools:
     add-properties: true
@@ -14,6 +11,19 @@ spring:
   jpa:
     show-sql: true
 
+  flyway:
+    placeholders:
+      dpr_user: dpr_user
+      dpr_password: dpr_password
+
 database:
   username: health-and-medication-data
   password: health-and-medication-data
+
+api:
+  hmpps-auth:
+    base-url: "https://sign-in-dev.hmpps.service.justice.gov.uk/auth"
+  prisoner-search:
+    base-url: "https://prisoner-search-dev.prison.service.justice.gov.uk"
+  prison-api:
+    base-url: "https://prison-api-dev.prison.service.justice.gov.uk"
