@@ -43,7 +43,7 @@ import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.Reference
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.utils.HistoryComparison
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.utils.expectFieldHistory
 import uk.gov.justice.digital.hmpps.healthandmedication.mapper.toSimpleDto
-import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.ReferenceDataSimpleDto
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.ReferenceDataValue
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.HealthAndMedicationForPrisonRequest
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.PageMeta
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.ReferenceDataIdSelection
@@ -151,11 +151,10 @@ class PrisonerHealthServiceTest {
             foodAllergies = ValueWithMetadata(
               listOf(
                 ReferenceDataSelection(
-                  ReferenceDataSimpleDto(
+                  ReferenceDataValue(
                     id = FOOD_ALLERGY_CODE.id,
+                    code = FOOD_ALLERGY_CODE.code,
                     description = FOOD_ALLERGY_CODE.description,
-                    listSequence = FOOD_ALLERGY_CODE.listSequence,
-                    isActive = true,
                   ),
                 ),
               ),
@@ -165,11 +164,10 @@ class PrisonerHealthServiceTest {
             medicalDietaryRequirements = ValueWithMetadata(
               listOf(
                 ReferenceDataSelection(
-                  ReferenceDataSimpleDto(
+                  ReferenceDataValue(
                     id = MEDICAL_DIET_CODE.id,
+                    code = MEDICAL_DIET_CODE.code,
                     description = MEDICAL_DIET_CODE.description,
-                    listSequence = MEDICAL_DIET_CODE.listSequence,
-                    isActive = true,
                   ),
                 ),
               ),
@@ -179,11 +177,10 @@ class PrisonerHealthServiceTest {
             personalisedDietaryRequirements = ValueWithMetadata(
               listOf(
                 ReferenceDataSelection(
-                  ReferenceDataSimpleDto(
+                  ReferenceDataValue(
                     id = PERSONALISED_DIET_CODE.id,
+                    code = PERSONALISED_DIET_CODE.code,
                     description = PERSONALISED_DIET_CODE.description,
-                    listSequence = PERSONALISED_DIET_CODE.listSequence,
-                    isActive = true,
                   ),
                 ),
               ),
