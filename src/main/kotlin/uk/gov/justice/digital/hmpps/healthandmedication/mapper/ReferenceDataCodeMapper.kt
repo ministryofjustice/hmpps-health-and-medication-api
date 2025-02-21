@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.healthandmedication.mapper
 
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.ReferenceDataCode
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.ReferenceDataCodeDto
-import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.ReferenceDataSimpleDto
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.ReferenceDataValue
 import java.time.ZonedDateTime
 
 fun ReferenceDataCode.toDto(): ReferenceDataCodeDto = ReferenceDataCodeDto(
@@ -20,11 +20,10 @@ fun ReferenceDataCode.toDto(): ReferenceDataCodeDto = ReferenceDataCodeDto(
   deactivatedBy,
 )
 
-fun ReferenceDataCode.toSimpleDto(): ReferenceDataSimpleDto = ReferenceDataSimpleDto(
+fun ReferenceDataCode.toSimpleDto(): ReferenceDataValue = ReferenceDataValue(
   id,
+  code,
   description,
-  listSequence,
-  isActive(),
 )
 
 fun ReferenceDataCode.isActive() = deactivatedAt?.isBefore(ZonedDateTime.now()) != true

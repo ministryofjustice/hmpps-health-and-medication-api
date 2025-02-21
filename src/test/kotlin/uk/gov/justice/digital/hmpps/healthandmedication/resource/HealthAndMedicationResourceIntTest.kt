@@ -476,9 +476,8 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
             {
               "value": {
                 "id": "FOOD_ALLERGY_MILK",
-                "description": "Milk",
-                "listSequence": 6,
-                "isActive": true
+                "code": "MILK",
+                "description": "Milk"
               },
               "comment" : null
             }
@@ -491,9 +490,8 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
             {
               "value": {
                 "id": "MEDICAL_DIET_OTHER",
-                "description": "Other",
-                "listSequence": 9,
-                "isActive": true
+                "code": "OTHER",
+                "description": "Other"
               },
               "comment" : "Some other diet" 
             } 
