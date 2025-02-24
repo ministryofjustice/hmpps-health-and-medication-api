@@ -24,7 +24,6 @@ spring:
     placeholders:
       dpr_user: dpr_user
       dpr_password: dpr_password
-      rds_default_credentials: rds_default_credentials
     locations: classpath:/db/migration/common,classpath:/db/migration/test
 
 database:
