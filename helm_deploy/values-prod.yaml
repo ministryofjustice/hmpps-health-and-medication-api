@@ -12,6 +12,7 @@ generic-service:
 
   postgresDatabaseRestore:
     enabled: true
+    tag: "sha-a08734f"
     namespace_secrets:
       rds-postgresql-instance-output:
         DB_NAME: "database_name"
