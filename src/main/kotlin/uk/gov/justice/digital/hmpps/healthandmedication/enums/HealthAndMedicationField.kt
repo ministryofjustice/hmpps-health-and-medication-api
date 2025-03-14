@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.healthandmedication.enums
 
+import uk.gov.justice.digital.hmpps.healthandmedication.jpa.CateringInstructions
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.FoodAllergy
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.FoodAllergyHistory
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.JsonObject
@@ -62,6 +63,18 @@ enum class HealthAndMedicationField(
     },
     { old, new -> old.valueJson?.value != PersonalisedDietaryRequirementHistory(new as MutableSet<PersonalisedDietaryRequirement>) },
     "PERSONALISED_DIET",
+  ),
+
+  CATERING_INSTRUCTIONS(
+    getString,
+    { values, value ->
+      run {
+        value as CateringInstructions
+        values.valueString = value.instructions
+      }
+    },
+    hasChangedString,
+    "CATERING_INSTRUCTIONS",
   ),
 }
 

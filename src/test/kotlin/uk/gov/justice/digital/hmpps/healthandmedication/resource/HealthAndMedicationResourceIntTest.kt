@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Primary
 import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.json.JsonCompareMode.STRICT
 import org.springframework.test.web.reactive.server.WebTestClient
+import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField.CATERING_INSTRUCTIONS
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField.FOOD_ALLERGY
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField.MEDICAL_DIET
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField.PERSONALISED_DIET
@@ -216,6 +217,14 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
             createdBy = USER1,
           ),
         )
+        expectFieldHistory(
+          CATERING_INSTRUCTIONS,
+          HistoryComparison(
+            value = "Some catering instructions.",
+            createdAt = NOW,
+            createdBy = USER1,
+          ),
+        )
       }
 
       @Test
@@ -313,13 +322,14 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
       @Sql("classpath:resource/healthandmedication/food_allergies.sql")
       @Sql("classpath:resource/healthandmedication/medical_dietary_requirements.sql")
       @Sql("classpath:resource/healthandmedication/personalised_dietary_requirements.sql")
+      @Sql("classpath:resource/healthandmedication/catering_instructions.sql")
       @Sql("classpath:resource/healthandmedication/field_metadata.sql")
       @Sql("classpath:resource/healthandmedication/field_history.sql")
-      fun `can update existing diet and allergy data to empty lists`() {
+      fun `can update existing diet and allergy data to empty lists and null values`() {
         expectSuccessfulUpdateFrom(
           // language=json
           """
-            { "foodAllergies": [], "medicalDietaryRequirements": [], "personalisedDietaryRequirements": [] }
+            { "foodAllergies": [], "medicalDietaryRequirements": [], "personalisedDietaryRequirements": [], "cateringInstructions": null }
           """.trimIndent(),
         ).expectBody().json(
           // language=json
@@ -337,6 +347,11 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
               },
               "personalisedDietaryRequirements": {
                 "value": [], 
+                "lastModifiedAt":"2024-06-14T09:10:11+0100",
+                "lastModifiedBy":"USER1"
+              },
+              "cateringInstructions": {
+                "value": null, 
                 "lastModifiedAt":"2024-06-14T09:10:11+0100",
                 "lastModifiedBy":"USER1"
               }
@@ -463,7 +478,8 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
         { 
           "foodAllergies": [{ "value": "FOOD_ALLERGY_MILK" }],
           "medicalDietaryRequirements": [{ "value": "MEDICAL_DIET_OTHER", "comment": "Some other diet" }],
-          "personalisedDietaryRequirements": []
+          "personalisedDietaryRequirements": [],
+          "cateringInstructions": "Some catering instructions."
         }
       """.trimIndent()
 
@@ -503,7 +519,12 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
           "value": [],
           "lastModifiedAt": "2024-06-14T09:10:11+0100",
           "lastModifiedBy": "USER1"
-        } 
+        },
+        "cateringInstructions": {
+          "value": "Some catering instructions.",
+          "lastModifiedAt": "2024-06-14T09:10:11+0100",
+          "lastModifiedBy": "USER1"
+        }
       }
       """.trimIndent()
 

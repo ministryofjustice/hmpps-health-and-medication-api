@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.re
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField.FOOD_ALLERGY
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField.MEDICAL_DIET
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField.PERSONALISED_DIET
+import uk.gov.justice.digital.hmpps.healthandmedication.jpa.CateringInstructions
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.FieldMetadata
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.FoodAllergy
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.FoodAllergyHistory
@@ -230,6 +231,11 @@ class PrisonerHealthServiceTest {
             NOW,
             USER1,
           ),
+          cateringInstructions = ValueWithMetadata(
+            "Some catering instructions.",
+            NOW,
+            USER1,
+          ),
         ),
       )
 
@@ -292,6 +298,7 @@ class PrisonerHealthServiceTest {
             foodAllergies = mutableSetOf(FOOD_ALLERGY_DBO),
             medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_DBO),
             personalisedDietaryRequirements = mutableSetOf(PERSONALISED_DIET_DBO),
+            cateringInstructions = CateringInstructions(PRISONER_NUMBER, "outdated instructions"),
           ).also { it.updateFieldHistory(lastModifiedAt = NOW.minusDays(1), lastModifiedBy = USER2) },
         ),
       )
@@ -301,6 +308,7 @@ class PrisonerHealthServiceTest {
           foodAllergies = ValueWithMetadata(emptyList(), NOW, USER1),
           medicalDietaryRequirements = ValueWithMetadata(emptyList(), NOW, USER1),
           personalisedDietaryRequirements = ValueWithMetadata(emptyList(), NOW, USER1),
+          cateringInstructions = ValueWithMetadata(null, NOW, USER1),
         ),
       )
 
@@ -615,12 +623,14 @@ class PrisonerHealthServiceTest {
         foodAllergies = listOf(ReferenceDataIdSelection(FOOD_ALLERGY_CODE.id)),
         medicalDietaryRequirements = listOf(ReferenceDataIdSelection(MEDICAL_DIET_CODE.id)),
         personalisedDietaryRequirements = listOf(ReferenceDataIdSelection(PERSONALISED_DIET_CODE.id)),
+        cateringInstructions = "Some catering instructions.",
       )
 
     val EMPTY_DIET_AND_ALLERGY_UPDATE_REQUEST = UpdateDietAndAllergyRequest(
       foodAllergies = emptyList(),
       medicalDietaryRequirements = emptyList(),
       personalisedDietaryRequirements = emptyList(),
+      cateringInstructions = null,
     )
 
     val PRISONER_HEALTH = PrisonerHealth(
