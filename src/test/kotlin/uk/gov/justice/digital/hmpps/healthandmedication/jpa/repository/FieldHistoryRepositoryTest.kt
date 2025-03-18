@@ -22,6 +22,7 @@ class FieldHistoryRepositoryTest : RepositoryTest() {
       valueRef = REF_DATA_CODE,
       createdAt = NOW,
       createdBy = USER1,
+      prisonId = PRISON_ID,
     )
 
     val id = fieldHistoryRepository.save(fieldHistory).fieldHistoryId
@@ -50,6 +51,7 @@ class FieldHistoryRepositoryTest : RepositoryTest() {
       valueRef = REF_DATA_CODE,
       createdAt = NOW,
       createdBy = USER1,
+      prisonId = PRISON_ID,
     )
 
     assertThrows(DataIntegrityViolationException::class.java) {
@@ -69,6 +71,7 @@ class FieldHistoryRepositoryTest : RepositoryTest() {
       valueRef = INVALID_REF_DATA_CODE,
       createdAt = NOW,
       createdBy = USER1,
+      prisonId = PRISON_ID,
     )
 
     assertThrows(InvalidDataAccessApiUsageException::class.java) {
@@ -89,6 +92,7 @@ class FieldHistoryRepositoryTest : RepositoryTest() {
         valueRef = REF_DATA_CODE,
         createdAt = NOW,
         createdBy = USER1,
+        prisonId = PRISON_ID,
       ),
     ).isEqualTo(
       FieldHistory(
@@ -97,6 +101,7 @@ class FieldHistoryRepositoryTest : RepositoryTest() {
         valueRef = REF_DATA_CODE,
         createdAt = NOW,
         createdBy = USER1,
+        prisonId = PRISON_ID,
       ),
     )
   }
@@ -110,6 +115,7 @@ class FieldHistoryRepositoryTest : RepositoryTest() {
         valueRef = REF_DATA_CODE,
         createdAt = NOW,
         createdBy = USER1,
+        prisonId = PRISON_ID,
       ).toString(),
     ).isInstanceOf(String::class.java)
   }
@@ -117,6 +123,7 @@ class FieldHistoryRepositoryTest : RepositoryTest() {
   private companion object {
     const val PRISONER_NUMBER = "A1234AA"
     const val USER1 = "USER1"
+    const val PRISON_ID = "STI"
 
     val REF_DATA_DOMAIN = ReferenceDataDomain("FOOD_ALLERGY", "Food allergy", 0, ZonedDateTime.now(), "OMS_OWNER")
     val REF_DATA_CODE = ReferenceDataCode(

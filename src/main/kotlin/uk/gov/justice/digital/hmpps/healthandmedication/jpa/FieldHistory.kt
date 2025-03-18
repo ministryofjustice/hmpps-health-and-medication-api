@@ -38,6 +38,7 @@ class FieldHistory(
   @JoinColumn(name = "valueRef", referencedColumnName = "id")
   override var valueRef: ReferenceDataCode? = null,
 
+  override var prisonId: String,
   override val createdAt: ZonedDateTime = ZonedDateTime.now(),
   override val createdBy: String,
   override var mergedAt: ZonedDateTime? = null,
@@ -51,6 +52,7 @@ class FieldHistory(
     field = field,
     lastModifiedAt = createdAt,
     lastModifiedBy = createdBy,
+    lastModifiedPrisonId = prisonId,
   )
 
   override fun equals(other: Any?): Boolean {
@@ -65,6 +67,7 @@ class FieldHistory(
     if (valueString != other.valueString) return false
     if (valueRef != other.valueRef) return false
     if (valueJson != other.valueJson) return false
+    if (prisonId != other.prisonId) return false
     if (createdAt != other.createdAt) return false
     if (createdBy != other.createdBy) return false
     if (mergedAt != other.mergedAt) return false
@@ -80,6 +83,7 @@ class FieldHistory(
     result = 31 * result + (valueString?.hashCode() ?: 0)
     result = 31 * result + (valueRef?.hashCode() ?: 0)
     result = 31 * result + (valueJson?.hashCode() ?: 0)
+    result = 31 * result + (prisonId.hashCode())
     result = 31 * result + createdAt.hashCode()
     result = 31 * result + createdBy.hashCode()
     result = 31 * result + (mergedAt?.hashCode() ?: 0)
@@ -95,6 +99,7 @@ class FieldHistory(
     "valueString=$valueString, " +
     "valueRef=$valueRef, " +
     "valueJson=$valueJson, " +
+    "prisonId='$prisonId', " +
     "createdAt=$createdAt, " +
     "createdBy='$createdBy', " +
     "mergedAt=$mergedAt, " +

@@ -161,15 +161,6 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
           .expectStatus().isBadRequest
           .expectBody().jsonPath("userMessage").isEqualTo(message)
       }
-
-      private fun expectNotFoundFrom(prisonerNumber: String, requestBody: String, message: String) {
-        webTestClient.put().uri("/prisoners/$prisonerNumber/diet-and-allergy")
-          .headers(setAuthorisation(roles = listOf("ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RW")))
-          .header("Content-Type", "application/json")
-          .bodyValue(requestBody)
-          .exchange()
-          .expectStatus().isNotFound
-      }
     }
 
     @Nested
@@ -338,22 +329,26 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
               "foodAllergies": {
                 "value": [], 
                 "lastModifiedAt":"2024-06-14T09:10:11+0100",
-                "lastModifiedBy":"USER1"
+                "lastModifiedBy":"USER1",
+                "lastModifiedPrisonId": "MDI"
               },
               "medicalDietaryRequirements": {
                 "value": [], 
                 "lastModifiedAt":"2024-06-14T09:10:11+0100",
-                "lastModifiedBy":"USER1"
+                "lastModifiedBy":"USER1",
+                "lastModifiedPrisonId": "MDI"
               },
               "personalisedDietaryRequirements": {
                 "value": [], 
                 "lastModifiedAt":"2024-06-14T09:10:11+0100",
-                "lastModifiedBy":"USER1"
+                "lastModifiedBy":"USER1",
+                "lastModifiedPrisonId": "MDI"
               },
               "cateringInstructions": {
                 "value": null, 
                 "lastModifiedAt":"2024-06-14T09:10:11+0100",
-                "lastModifiedBy":"USER1"
+                "lastModifiedBy":"USER1",
+                "lastModifiedPrisonId": "MDI"
               }
             }
           """.trimIndent(),
@@ -499,7 +494,8 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
             }
           ],
           "lastModifiedAt": "2024-06-14T09:10:11+0100",
-          "lastModifiedBy": "USER1"
+          "lastModifiedBy": "USER1",
+          "lastModifiedPrisonId": "MDI"
         },
         "medicalDietaryRequirements": {
           "value": [
@@ -513,17 +509,20 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
             } 
           ],
           "lastModifiedAt": "2024-06-14T09:10:11+0100",
-          "lastModifiedBy": "USER1"
+          "lastModifiedBy": "USER1",
+          "lastModifiedPrisonId": "MDI"
         },
         "personalisedDietaryRequirements": {
           "value": [],
           "lastModifiedAt": "2024-06-14T09:10:11+0100",
-          "lastModifiedBy": "USER1"
+          "lastModifiedBy": "USER1",
+          "lastModifiedPrisonId": "MDI"
         },
         "cateringInstructions": {
           "value": "Some catering instructions.",
           "lastModifiedAt": "2024-06-14T09:10:11+0100",
-          "lastModifiedBy": "USER1"
+          "lastModifiedBy": "USER1",
+          "lastModifiedPrisonId": "MDI"
         }
       }
       """.trimIndent()

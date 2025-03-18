@@ -17,6 +17,7 @@ class FieldMetadataTest : RepositoryTest() {
         FOOD_ALLERGY,
         lastModifiedAt = NOW,
         lastModifiedBy = USER1,
+        lastModifiedPrisonId = PRISON_ID,
       ),
     )
 
@@ -40,6 +41,7 @@ class FieldMetadataTest : RepositoryTest() {
         FOOD_ALLERGY,
         lastModifiedAt = NOW,
         lastModifiedBy = USER1,
+        lastModifiedPrisonId = PRISON_ID,
       ),
     )
 
@@ -67,22 +69,22 @@ class FieldMetadataTest : RepositoryTest() {
   @Test
   fun `can check for equality`() {
     assertThat(
-      FieldMetadata(PRISONER_NUMBER, FOOD_ALLERGY, lastModifiedAt = NOW, lastModifiedBy = USER1),
+      FieldMetadata(PRISONER_NUMBER, FOOD_ALLERGY, lastModifiedAt = NOW, lastModifiedBy = USER1, lastModifiedPrisonId = PRISON_ID),
     ).isEqualTo(
-      FieldMetadata(PRISONER_NUMBER, FOOD_ALLERGY, lastModifiedAt = NOW, lastModifiedBy = USER1),
+      FieldMetadata(PRISONER_NUMBER, FOOD_ALLERGY, lastModifiedAt = NOW, lastModifiedBy = USER1, lastModifiedPrisonId = PRISON_ID),
     )
 
     assertThat(
-      FieldMetadata(PRISONER_NUMBER, FOOD_ALLERGY, lastModifiedAt = NOW, lastModifiedBy = USER1),
+      FieldMetadata(PRISONER_NUMBER, FOOD_ALLERGY, lastModifiedAt = NOW, lastModifiedBy = USER1, lastModifiedPrisonId = PRISON_ID),
     ).isNotEqualTo(
-      FieldMetadata("Z1234ZZ", FOOD_ALLERGY, lastModifiedAt = NOW, lastModifiedBy = USER1),
+      FieldMetadata("Z1234ZZ", FOOD_ALLERGY, lastModifiedAt = NOW, lastModifiedBy = USER1, lastModifiedPrisonId = PRISON_ID),
     )
   }
 
   @Test
   fun `toString does not cause stack overflow`() {
     assertThat(
-      FieldMetadata(PRISONER_NUMBER, FOOD_ALLERGY, lastModifiedAt = NOW, lastModifiedBy = USER1).toString(),
+      FieldMetadata(PRISONER_NUMBER, FOOD_ALLERGY, lastModifiedAt = NOW, lastModifiedBy = USER1, lastModifiedPrisonId = PRISON_ID).toString(),
     ).isInstanceOf(String::class.java)
   }
 
@@ -90,6 +92,7 @@ class FieldMetadataTest : RepositoryTest() {
     const val PRISONER_NUMBER = "A1234AA"
     const val USER1 = "USER1"
     const val USER2 = "USER2"
+    const val PRISON_ID = "STI"
 
     val NOW: ZonedDateTime = ZonedDateTime.now(clock)
   }

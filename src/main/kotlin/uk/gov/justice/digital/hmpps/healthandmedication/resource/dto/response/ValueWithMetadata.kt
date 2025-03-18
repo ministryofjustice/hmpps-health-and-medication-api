@@ -12,4 +12,7 @@ data class ValueWithMetadata<T>(
 
   @Schema(description = "Username of the user that last modified this field", example = "USER1")
   val lastModifiedBy: String,
+
+  @Schema(description = "The id code of the active prison at the time of the update", example = "STI")
+  val lastModifiedPrisonId: String,
 )
