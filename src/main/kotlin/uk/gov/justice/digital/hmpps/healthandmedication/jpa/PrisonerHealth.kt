@@ -5,12 +5,15 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType.LAZY
 import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
 import jakarta.persistence.MapKey
 import jakarta.persistence.OneToMany
+import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import org.hibernate.Hibernate
 import org.hibernate.annotations.SortNatural
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField
+import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField.CATERING_INSTRUCTIONS
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField.FOOD_ALLERGY
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField.MEDICAL_DIET
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField.PERSONALISED_DIET
@@ -39,6 +42,10 @@ class PrisonerHealth(
   @OneToMany(mappedBy = "prisonerNumber", cascade = [ALL], orphanRemoval = true)
   var personalisedDietaryRequirements: MutableSet<PersonalisedDietaryRequirement> = mutableSetOf(),
 
+  @OneToOne(cascade = [ALL], orphanRemoval = true)
+  @JoinColumn(name = "prisoner_number", referencedColumnName = "prisoner_number")
+  var cateringInstructions: CateringInstructions? = null,
+
   // Stores snapshots of each update to a prisoner's health information
   @OneToMany(mappedBy = "prisonerNumber", fetch = LAZY, cascade = [ALL], orphanRemoval = true)
   @SortNatural
@@ -54,6 +61,7 @@ class PrisonerHealth(
     FOOD_ALLERGY to ::foodAllergies,
     MEDICAL_DIET to ::medicalDietaryRequirements,
     PERSONALISED_DIET to ::personalisedDietaryRequirements,
+    CATERING_INSTRUCTIONS to ::cateringInstructions,
   )
 
   fun toHealthDto(): HealthAndMedicationResponse = HealthAndMedicationResponse(toDietAndAllergyDto())
@@ -86,6 +94,11 @@ class PrisonerHealth(
       },
       PERSONALISED_DIET,
     ),
+    cateringInstructions = getStringValueWithMetadata(
+      cateringInstructions,
+      { it.instructions },
+      CATERING_INSTRUCTIONS,
+    ),
   )
 
   override fun updateFieldHistory(lastModifiedAt: ZonedDateTime, lastModifiedBy: String) = updateFieldHistory(lastModifiedAt, lastModifiedBy, allFields)
@@ -97,6 +110,18 @@ class PrisonerHealth(
   ): ValueWithMetadata<List<ReferenceDataSelection>>? = fieldMetadata[field]?.let {
     ValueWithMetadata(
       mapper(value),
+      it.lastModifiedAt,
+      it.lastModifiedBy,
+    )
+  }
+
+  private fun <T> getStringValueWithMetadata(
+    value: T?,
+    mapper: (T) -> String?,
+    field: HealthAndMedicationField,
+  ): ValueWithMetadata<String?>? = fieldMetadata[field]?.let {
+    ValueWithMetadata(
+      value?.let(mapper),
       it.lastModifiedAt,
       it.lastModifiedBy,
     )
@@ -129,6 +154,7 @@ class PrisonerHealth(
       FOOD_ALLERGY,
       MEDICAL_DIET,
       PERSONALISED_DIET,
+      CATERING_INSTRUCTIONS,
     )
   }
 }

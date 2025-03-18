@@ -1,0 +1,1 @@
+ALTER TABLE field_history ALTER COLUMN value_string TYPE VARCHAR(1000);

@@ -45,4 +45,12 @@ data class UpdateDietAndAllergyRequest(
   )
   @field:ReferenceDataListValidation(domains = ["PERSONALISED_DIET"])
   val personalisedDietaryRequirements: List<ReferenceDataIdSelection>?,
+
+  @Schema(
+    description = "A description of specific catering instructions required by the prisoner.",
+    example = "Some specific instructions.",
+    requiredMode = REQUIRED,
+    nullable = true,
+  )
+  val cateringInstructions: String?,
 )

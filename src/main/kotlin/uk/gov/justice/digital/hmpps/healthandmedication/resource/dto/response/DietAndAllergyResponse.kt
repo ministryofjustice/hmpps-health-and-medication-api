@@ -12,4 +12,7 @@ data class DietAndAllergyResponse(
 
   @Schema(description = "Personalised dietary requirements")
   val personalisedDietaryRequirements: ValueWithMetadata<List<ReferenceDataSelection>>? = null,
+
+  @Schema(description = "Catering instructions")
+  val cateringInstructions: ValueWithMetadata<String?>? = null,
 )
