@@ -5,6 +5,7 @@ import java.time.ZonedDateTime
 interface HistoryItem : Comparable<HistoryItem> {
   val createdAt: ZonedDateTime
   val createdBy: String
+  var prisonId: String
   var mergedAt: ZonedDateTime?
   var mergedFrom: String?
 

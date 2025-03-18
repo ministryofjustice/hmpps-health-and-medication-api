@@ -101,7 +101,11 @@ class PrisonerHealth(
     ),
   )
 
-  override fun updateFieldHistory(lastModifiedAt: ZonedDateTime, lastModifiedBy: String) = updateFieldHistory(lastModifiedAt, lastModifiedBy, allFields)
+  override fun updateFieldHistory(
+    lastModifiedAt: ZonedDateTime,
+    lastModifiedBy: String,
+    lastModifiedPrisonId: String,
+  ) = updateFieldHistory(lastModifiedAt, lastModifiedBy, lastModifiedPrisonId, allFields)
 
   private fun <T> getReferenceDataListValueWithMetadata(
     value: T,
@@ -112,6 +116,7 @@ class PrisonerHealth(
       mapper(value),
       it.lastModifiedAt,
       it.lastModifiedBy,
+      it.lastModifiedPrisonId,
     )
   }
 
@@ -124,6 +129,7 @@ class PrisonerHealth(
       value?.let(mapper),
       it.lastModifiedAt,
       it.lastModifiedBy,
+      it.lastModifiedPrisonId,
     )
   }
 

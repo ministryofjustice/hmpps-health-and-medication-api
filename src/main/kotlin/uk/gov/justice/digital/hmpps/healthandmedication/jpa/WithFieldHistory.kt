@@ -15,11 +15,13 @@ abstract class WithFieldHistory<T : AbstractAggregateRoot<T>?> : AbstractAggrega
   abstract fun updateFieldHistory(
     lastModifiedAt: ZonedDateTime,
     lastModifiedBy: String,
+    lastModifiedPrisonId: String,
   ): Collection<HealthAndMedicationField>
 
   fun updateFieldHistory(
     lastModifiedAt: ZonedDateTime,
     lastModifiedBy: String,
+    lastModifiedPrisonId: String,
     fields: Collection<HealthAndMedicationField>,
   ): Collection<HealthAndMedicationField> {
     val changedFields = mutableSetOf<HealthAndMedicationField>()
@@ -34,6 +36,7 @@ abstract class WithFieldHistory<T : AbstractAggregateRoot<T>?> : AbstractAggrega
             prisonerNumber = this.prisonerNumber,
             lastModifiedAt = lastModifiedAt,
             lastModifiedBy = lastModifiedBy,
+            lastModifiedPrisonId = lastModifiedPrisonId,
           )
 
           fieldHistory.add(
@@ -42,6 +45,7 @@ abstract class WithFieldHistory<T : AbstractAggregateRoot<T>?> : AbstractAggrega
               field = field,
               createdAt = lastModifiedAt,
               createdBy = lastModifiedBy,
+              prisonId = lastModifiedPrisonId,
             ).also { field.set(it, currentValue()) },
           )
           changedFields.add(field)

@@ -142,7 +142,10 @@ class PrisonerHealthService(
       )
 
       this.cateringInstructions = CateringInstructions(prisonerNumber, request.cateringInstructions)
-    }.also { it.updateFieldHistory(now, authenticationFacade.getUserOrSystemInContext()) }
+    }.also {
+      val currentPrisonCode = prisonerSearchClient.getPrisoner(prisonerNumber)?.prisonId
+      it.updateFieldHistory(now, authenticationFacade.getUserOrSystemInContext(), currentPrisonCode!!)
+    }
 
     return prisonerHealthRepository.save(health).toDietAndAllergyDto()
   }

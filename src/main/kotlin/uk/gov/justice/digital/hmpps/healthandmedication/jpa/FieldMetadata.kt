@@ -26,6 +26,8 @@ class FieldMetadata(
   var lastModifiedAt: ZonedDateTime = ZonedDateTime.now(),
 
   var lastModifiedBy: String,
+
+  var lastModifiedPrisonId: String,
 ) {
 
   override fun equals(other: Any?): Boolean {
@@ -38,6 +40,7 @@ class FieldMetadata(
     if (field != other.field) return false
     if (lastModifiedAt.toInstant() != other.lastModifiedAt.toInstant()) return false
     if (lastModifiedBy != other.lastModifiedBy) return false
+    if (lastModifiedPrisonId != other.lastModifiedPrisonId) return false
 
     return true
   }
@@ -47,10 +50,11 @@ class FieldMetadata(
     result = 31 * result + field.hashCode()
     result = 31 * result + lastModifiedAt.toInstant().hashCode()
     result = 31 * result + lastModifiedBy.hashCode()
+    result = 31 * result + lastModifiedPrisonId.hashCode()
     return result
   }
 
-  override fun toString(): String = "FieldMetadata(prisonerNumber='$prisonerNumber', field=$field, lastModifiedAt=$lastModifiedAt, lastModifiedBy='$lastModifiedBy')"
+  override fun toString(): String = "FieldMetadata(prisonerNumber='$prisonerNumber', field=$field, lastModifiedAt=$lastModifiedAt, lastModifiedBy='$lastModifiedBy' lastModifiedPrisonId='$lastModifiedPrisonId')"
 }
 
 private data class FieldMetadataId(val prisonerNumber: String? = null, val field: HealthAndMedicationField? = null) : Serializable

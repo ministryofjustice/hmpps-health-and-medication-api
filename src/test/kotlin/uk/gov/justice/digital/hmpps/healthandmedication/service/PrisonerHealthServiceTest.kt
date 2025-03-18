@@ -126,18 +126,21 @@ class PrisonerHealthServiceTest {
                 field = FOOD_ALLERGY,
                 lastModifiedAt = NOW,
                 lastModifiedBy = USER1,
+                lastModifiedPrisonId = "STI",
               ),
               MEDICAL_DIET to FieldMetadata(
                 prisonerNumber = PRISONER_NUMBER,
                 field = MEDICAL_DIET,
                 lastModifiedAt = NOW,
                 lastModifiedBy = USER1,
+                lastModifiedPrisonId = "STI",
               ),
               PERSONALISED_DIET to FieldMetadata(
                 prisonerNumber = PRISONER_NUMBER,
                 field = PERSONALISED_DIET,
                 lastModifiedAt = NOW,
                 lastModifiedBy = USER1,
+                lastModifiedPrisonId = "STI",
               ),
             ),
           ),
@@ -161,6 +164,7 @@ class PrisonerHealthServiceTest {
               ),
               NOW,
               USER1,
+              PRISON_ID,
             ),
             medicalDietaryRequirements = ValueWithMetadata(
               listOf(
@@ -174,6 +178,7 @@ class PrisonerHealthServiceTest {
               ),
               NOW,
               USER1,
+              PRISON_ID,
             ),
             personalisedDietaryRequirements = ValueWithMetadata(
               listOf(
@@ -187,6 +192,7 @@ class PrisonerHealthServiceTest {
               ),
               NOW,
               USER1,
+              PRISON_ID,
             ),
           ),
         ),
@@ -220,21 +226,25 @@ class PrisonerHealthServiceTest {
             listOf(ReferenceDataSelection(FOOD_ALLERGY_CODE.toSimpleDto())),
             NOW,
             USER1,
+            PRISON_ID,
           ),
           medicalDietaryRequirements = ValueWithMetadata(
             listOf(ReferenceDataSelection(MEDICAL_DIET_CODE.toSimpleDto())),
             NOW,
             USER1,
+            PRISON_ID,
           ),
           personalisedDietaryRequirements = ValueWithMetadata(
             listOf(ReferenceDataSelection(PERSONALISED_DIET_CODE.toSimpleDto())),
             NOW,
             USER1,
+            PRISON_ID,
           ),
           cateringInstructions = ValueWithMetadata(
             "Some catering instructions.",
             NOW,
             USER1,
+            PRISON_ID,
           ),
         ),
       )
@@ -299,16 +309,22 @@ class PrisonerHealthServiceTest {
             medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_DBO),
             personalisedDietaryRequirements = mutableSetOf(PERSONALISED_DIET_DBO),
             cateringInstructions = CateringInstructions(PRISONER_NUMBER, "outdated instructions"),
-          ).also { it.updateFieldHistory(lastModifiedAt = NOW.minusDays(1), lastModifiedBy = USER2) },
+          ).also {
+            it.updateFieldHistory(
+              lastModifiedAt = NOW.minusDays(1),
+              lastModifiedBy = USER2,
+              lastModifiedPrisonId = "KMI",
+            )
+          },
         ),
       )
 
       assertThat(underTest.updateDietAndAllergyData(PRISONER_NUMBER, EMPTY_DIET_AND_ALLERGY_UPDATE_REQUEST)).isEqualTo(
         DietAndAllergyResponse(
-          foodAllergies = ValueWithMetadata(emptyList(), NOW, USER1),
-          medicalDietaryRequirements = ValueWithMetadata(emptyList(), NOW, USER1),
-          personalisedDietaryRequirements = ValueWithMetadata(emptyList(), NOW, USER1),
-          cateringInstructions = ValueWithMetadata(null, NOW, USER1),
+          foodAllergies = ValueWithMetadata(emptyList(), NOW, USER1, PRISON_ID),
+          medicalDietaryRequirements = ValueWithMetadata(emptyList(), NOW, USER1, PRISON_ID),
+          personalisedDietaryRequirements = ValueWithMetadata(emptyList(), NOW, USER1, PRISON_ID),
+          cateringInstructions = ValueWithMetadata(null, NOW, USER1, PRISON_ID),
         ),
       )
 
@@ -523,7 +539,7 @@ class PrisonerHealthServiceTest {
   }
 
   private companion object {
-    const val PRISON_ID = "LEI"
+    const val PRISON_ID = "STI"
     const val PRISONER_NUMBER = "A1234AA"
     const val PRISONER_FIRST_NAME = "First"
     const val PRISONER_LAST_NAME = "Last"
@@ -647,12 +663,14 @@ class PrisonerHealthServiceTest {
           MEDICAL_DIET,
           NOW,
           USER1,
+          PRISON_ID,
         ),
         FOOD_ALLERGY to FieldMetadata(
           PRISONER_NUMBER,
           MEDICAL_DIET,
           NOW,
           USER1,
+          PRISON_ID,
         ),
       ),
     )
