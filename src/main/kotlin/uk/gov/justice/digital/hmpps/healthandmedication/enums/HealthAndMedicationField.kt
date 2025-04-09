@@ -69,8 +69,8 @@ enum class HealthAndMedicationField(
     getString,
     { values, value ->
       run {
-        value as CateringInstructions
-        values.valueString = value.instructions
+        value as CateringInstructions?
+        values.valueString = value?.instructions
       }
     },
     hasChangedString,
