@@ -141,7 +141,8 @@ class PrisonerHealthService(
         },
       )
 
-      this.cateringInstructions = CateringInstructions(prisonerNumber, request.cateringInstructions)
+      cateringInstructions = request.cateringInstructions?.takeIf { it.isNotBlank() }
+        ?.let { CateringInstructions(prisonerNumber, it) }
     }.also {
       val currentPrisonCode = prisonerSearchClient.getPrisoner(prisonerNumber)?.prisonId
       it.updateFieldHistory(now, authenticationFacade.getUserOrSystemInContext(), currentPrisonCode!!)
