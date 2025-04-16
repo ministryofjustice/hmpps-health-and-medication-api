@@ -16,6 +16,10 @@ spring:
       dpr_user: dpr_user
       dpr_password: dpr_password
 
+hmpps:
+  sar:
+    additionalAccessRole: ROLE_HEALTH_AND_MEDICATION_API__REFERENCE_DATA__RO
+
 database:
   username: health-and-medication-data
   password: health-and-medication-data

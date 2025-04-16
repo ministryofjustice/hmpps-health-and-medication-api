@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField
 
 data class JsonObject(
-  val field: HealthAndMedicationField,
+  var field: HealthAndMedicationField,
 
   @JsonTypeInfo(use = NAME, property = "field", include = EXTERNAL_PROPERTY)
   @JsonSubTypes(
