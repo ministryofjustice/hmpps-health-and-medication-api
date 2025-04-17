@@ -1,7 +1,7 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "7.1.3"
-  kotlin("plugin.spring") version "2.1.10"
-  kotlin("plugin.jpa") version "2.1.10"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "8.0.0"
+  kotlin("plugin.spring") version "2.1.20"
+  kotlin("plugin.jpa") version "2.1.20"
   jacoco
   idea
 }
@@ -13,12 +13,12 @@ configurations {
 dependencies {
 
   // Spring Boot
-  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:1.4.0")
+  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:1.4.2")
   implementation("org.springframework.boot:spring-boot-starter-webflux")
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
   // OpenAPI
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
 
   // UUIDs
   implementation("com.fasterxml.uuid:java-uuid-generator:5.1.0")
@@ -29,12 +29,12 @@ dependencies {
   runtimeOnly("org.postgresql:postgresql")
 
   // Test
-  testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:1.4.0")
+  testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:1.4.2")
   testImplementation("org.testcontainers:junit-jupiter:1.20.6")
   testImplementation("org.testcontainers:postgresql:1.20.6")
-  testImplementation("io.mockk:mockk:1.13.17")
+  testImplementation("io.mockk:mockk:1.14.0")
   testImplementation("org.wiremock:wiremock-standalone:3.12.1")
-  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.25") {
+  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.26") {
     exclude(group = "io.swagger.core.v3")
   }
 }
