@@ -100,6 +100,16 @@ class SubjectAccessRequestResourceIntTest : IntegrationTestBase() {
         .expectStatus().isOk
         .expectBody().json(DIET_AND_ALLERGY_UPDATED_RESPONSE, JsonCompareMode.STRICT)
 
+      webTestClient.put().uri("/prisoners/${PRISONER_NUMBER}/diet-and-allergy")
+        .headers(
+          setAuthorisation(USER1, roles = listOf("ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RW")),
+        )
+        .header("Content-Type", "application/json")
+        .bodyValue(VALID_DIET_AND_FOOD_ALLERGY_REQUEST)
+        .exchange()
+        .expectStatus().isOk
+        .expectBody().json(DIET_AND_ALLERGY_UPDATED_RESPONSE, JsonCompareMode.STRICT)
+
       webTestClient.get().uri("/subject-access-request?prn=${PRISONER_NUMBER}")
         .headers(setAuthorisation(roles = listOf("SAR_DATA_ACCESS")))
         .header("Content-Type", "application/json")
@@ -135,6 +145,17 @@ class SubjectAccessRequestResourceIntTest : IntegrationTestBase() {
           "medicalDietaryRequirements": [{ "value": "MEDICAL_DIET_OTHER", "comment": "Some other diet" }],
           "personalisedDietaryRequirements": [],
           "cateringInstructions": "Some catering instructions."
+        }
+      """.trimIndent()
+
+    val VALID_DIET_AND_FOOD_ALLERGY_UPDATE_REQUEST =
+      // language=json
+      """
+        { 
+          "foodAllergies": [{ "value": "FOOD_ALLERGY_SOYA" }],
+          "medicalDietaryRequirements":[{ "value": "MEDICAL_DIET_OTHER", "comment": "SOME OTHER DIET 1" }],
+          "personalisedDietaryRequirements": [],
+          "cateringInstructions": "Some Other catering instructions - 1."
         }
       """.trimIndent()
 
@@ -180,6 +201,55 @@ class SubjectAccessRequestResourceIntTest : IntegrationTestBase() {
         },
         "cateringInstructions": {
           "value": "Some catering instructions.",
+          "lastModifiedAt": "2024-06-14T09:10:11+0100",
+          "lastModifiedBy": "USER1",
+          "lastModifiedPrisonId": "MDI"
+        }
+      }
+      """.trimIndent()
+
+    val DIET_AND_ALLERGY_UPDATED_UPDATE_RESPONSE =
+      // language=json
+      """
+      {
+        "foodAllergies": {
+          "value": [
+            {
+              "value": {
+                "id": "FOOD_ALLERGY_SOYA",
+                "code": "SOYA",
+                "description": "Soya"
+              },
+              "comment" : null
+            }
+          ],
+          "lastModifiedAt": "2024-06-14T09:10:11+0100",
+          "lastModifiedBy": "USER1",
+          "lastModifiedPrisonId": "MDI"
+        },
+        "medicalDietaryRequirements": {
+          "value": [
+            {
+              "value": {
+                "id": "MEDICAL_DIET_OTHER",
+                "code": "OTHER",
+                "description": "Other"
+              },
+              "comment" : "SOME OTHER DIET 1" 
+            } 
+          ],
+          "lastModifiedAt": "2024-06-14T09:10:11+0100",
+          "lastModifiedBy": "USER1",
+          "lastModifiedPrisonId": "MDI"
+        },
+        "personalisedDietaryRequirements": {
+          "value": [],
+          "lastModifiedAt": "2024-06-14T09:10:11+0100",
+          "lastModifiedBy": "USER1",
+          "lastModifiedPrisonId": "MDI"
+        },
+        "cateringInstructions": {
+          "value": "Some Other catering instructions - 1.",
           "lastModifiedAt": "2024-06-14T09:10:11+0100",
           "lastModifiedBy": "USER1",
           "lastModifiedPrisonId": "MDI"
@@ -235,5 +305,174 @@ class SubjectAccessRequestResourceIntTest : IntegrationTestBase() {
                       ]
           }
       """.trimIndent()
+
+    val SAR_RESPONSE_WITHOUT_FIELD_HISTORY_ID_FOR_DATES =
+      // language=json
+      """
+          {
+            "content": [   
+                          {
+                          "prisonerNumber":"A1234AA",
+                          "fieldHistoryType":"Catering Instructions",
+                          "fieldHistoryValue":"Some catering instructions.",
+                          "createdAt":"2024-06-14T09:10:11+0100",
+                          "createdBy":"USER1",
+                          "mergedAt":null,
+                          "mergedFrom":null,
+                          "prisonId":"MDI"
+                          },
+                          {
+                            "prisonerNumber":"A1234AA",
+                            "fieldHistoryType":"Personalised Dietary Requirements",
+                            "fieldHistoryValue":[],
+                            "createdAt":"2024-06-14T09:10:11+0100",
+                            "createdBy":"USER1",
+                            "mergedAt":null,
+                            "mergedFrom":null,
+                            "prisonId":"MDI"
+                          },
+                          {
+                            "prisonerNumber":"A1234AA",
+                            "fieldHistoryType":"Medical Dietary Requirements",
+                            "fieldHistoryValue":[{"value":"Other","comment":"Some other diet"}],
+                            "createdAt":"2024-06-14T09:10:11+0100",
+                            "createdBy":"USER1",
+                            "mergedAt":null,
+                            "mergedFrom":null,
+                            "prisonId":"MDI"
+                          },
+                          {
+                            "prisonerNumber":"A1234AA",
+                            "fieldHistoryType":"Food Allergies",
+                            "fieldHistoryValue":[{"value":"Milk","comment":null}],
+                            "createdAt":"2024-06-14T09:10:11+0100",
+                            "createdBy":"USER1",
+                            "mergedAt":null,
+                            "mergedFrom":null,
+                            "prisonId":"MDI"
+                          }
+                      ]
+          }
+      """.trimIndent()
+
+    val SAR_RESPONSE_WITHOUT_FIELD_HISTORY_ID_FOR_UPDATES =
+      // language=json
+      """
+          {
+            "content": [   
+                          { 
+                          "prisonerNumber":"A1234AA",
+                          "fieldHistoryType":"Catering Instructions",
+                          "fieldHistoryValue":"Some catering instructions.",
+                          "createdAt":"2024-06-14T09:10:11+0100",
+                          "createdBy":"USER1",
+                          "mergedAt":null,
+                          "mergedFrom":null,
+                          "prisonId":"MDI"
+                          },
+                          {  
+                          "prisonerNumber":"A1234AA",
+                          "fieldHistoryType":"Catering Instructions",
+                          "fieldHistoryValue":"Some Other catering instructions - 1.",
+                          "createdAt":"2024-06-14T09:10:11+0100",
+                          "createdBy":"USER1",
+                          "mergedAt":null,
+                          "mergedFrom":null,
+                          "prisonId":"MDI"
+                          },
+                          {
+                            "prisonerNumber":"A1234AA",
+                            "fieldHistoryType":"Personalised Dietary Requirements",
+                            "fieldHistoryValue":[],
+                            "createdAt":"2024-06-14T09:10:11+0100",
+                            "createdBy":"USER1",
+                            "mergedAt":null,
+                            "mergedFrom":null,
+                            "prisonId":"MDI"
+                          },
+                          {
+                            "prisonerNumber":"A1234AA",
+                            "fieldHistoryType":"Medical Dietary Requirements",
+                            "fieldHistoryValue":[{"value":"Other","comment":"Some other diet"}],
+                            "createdAt":"2024-06-14T09:10:11+0100",
+                            "createdBy":"USER1",
+                            "mergedAt":null,
+                            "mergedFrom":null,
+                            "prisonId":"MDI"
+                          },
+                          { 
+                            "prisonerNumber":"A1234AA",
+                            "fieldHistoryType":"Medical Dietary Requirements",
+                            "fieldHistoryValue":[{"value":"Other","comment":"SOME OTHER DIET 1"}],
+                            "createdAt":"2024-06-14T09:10:11+0100",
+                            "createdBy":"USER1",
+                            "mergedAt":null,
+                            "mergedFrom":null,
+                            "prisonId":"MDI"
+                          },
+                          { 
+                            "prisonerNumber":"A1234AA",
+                            "fieldHistoryType":"Food Allergies",
+                            "fieldHistoryValue":[{"value":"Soya","comment":null}],
+                            "createdAt":"2024-06-14T09:10:11+0100",
+                            "createdBy":"USER1",
+                            "mergedAt":null,
+                            "mergedFrom":null,
+                            "prisonId":"MDI"
+                          },
+                          {
+                            "prisonerNumber": "A1234AA",
+                            "fieldHistoryType": "Food Allergies",
+                            "fieldHistoryValue": [{"value": "Milk","comment": null}],
+                            "createdAt": "2024-06-14T09:10:11+0100",
+                            "createdBy": "USER1",
+                            "mergedAt": null,
+                            "mergedFrom": null,
+                            "prisonId": "MDI"
+                          }
+                      ]
+          }
+      """.trimIndent()
   }
+
+  @Test
+  fun `Does the endpoint respond with a 200 status code when the SAR endpoint is hit with a valid token and valid subject identifier and date is after modified date`() {
+    webTestClient.put().uri("/prisoners/${PRISONER_NUMBER}/diet-and-allergy")
+      .headers(
+        setAuthorisation(USER1, roles = listOf("ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RW")),
+      )
+      .header("Content-Type", "application/json")
+      .bodyValue(VALID_DIET_AND_FOOD_ALLERGY_REQUEST)
+      .exchange()
+      .expectStatus().isOk
+      .expectBody().json(DIET_AND_ALLERGY_UPDATED_RESPONSE, JsonCompareMode.STRICT)
+
+    webTestClient.put().uri("/prisoners/${PRISONER_NUMBER}/diet-and-allergy")
+      .headers(
+        setAuthorisation(USER1, roles = listOf("ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RW")),
+      )
+      .header("Content-Type", "application/json")
+      .bodyValue(VALID_DIET_AND_FOOD_ALLERGY_UPDATE_REQUEST)
+      .exchange()
+      .expectStatus().isOk
+      .expectBody().json(DIET_AND_ALLERGY_UPDATED_UPDATE_RESPONSE, JsonCompareMode.STRICT)
+
+    webTestClient.get().uri("/subject-access-request?prn=${PRISONER_NUMBER}&fromDate=12/06/2024&toDate=18/06/2024")
+      .headers(setAuthorisation(roles = listOf("SAR_DATA_ACCESS")))
+      .header("Content-Type", "application/json")
+      .exchange()
+      .expectStatus().isOk()
+      .expectBody().json(SAR_RESPONSE_WITHOUT_FIELD_HISTORY_ID_FOR_UPDATES, JsonCompareMode.LENIENT)
+      .jsonPath("$.content.[0].fieldHistoryId").isEqualTo(7)
+
+    // Relies on resetting field_history_field_history_id_seq in reset.sql.
+
+    // Note that when creating data using /diet-and-allergy the FieldHistory record for each of the 4 fields is created
+    // in a random order. This means that when we create FieldHistory record for FoodAllergies the fieldHistoryId is
+    // not guaranteed to be the same for each invocation. Consequently, we use lenient checking and omit the
+    // fieldHistoryId from SAR_RESPONSE_WITHOUT_FIELD_HISTORY_ID. Because the SAR contract is to show the most recent
+    // information first, we can instead check that the first item in the SAR Response data has a fieldHistoryId
+    // of 4 - see EXPECTED_FIRST_FIELD_HISTORY_ID.
+  }
+
 }

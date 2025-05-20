@@ -22,6 +22,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.SortedSet
+import kotlin.math.log
 
 /*
   From https://dsdmoj.atlassian.net/wiki/spaces/SARS/pages/4780589084/Integration+Guide#Testing-Checklist
@@ -36,7 +37,7 @@ import java.util.SortedSet
   - Does the endpoint respond with a 200 status code when the SAR endpoint is hit with a valid token and valid subject identifier? YES
   - Does the endpoint respond with a response body in JSON format with a JSON object in the ‘content’ block? YES
 
-  Please see SubjectAccessRequestResourceIntTest, which checks each above requirment.
+  Please see SubjectAccessRequestResourceIntTest, which checks each above requirement.
 
   Useful URLs
     http://localhost:8080/subject-access-request?prn=G9154UN&fromDate=01/01/1980&toDate=01/03/2025
