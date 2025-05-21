@@ -22,7 +22,6 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.SortedSet
-import kotlin.math.log
 
 /*
   From https://dsdmoj.atlassian.net/wiki/spaces/SARS/pages/4780589084/Integration+Guide#Testing-Checklist

@@ -133,7 +133,7 @@ class SubjectAccessRequestResourceIntTest : IntegrationTestBase() {
     const val PRISONER_NUMBER = "A1234AA"
     const val USER1 = "USER1"
 
-    const val EXPECTED_FIRST_FIELD_HISTORY_ID = 4
+    const val EXPECTED_FIRST_FIELD_HISTORY_ID = 5
 
     val NOW: ZonedDateTime = ZonedDateTime.now(TestBase.clock)
 
@@ -474,5 +474,4 @@ class SubjectAccessRequestResourceIntTest : IntegrationTestBase() {
     // information first, we can instead check that the first item in the SAR Response data has a fieldHistoryId
     // of 4 - see EXPECTED_FIRST_FIELD_HISTORY_ID.
   }
-
 }
