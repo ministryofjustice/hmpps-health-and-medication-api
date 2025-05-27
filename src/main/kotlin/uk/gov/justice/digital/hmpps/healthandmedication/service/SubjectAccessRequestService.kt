@@ -76,7 +76,7 @@ class SubjectAccessRequestService(
         )
 
       val latestPrisonerHistoryBeforeFromDate: List<FieldHistory> = HealthAndMedicationField.entries.mapNotNull { field ->
-        fieldHistoryRepository.findFirstByPrisonerNumberAndFieldAndCreatedAtLessThanEqualOrderByCreatedAtDesc(
+        fieldHistoryRepository.findFirstByPrisonerNumberAndFieldAndCreatedAtBeforeOrderByCreatedAtDesc(
           prn,
           field,
           queryFromDate,

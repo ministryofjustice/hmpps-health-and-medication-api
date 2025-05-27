@@ -15,7 +15,7 @@ interface FieldHistoryRepository : JpaRepository<FieldHistory, Long> {
 
   fun findAllByPrisonerNumberAndCreatedAtBetweenOrderByFieldHistoryIdDesc(prisonerNumber: String, fromDate: ZonedDateTime, toDate: ZonedDateTime): SortedSet<FieldHistory>
 
-  fun findFirstByPrisonerNumberAndFieldAndCreatedAtLessThanEqualOrderByCreatedAtDesc(
+  fun findFirstByPrisonerNumberAndFieldAndCreatedAtBeforeOrderByCreatedAtDesc(
     prisonerNumber: String, field: HealthAndMedicationField, createdAt: ZonedDateTime
   ): FieldHistory?
 
