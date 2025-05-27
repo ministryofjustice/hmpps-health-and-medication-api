@@ -50,7 +50,7 @@ class SubjectAccessRequestServiceTest {
   private lateinit var subjectaccessRequestService: SubjectAccessRequestService
 
   @Test
-  fun `can retrieve ordered SAR data for a prisoner between two dates`() {
+  fun `can retrieve ordered SAR data for a prisoner when data is between two dates`() {
     val queryFrom = ZonedDateTime.of(2025, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault())
     val queryTo = ZonedDateTime.of(2025, 1, 4, 23, 59, 59, 999999999, ZoneId.systemDefault())
 
@@ -163,6 +163,259 @@ class SubjectAccessRequestServiceTest {
             fieldHistoryType = SubjectAccessRequestFieldHistoryType.FOOD_ALLERGY.description,
             fieldHistoryValue = listOf(FoodAllergyHistoryItem(FOOD_ALLERGY_CODE.description), FoodAllergyHistoryItem(FOOD_ALLERGY_CODE.description)),
             createdAt = expectedCreatedAt,
+            createdBy = USER1,
+            prisonId = PRISON_ID,
+            mergedAt = null,
+            mergedFrom = null,
+          ),
+        ),
+      ),
+    )
+
+    verify(fieldHistoryRepository).findAllByPrisonerNumberAndCreatedAtBetweenOrderByFieldHistoryIdDesc(PRISONER_NUMBER, queryFrom, queryTo)
+  }
+
+  @Test
+  fun `can retrieve ordered SAR data for a prisoner when data is partially before two dates`() {
+    val queryFrom = ZonedDateTime.of(2025, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault())
+    val queryTo = ZonedDateTime.of(2025, 1, 4, 23, 59, 59, 999999999, ZoneId.systemDefault())
+
+    val expectedCreatedAt = ZonedDateTime.of(2025, 1, 2, 23, 59, 59, 0, ZoneId.systemDefault())
+    val expectedCreatedAtLatestAvailable = ZonedDateTime.of(2024, 12, 31, 23, 59, 59, 0, ZoneId.systemDefault())
+
+    whenever(referenceDataCodeRepository.findById(FOOD_ALLERGY_CODE.id)).thenReturn(
+      Optional.of(
+        FOOD_ALLERGY_CODE,
+      ),
+    )
+
+    whenever(referenceDataCodeRepository.findById(MEDICAL_DIET_CODE.id)).thenReturn(
+      Optional.of(
+        MEDICAL_DIET_CODE,
+      ),
+    )
+
+    whenever(referenceDataCodeRepository.findById(PERSONALISED_DIET_CODE.id)).thenReturn(
+      Optional.of(
+        PERSONALISED_DIET_CODE,
+      ),
+    )
+
+    whenever(fieldHistoryRepository.findAllByPrisonerNumberAndCreatedAtBetweenOrderByFieldHistoryIdDesc(PRISONER_NUMBER, queryFrom, queryTo)).thenReturn(
+
+      sortedSetOf(
+        FieldHistory(
+          fieldHistoryId = 0,
+          prisonerNumber = PRISONER_NUMBER,
+          field = FOOD_ALLERGY,
+          valueJson = JsonObject(FOOD_ALLERGY, FoodAllergyHistory(listOf(FoodAllergyHistoryItem("FOOD_ALLERGY_PEANUTS"), FoodAllergyHistoryItem("FOOD_ALLERGY_PEANUTS")))),
+          prisonId = PRISON_ID,
+          createdAt = expectedCreatedAtLatestAvailable,
+          createdBy = USER1,
+        ),
+        FieldHistory(
+          fieldHistoryId = 1,
+          prisonerNumber = PRISONER_NUMBER,
+          field = MEDICAL_DIET,
+          valueJson = JsonObject(MEDICAL_DIET, MedicalDietaryRequirementHistory(listOf(MedicalDietaryRequirementItem(MEDICAL_DIET_CODE.id, "Some other diet")))),
+          prisonId = PRISON_ID,
+          createdAt = expectedCreatedAtLatestAvailable,
+          createdBy = USER1,
+        ),
+        FieldHistory(
+          fieldHistoryId = 2,
+          prisonerNumber = PRISONER_NUMBER,
+          field = PERSONALISED_DIET,
+          valueJson = JsonObject(PERSONALISED_DIET, PersonalisedDietaryRequirementHistory(listOf(PersonalisedDietaryRequirementItem(PERSONALISED_DIET_CODE.id, "Some other diet")))),
+          prisonId = PRISON_ID,
+          createdAt = expectedCreatedAt,
+          createdBy = USER1,
+        ),
+        FieldHistory(
+          fieldHistoryId = 3,
+          prisonerNumber = PRISONER_NUMBER,
+          field = CATERING_INSTRUCTIONS,
+          valueString = "Some catering instructions",
+          prisonId = PRISON_ID,
+          createdAt = expectedCreatedAt,
+          createdBy = USER1,
+        ),
+      ),
+    )
+
+    val fromDate: LocalDate = LocalDate.parse("2025-01-01")
+    val toDate: LocalDate = LocalDate.parse("2025-01-04")
+
+    val result: HmppsSubjectAccessRequestContent? = subjectaccessRequestService.getPrisonContentFor(PRISONER_NUMBER, fromDate, toDate)
+
+    assertThat(result).isEqualTo(
+      HmppsSubjectAccessRequestContent(
+        listOf(
+          SubjectAccessRequestResponseDto(
+            fieldHistoryId = 3,
+            prisonerNumber = PRISONER_NUMBER,
+            fieldHistoryType = SubjectAccessRequestFieldHistoryType.CATERING_INSTRUCTIONS.description,
+            fieldHistoryValue = "Some catering instructions",
+            createdAt = expectedCreatedAt,
+            createdBy = USER1,
+            prisonId = PRISON_ID,
+            mergedAt = null,
+            mergedFrom = null,
+          ),
+          SubjectAccessRequestResponseDto(
+            fieldHistoryId = 2,
+            prisonerNumber = PRISONER_NUMBER,
+            fieldHistoryType = SubjectAccessRequestFieldHistoryType.PERSONALISED_DIET.description,
+            fieldHistoryValue = listOf(PersonalisedDietaryRequirementItem(PERSONALISED_DIET_CODE.description, "Some other diet")),
+            createdAt = expectedCreatedAt,
+            createdBy = USER1,
+            prisonId = PRISON_ID,
+            mergedAt = null,
+            mergedFrom = null,
+          ),
+          SubjectAccessRequestResponseDto(
+            fieldHistoryId = 1,
+            prisonerNumber = PRISONER_NUMBER,
+            fieldHistoryType = SubjectAccessRequestFieldHistoryType.MEDICAL_DIET.description,
+            fieldHistoryValue = listOf(MedicalDietaryRequirementItem(MEDICAL_DIET_CODE.description, "Some other diet")),
+            createdAt = expectedCreatedAtLatestAvailable,
+            createdBy = USER1,
+            prisonId = PRISON_ID,
+            mergedAt = null,
+            mergedFrom = null,
+          ),
+          SubjectAccessRequestResponseDto(
+            fieldHistoryId = 0,
+            prisonerNumber = PRISONER_NUMBER,
+            fieldHistoryType = SubjectAccessRequestFieldHistoryType.FOOD_ALLERGY.description,
+            fieldHistoryValue = listOf(FoodAllergyHistoryItem(FOOD_ALLERGY_CODE.description), FoodAllergyHistoryItem(FOOD_ALLERGY_CODE.description)),
+            createdAt = expectedCreatedAtLatestAvailable,
+            createdBy = USER1,
+            prisonId = PRISON_ID,
+            mergedAt = null,
+            mergedFrom = null,
+          ),
+        ),
+      ),
+    )
+
+    verify(fieldHistoryRepository).findAllByPrisonerNumberAndCreatedAtBetweenOrderByFieldHistoryIdDesc(PRISONER_NUMBER, queryFrom, queryTo)
+  }
+
+  @Test
+  fun `can retrieve ordered SAR data for a prisoner when data is completely before two dates`() {
+    val queryFrom = ZonedDateTime.of(2025, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault())
+    val queryTo = ZonedDateTime.of(2025, 1, 4, 23, 59, 59, 999999999, ZoneId.systemDefault())
+
+    val expectedCreatedAtLatestAvailable = ZonedDateTime.of(2024, 12, 31, 23, 59, 59, 0, ZoneId.systemDefault())
+
+    whenever(referenceDataCodeRepository.findById(FOOD_ALLERGY_CODE.id)).thenReturn(
+      Optional.of(
+        FOOD_ALLERGY_CODE,
+      ),
+    )
+
+    whenever(referenceDataCodeRepository.findById(MEDICAL_DIET_CODE.id)).thenReturn(
+      Optional.of(
+        MEDICAL_DIET_CODE,
+      ),
+    )
+
+    whenever(referenceDataCodeRepository.findById(PERSONALISED_DIET_CODE.id)).thenReturn(
+      Optional.of(
+        PERSONALISED_DIET_CODE,
+      ),
+    )
+
+    whenever(fieldHistoryRepository.findAllByPrisonerNumberAndCreatedAtBetweenOrderByFieldHistoryIdDesc(PRISONER_NUMBER, queryFrom, queryTo)).thenReturn(
+
+      sortedSetOf(
+        FieldHistory(
+          fieldHistoryId = 0,
+          prisonerNumber = PRISONER_NUMBER,
+          field = FOOD_ALLERGY,
+          valueJson = JsonObject(FOOD_ALLERGY, FoodAllergyHistory(listOf(FoodAllergyHistoryItem("FOOD_ALLERGY_PEANUTS"), FoodAllergyHistoryItem("FOOD_ALLERGY_PEANUTS")))),
+          prisonId = PRISON_ID,
+          createdAt = expectedCreatedAtLatestAvailable,
+          createdBy = USER1,
+        ),
+        FieldHistory(
+          fieldHistoryId = 1,
+          prisonerNumber = PRISONER_NUMBER,
+          field = MEDICAL_DIET,
+          valueJson = JsonObject(MEDICAL_DIET, MedicalDietaryRequirementHistory(listOf(MedicalDietaryRequirementItem(MEDICAL_DIET_CODE.id, "Some other diet")))),
+          prisonId = PRISON_ID,
+          createdAt = expectedCreatedAtLatestAvailable,
+          createdBy = USER1,
+        ),
+        FieldHistory(
+          fieldHistoryId = 2,
+          prisonerNumber = PRISONER_NUMBER,
+          field = PERSONALISED_DIET,
+          valueJson = JsonObject(PERSONALISED_DIET, PersonalisedDietaryRequirementHistory(listOf(PersonalisedDietaryRequirementItem(PERSONALISED_DIET_CODE.id, "Some other diet")))),
+          prisonId = PRISON_ID,
+          createdAt = expectedCreatedAtLatestAvailable,
+          createdBy = USER1,
+        ),
+        FieldHistory(
+          fieldHistoryId = 3,
+          prisonerNumber = PRISONER_NUMBER,
+          field = CATERING_INSTRUCTIONS,
+          valueString = "Some catering instructions",
+          prisonId = PRISON_ID,
+          createdAt = expectedCreatedAtLatestAvailable,
+          createdBy = USER1,
+        ),
+      ),
+    )
+
+    val fromDate: LocalDate = LocalDate.parse("2025-01-01")
+    val toDate: LocalDate = LocalDate.parse("2025-01-04")
+
+    val result: HmppsSubjectAccessRequestContent? = subjectaccessRequestService.getPrisonContentFor(PRISONER_NUMBER, fromDate, toDate)
+
+    assertThat(result).isEqualTo(
+      HmppsSubjectAccessRequestContent(
+        listOf(
+          SubjectAccessRequestResponseDto(
+            fieldHistoryId = 3,
+            prisonerNumber = PRISONER_NUMBER,
+            fieldHistoryType = SubjectAccessRequestFieldHistoryType.CATERING_INSTRUCTIONS.description,
+            fieldHistoryValue = "Some catering instructions",
+            createdAt = expectedCreatedAtLatestAvailable,
+            createdBy = USER1,
+            prisonId = PRISON_ID,
+            mergedAt = null,
+            mergedFrom = null,
+          ),
+          SubjectAccessRequestResponseDto(
+            fieldHistoryId = 2,
+            prisonerNumber = PRISONER_NUMBER,
+            fieldHistoryType = SubjectAccessRequestFieldHistoryType.PERSONALISED_DIET.description,
+            fieldHistoryValue = listOf(PersonalisedDietaryRequirementItem(PERSONALISED_DIET_CODE.description, "Some other diet")),
+            createdAt = expectedCreatedAtLatestAvailable,
+            createdBy = USER1,
+            prisonId = PRISON_ID,
+            mergedAt = null,
+            mergedFrom = null,
+          ),
+          SubjectAccessRequestResponseDto(
+            fieldHistoryId = 1,
+            prisonerNumber = PRISONER_NUMBER,
+            fieldHistoryType = SubjectAccessRequestFieldHistoryType.MEDICAL_DIET.description,
+            fieldHistoryValue = listOf(MedicalDietaryRequirementItem(MEDICAL_DIET_CODE.description, "Some other diet")),
+            createdAt = expectedCreatedAtLatestAvailable,
+            createdBy = USER1,
+            prisonId = PRISON_ID,
+            mergedAt = null,
+            mergedFrom = null,
+          ),
+          SubjectAccessRequestResponseDto(
+            fieldHistoryId = 0,
+            prisonerNumber = PRISONER_NUMBER,
+            fieldHistoryType = SubjectAccessRequestFieldHistoryType.FOOD_ALLERGY.description,
+            fieldHistoryValue = listOf(FoodAllergyHistoryItem(FOOD_ALLERGY_CODE.description), FoodAllergyHistoryItem(FOOD_ALLERGY_CODE.description)),
+            createdAt = expectedCreatedAtLatestAvailable,
             createdBy = USER1,
             prisonId = PRISON_ID,
             mergedAt = null,

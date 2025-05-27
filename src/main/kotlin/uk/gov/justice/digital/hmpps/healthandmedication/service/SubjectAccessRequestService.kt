@@ -67,15 +67,29 @@ class SubjectAccessRequestService(
         else -> toDate!!.atStartOfDay(ZoneId.systemDefault()).withHour(23).withMinute(59).withSecond(59).withNano(999999999)
       }
 
-      val prisonerHealthHistory: SortedSet<FieldHistory> =
+
+      val prisonerHealthHistoryWithinTimeframe: SortedSet<FieldHistory> =
         fieldHistoryRepository.findAllByPrisonerNumberAndCreatedAtBetweenOrderByFieldHistoryIdDesc(
           prn,
           queryFromDate,
           queryToDate,
         )
 
+      val latestPrisonerHistoryBeforeToDate: List<FieldHistory> = HealthAndMedicationField.entries.mapNotNull { field ->
+        fieldHistoryRepository.findFirstByPrisonerNumberAndFieldAndCreatedAtLessThanEqualOrderByCreatedAtDesc(
+          prn,
+          field,
+          queryToDate,
+        )
+      }
+
+      val combinedPrisonerHistory: SortedSet<FieldHistory> = sortedSetOf(compareByDescending<FieldHistory> { it.fieldHistoryId }).apply {
+        prisonerHealthHistoryWithinTimeframe?.let { addAll(it) }
+        latestPrisonerHistoryBeforeToDate?.let { addAll(it) }
+      }
+
       // Must return 204 if there is no data
-      if (prisonerHealthHistory == null || prisonerHealthHistory!!.isEmpty()) {
+      if (combinedPrisonerHistory == null || combinedPrisonerHistory!!.isEmpty()) {
         return null // Returns 204 and empty response body
       }
 
@@ -93,7 +107,7 @@ class SubjectAccessRequestService(
       //    to the value.valueJson.value.allergies array rather than retaining the nested structure.
 
       var transformedSubjectAccessRequestData: List<SubjectAccessRequestResponseDto> =
-        prisonerHealthHistory.mapIndexed { index: Int, value: FieldHistory ->
+        combinedPrisonerHistory.mapIndexed { index: Int, value: FieldHistory ->
           SubjectAccessRequestResponseDto(
             fieldHistoryId = value.fieldHistoryId,
             prisonerNumber = value.prisonerNumber,
