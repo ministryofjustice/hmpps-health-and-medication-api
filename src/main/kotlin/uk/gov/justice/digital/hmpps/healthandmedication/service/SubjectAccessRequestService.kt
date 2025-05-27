@@ -67,7 +67,6 @@ class SubjectAccessRequestService(
         else -> toDate!!.atStartOfDay(ZoneId.systemDefault()).withHour(23).withMinute(59).withSecond(59).withNano(999999999)
       }
 
-
       val prisonerHealthHistoryWithinTimeframe: SortedSet<FieldHistory> =
         fieldHistoryRepository.findAllByPrisonerNumberAndCreatedAtBetweenOrderByFieldHistoryIdDesc(
           prn,
