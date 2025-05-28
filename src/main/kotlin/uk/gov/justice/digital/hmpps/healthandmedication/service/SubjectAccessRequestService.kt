@@ -74,13 +74,17 @@ class SubjectAccessRequestService(
           queryToDate,
         )
 
-      val latestPrisonerHistoryBeforeFromDate: List<FieldHistory> = HealthAndMedicationField.entries.mapNotNull { field ->
-        fieldHistoryRepository.findFirstByPrisonerNumberAndFieldAndCreatedAtBeforeOrderByCreatedAtDesc(
-          prn,
-          field,
-          queryFromDate,
-        )
-      }
+      val excludedFields = prisonerHealthHistoryWithinTimeframe.firstOrNull()?.field
+
+      val latestPrisonerHistoryBeforeFromDate: List<FieldHistory> = HealthAndMedicationField.entries
+        .filter { it != excludedFields }
+        .mapNotNull { field ->
+          fieldHistoryRepository.findFirstByPrisonerNumberAndFieldAndCreatedAtBeforeOrderByCreatedAtDesc(
+            prn,
+            field,
+            queryFromDate,
+          )
+        }
 
       val combinedPrisonerHistory: SortedSet<FieldHistory> = sortedSetOf(compareByDescending<FieldHistory> { it.fieldHistoryId }).apply {
         prisonerHealthHistoryWithinTimeframe?.let { addAll(it) }
