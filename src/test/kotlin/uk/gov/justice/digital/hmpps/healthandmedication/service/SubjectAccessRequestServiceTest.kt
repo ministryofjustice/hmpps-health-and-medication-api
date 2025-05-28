@@ -240,6 +240,15 @@ class SubjectAccessRequestServiceTest {
           createdAt = expectedCreatedAt,
           createdBy = USER1,
         ),
+        FieldHistory(
+          fieldHistoryId = 4,
+          prisonerNumber = PRISONER_NUMBER,
+          field = CATERING_INSTRUCTIONS,
+          valueString = "Some other catering instructions",
+          prisonId = PRISON_ID,
+          createdAt = expectedCreatedAt,
+          createdBy = USER1,
+        ),
       ),
     )
 
@@ -251,6 +260,17 @@ class SubjectAccessRequestServiceTest {
     assertThat(result).isEqualTo(
       HmppsSubjectAccessRequestContent(
         listOf(
+          SubjectAccessRequestResponseDto(
+            fieldHistoryId = 4,
+            prisonerNumber = PRISONER_NUMBER,
+            fieldHistoryType = SubjectAccessRequestFieldHistoryType.CATERING_INSTRUCTIONS.description,
+            fieldHistoryValue = "Some other catering instructions",
+            createdAt = expectedCreatedAt,
+            createdBy = USER1,
+            prisonId = PRISON_ID,
+            mergedAt = null,
+            mergedFrom = null,
+          ),
           SubjectAccessRequestResponseDto(
             fieldHistoryId = 3,
             prisonerNumber = PRISONER_NUMBER,

@@ -67,21 +67,21 @@ class SubjectAccessRequestService(
         else -> toDate!!.atStartOfDay(ZoneId.systemDefault()).withHour(23).withMinute(59).withSecond(59).withNano(999999999)
       }
 
-      val prisonerHealthHistoryWithinTimeframe: SortedSet<FieldHistory> =
+      val prisonerHealthHistoryWithinTimeframe: SortedSet<FieldHistory>? =
         fieldHistoryRepository.findAllByPrisonerNumberAndCreatedAtBetweenOrderByFieldHistoryIdDesc(
           prn,
           queryFromDate,
           queryToDate,
         )
 
-      val excludedFields = prisonerHealthHistoryWithinTimeframe.firstOrNull()?.field
+      val fieldsAlreadyFound = prisonerHealthHistoryWithinTimeframe?.firstOrNull()?.field
 
       val latestPrisonerHistoryBeforeFromDate: List<FieldHistory> = HealthAndMedicationField.entries
-        .filter { it != excludedFields }
-        .mapNotNull { field ->
+        .filter { it != fieldsAlreadyFound }
+        .mapNotNull { missingField ->
           fieldHistoryRepository.findFirstByPrisonerNumberAndFieldAndCreatedAtBeforeOrderByCreatedAtDesc(
             prn,
-            field,
+            missingField,
             queryFromDate,
           )
         }
