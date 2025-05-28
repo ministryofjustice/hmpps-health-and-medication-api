@@ -74,10 +74,10 @@ class SubjectAccessRequestService(
           queryToDate,
         )
 
-      val fieldsAlreadyFound = prisonerHealthHistoryWithinTimeframe?.firstOrNull()?.field
+      val fieldsAlreadyFound = prisonerHealthHistoryWithinTimeframe?.map { it.field } ?: emptyList()
 
       val latestPrisonerHistoryBeforeFromDate: List<FieldHistory> = HealthAndMedicationField.entries
-        .filter { it != fieldsAlreadyFound }
+        .filterNot { it in fieldsAlreadyFound }
         .mapNotNull { missingField ->
           fieldHistoryRepository.findFirstByPrisonerNumberAndFieldAndCreatedAtBeforeOrderByCreatedAtDesc(
             prn,
