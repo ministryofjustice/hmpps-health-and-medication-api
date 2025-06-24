@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
+import org.springframework.http.HttpStatus.LOCKED
 import org.springframework.http.HttpStatus.METHOD_NOT_ALLOWED
 import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.http.HttpStatus.NOT_IMPLEMENTED
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.HandlerMethodValidationException
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.multipart.support.MissingServletRequestPartException
+import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.servlet.resource.NoResourceFoundException
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
@@ -234,6 +236,24 @@ class HealthAndMedicationExceptionHandler {
         developerMessage = e.message,
       ),
     ).also { log.error("Unexpected exception", e) }
+
+  @ExceptionHandler(DownstreamServiceException::class)
+  fun handleDownstreamServiceException(e: DownstreamServiceException): ResponseEntity<ErrorResponse> {
+    val cause = e.cause
+    return if (cause is WebClientResponseException && cause.statusCode == LOCKED) {
+      ResponseEntity
+        .status(LOCKED)
+        .body(
+          ErrorResponse(
+            status = LOCKED,
+            userMessage = "Resource locked: ${e.message}",
+            developerMessage = e.message,
+          ),
+        )
+    } else {
+      handleUnexpectedException(e)
+    }
+  }
 
   @ExceptionHandler(MissingServletRequestPartException::class)
   fun handleMissingServletRequestPartException(e: MissingServletRequestPartException): ResponseEntity<ErrorResponse> = ResponseEntity
