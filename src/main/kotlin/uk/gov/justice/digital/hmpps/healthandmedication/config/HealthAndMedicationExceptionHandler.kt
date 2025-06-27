@@ -241,7 +241,7 @@ class HealthAndMedicationExceptionHandler {
   fun handleDownstreamServiceException(e: DownstreamServiceException): ResponseEntity<ErrorResponse> {
     val cause = e.cause
     return if (cause is WebClientResponseException && cause.statusCode == LOCKED) {
-      log.warn("Resource locked: {}", e.message, e)
+      log.warn("Resource locked: ${e.message}")
       ResponseEntity
         .status(LOCKED)
         .body(
