@@ -30,7 +30,7 @@ generic-service:
       CLIENT_ID: "CLIENT_ID"
       CLIENT_SECRET: "CLIENT_SECRET"
 
-    application-insights:
+    hmpps-health-and-medication-api-application-insights:
       APPLICATIONINSIGHTS_CONNECTION_STRING: "APPLICATIONINSIGHTS_CONNECTION_STRING"
 
     rds-postgresql-instance-output:
