@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 class OpenApiConfiguration(
   buildProperties: BuildProperties,
-  @Value("\${api.hmpps-auth.base-url}") val oauthUrl: String,
+  @param:Value("\${api.hmpps-auth.base-url}") val oauthUrl: String,
 ) {
   private val version: String = buildProperties.version
 

@@ -21,16 +21,16 @@ import java.time.Duration
 
 @Configuration
 class WebClientConfiguration(
-  @Value("\${api.hmpps-auth.base-url}") private val hmppsAuthBaseUri: String,
-  @Value("\${api.hmpps-auth.health-timeout:20s}") private val hmppsAuthHealthTimeout: Duration,
+  @param:Value("\${api.hmpps-auth.base-url}") private val hmppsAuthBaseUri: String,
+  @param:Value("\${api.hmpps-auth.health-timeout:20s}") private val hmppsAuthHealthTimeout: Duration,
 
-  @Value("\${api.prisoner-search.base-url}") private val prisonerSearchBaseUri: String,
-  @Value("\${api.prisoner-search.timeout:30s}") private val prisonerSearchTimeout: Duration,
-  @Value("\${api.prisoner-search.health-timeout:20s}") private val prisonerSearchHealthTimeout: Duration,
+  @param:Value("\${api.prisoner-search.base-url}") private val prisonerSearchBaseUri: String,
+  @param:Value("\${api.prisoner-search.timeout:30s}") private val prisonerSearchTimeout: Duration,
+  @param:Value("\${api.prisoner-search.health-timeout:20s}") private val prisonerSearchHealthTimeout: Duration,
 
-  @Value("\${api.prison-api.base-url}") private val prisonApiBaseUri: String,
-  @Value("\${api.prison-api.timeout:30s}") private val prisonApiTimeout: Duration,
-  @Value("\${api.prison-api.health-timeout:20s}") private val prisonApiHealthTimeout: Duration,
+  @param:Value("\${api.prison-api.base-url}") private val prisonApiBaseUri: String,
+  @param:Value("\${api.prison-api.timeout:30s}") private val prisonApiTimeout: Duration,
+  @param:Value("\${api.prison-api.health-timeout:20s}") private val prisonApiHealthTimeout: Duration,
 ) {
   @Bean
   fun hmppsAuthHealthWebClient(builder: Builder): WebClient = builder.healthWebClient(hmppsAuthBaseUri, hmppsAuthHealthTimeout)
