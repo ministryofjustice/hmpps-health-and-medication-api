@@ -1,7 +1,7 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "8.3.4"
-  kotlin("plugin.spring") version "2.2.0"
-  kotlin("plugin.jpa") version "2.2.0"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "8.3.7"
+  kotlin("plugin.spring") version "2.2.10"
+  kotlin("plugin.jpa") version "2.2.10"
   jacoco
   idea
 }
@@ -18,7 +18,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
   // OpenAPI
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.11")
 
   // UUIDs
   implementation("com.fasterxml.uuid:java-uuid-generator:5.1.0")
@@ -34,7 +34,7 @@ dependencies {
   testImplementation("org.testcontainers:postgresql:1.21.3")
   testImplementation("io.mockk:mockk:1.14.5")
   testImplementation("org.wiremock:wiremock-standalone:3.13.1")
-  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.31") {
+  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.32") {
     exclude(group = "io.swagger.core.v3")
   }
 }
