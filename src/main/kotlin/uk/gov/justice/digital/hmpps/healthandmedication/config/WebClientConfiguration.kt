@@ -3,20 +3,15 @@ package uk.gov.justice.digital.hmpps.healthandmedication.config
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService
-import org.springframework.security.oauth2.client.endpoint.DefaultClientCredentialsTokenResponseClient
-import org.springframework.security.oauth2.client.endpoint.OAuth2ClientCredentialsGrantRequest
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
 import org.springframework.web.context.annotation.RequestScope
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClient.Builder
-import uk.gov.justice.digital.hmpps.personintegrationapi.config.UserEnhancedOAuth2ClientCredentialGrantRequestConverter
 import uk.gov.justice.hmpps.kotlin.auth.authorisedWebClient
 import uk.gov.justice.hmpps.kotlin.auth.healthWebClient
+import uk.gov.justice.hmpps.kotlin.auth.usernameAwareTokenRequestOAuth2AuthorizedClientManager
 import java.time.Duration
 
 @Configuration
@@ -56,31 +51,9 @@ class WebClientConfiguration(
     oAuth2AuthorizedClientService: OAuth2AuthorizedClientService,
     builder: Builder,
   ) = builder.authorisedWebClient(
-    authorizedClientManagerUserEnhanced(clientRegistrationRepository, oAuth2AuthorizedClientService),
+    usernameAwareTokenRequestOAuth2AuthorizedClientManager(clientRegistrationRepository, oAuth2AuthorizedClientService, Duration.ofSeconds(30)),
     "hmpps-health-and-medication-api",
     prisonApiBaseUri,
     prisonApiTimeout,
   )
-
-  private fun authorizedClientManagerUserEnhanced(clients: ClientRegistrationRepository?, clientService: OAuth2AuthorizedClientService): OAuth2AuthorizedClientManager {
-    val manager = AuthorizedClientServiceOAuth2AuthorizedClientManager(clients, clientService)
-
-    val defaultClientCredentialsTokenResponseClient = DefaultClientCredentialsTokenResponseClient()
-    val authentication = SecurityContextHolder.getContext().authentication
-    defaultClientCredentialsTokenResponseClient.setRequestEntityConverter { grantRequest: OAuth2ClientCredentialsGrantRequest ->
-      val converter = UserEnhancedOAuth2ClientCredentialGrantRequestConverter()
-      converter.enhanceWithUsername(grantRequest, authentication.name)
-    }
-
-    val authorizedClientProvider = OAuth2AuthorizedClientProviderBuilder.builder()
-      .clientCredentials { clientCredentialsGrantBuilder: OAuth2AuthorizedClientProviderBuilder.ClientCredentialsGrantBuilder ->
-        clientCredentialsGrantBuilder.accessTokenResponseClient(
-          defaultClientCredentialsTokenResponseClient,
-        )
-      }
-      .build()
-
-    manager.setAuthorizedClientProvider(authorizedClientProvider)
-    return manager
-  }
 }
