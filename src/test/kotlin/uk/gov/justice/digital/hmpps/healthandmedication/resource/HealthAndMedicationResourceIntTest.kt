@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.healthandmedication.resource
 
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -14,6 +15,7 @@ import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicatio
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField.MEDICAL_DIET
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField.PERSONALISED_DIET
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.healthandmedication.integration.wiremock.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.FoodAllergyHistory
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.JsonObject
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.MedicalDietaryRequirementHistory
@@ -458,6 +460,44 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
           .exchange()
           .expectStatus().isNoContent
       }
+    }
+  }
+
+  @Nested
+  inner class PassUsernameInContextToPrisonApi {
+
+    @BeforeEach
+    fun setup() {
+      HmppsAuthApiExtension.hmppsAuth.resetAll()
+    }
+
+    @Test
+    fun `username is added to the oauth token and cached per user when updating language preferences`() {
+      val listOfTestUsers = listOf("user1", "user2", "user3", "user4")
+      val numberOfRepeatRequestsPerUser = 2
+
+      for (i in 1..numberOfRepeatRequestsPerUser) {
+        for (user in listOfTestUsers) {
+          // The HMPPS Auth Token Endpoint stub will only match a request containing the provided
+          // username in the request body.
+          HmppsAuthApiExtension.hmppsAuth.stubUsernameEnhancedGrantToken(user)
+
+          webTestClient.put().uri("/prisoners/${PRISONER_NUMBER}/smoker")
+            .headers(
+              setAuthorisation(
+                user,
+                roles = listOf("ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RW"),
+              ),
+            )
+            .header("Content-Type", "application/json")
+            .bodyValue(VALID_SMOKER_STATUS_REQUEST)
+            .exchange()
+            .expectStatus().isNoContent
+        }
+      }
+
+      // There should be one request to the token endpoint for each unique user.
+      HmppsAuthApiExtension.hmppsAuth.assertNumberStubGrantTokenCalls(listOfTestUsers.size)
     }
   }
 
