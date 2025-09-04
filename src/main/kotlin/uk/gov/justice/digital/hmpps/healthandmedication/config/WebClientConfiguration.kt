@@ -51,7 +51,7 @@ class WebClientConfiguration(
     oAuth2AuthorizedClientService: OAuth2AuthorizedClientService,
     builder: Builder,
   ) = builder.authorisedWebClient(
-    usernameAwareTokenRequestOAuth2AuthorizedClientManager(clientRegistrationRepository, oAuth2AuthorizedClientService, Duration.ofSeconds(30)),
+    usernameAwareTokenRequestOAuth2AuthorizedClientManager(clientRegistrationRepository, oAuth2AuthorizedClientService),
     "hmpps-health-and-medication-api",
     prisonApiBaseUri,
     prisonApiTimeout,
