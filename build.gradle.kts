@@ -34,7 +34,7 @@ dependencies {
   testImplementation("org.testcontainers:postgresql:1.21.3")
   testImplementation("io.mockk:mockk:1.14.5")
   testImplementation("org.wiremock:wiremock-standalone:3.13.1")
-  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.33") {
+  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.34") {
     exclude(group = "io.swagger.core.v3")
   }
 }
