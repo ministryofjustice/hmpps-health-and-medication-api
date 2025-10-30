@@ -32,7 +32,7 @@ services:
       - APPLICATION_AUTHENTICATION_UI_ALLOWLIST=0.0.0.0/0
 
   health-and-medication-data-db:
-    image: postgres
+    image: postgres:16
     networks:
       - hmpps
     container_name: health-and-medication-data-db
@@ -44,5 +44,6 @@ services:
       - POSTGRES_USER=health-and-medication-data
       - POSTGRES_DB=health-and-medication-data
       - TZ="Europe/London"
+
 networks:
   hmpps:

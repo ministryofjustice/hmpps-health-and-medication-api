@@ -6,8 +6,9 @@ spring:
   application:
     name: hmpps-health-and-medication-api
 
-  codec:
-    max-in-memory-size: 10MB
+  http:
+    codecs:
+      max-in-memory-size: 10MB
 
   jackson:
     date-format: "yyyy-MM-dd'T'HH:mm:ssZ"
