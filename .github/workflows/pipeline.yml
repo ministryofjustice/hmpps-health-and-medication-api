@@ -33,24 +33,30 @@ jobs:
   helm_lint:
     strategy:
       matrix:
-        environments: [ 'development', 'preprod', 'production' ]
+        environments: ['development', 'preprod', 'production']
     name: helm lint
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/test_helm_lint.yml@v2 # WORKFLOW VERSION
     secrets: inherit
     with:
       environment: ${{ matrix.environments }}
 
-  kotlin_validate:
+  gradle-verify:
     name: Validate the kotlin
-    uses: ministryofjustice/hmpps-github-actions/.github/workflows/gradle_verify.yml@v2 # WORKFLOW_VERSION
+    uses: ministryofjustice/hmpps-github-actions/.github/workflows/gradle_postgres_verify.yml@v2 # WORKFLOW_VERSION
     secrets: inherit
+    with:
+      java-version: '25'
+      postgres-tag: '16'
+      postgres-db: 'health-and-medication-data'
+      postgres-username: 'health-and-medication-data'
+      postgres-password: 'health-and-medication-data'
 
   build:
     name: Build docker image from hmpps-github-actions
     if: github.ref == 'refs/heads/main'
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/docker_build.yml@v2 # WORKFLOW_VERSION
     needs:
-      - kotlin_validate
+      - gradle-verify
     with:
       docker_registry: 'ghcr.io'
       registry_org: 'ministryofjustice'
@@ -60,6 +66,7 @@ jobs:
 
   deploy_dev:
     name: Deploy to the development environment
+    if: github.ref == 'refs/heads/main'
     needs:
       - build
       - helm_lint
@@ -68,25 +75,30 @@ jobs:
     with:
       environment: 'development'
       app_version: '${{ needs.build.outputs.app_version }}'
+      helm_timeout: '5m'
 
   deploy_preprod:
     name: Deploy to pre-production environment
     needs:
       - build
+      - helm_lint
       - deploy_dev
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/deploy_env.yml@v2 # WORKFLOW_VERSION
     secrets: inherit
     with:
       environment: 'preprod'
       app_version: '${{ needs.build.outputs.app_version }}'
+      helm_timeout: '5m'
 
   deploy_prod:
     name: Deploy to production environment
     needs:
       - build
+      - helm_lint
       - deploy_preprod
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/deploy_env.yml@v2 # WORKFLOW_VERSION
     secrets: inherit
     with:
       environment: 'production'
       app_version: '${{ needs.build.outputs.app_version }}'
+      helm_timeout: '5m'

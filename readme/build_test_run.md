@@ -13,7 +13,7 @@ Firstly build the project (without tests) by running:
 
 To rebuild the docker image locally after building the project (perhaps after some new changes), run:
 ```
-docker build -t quay.io/hmpps/hmpps-health-and-medication-api:latest .
+docker build -t ghcr.io/ministryofjustice/hmpps-health-and-medication-api:latest .
 ```
 
 ## Testing
@@ -48,7 +48,7 @@ Run the main class with the following VM options:
 
 ### Running with docker-compose
 ```
-docker-compose up
+docker compose up
 ```
 
 ## Common gradle tasks

@@ -39,14 +39,15 @@ dependencies {
   }
 }
 
-kotlin {
-  jvmToolchain(21)
+java {
+  sourceCompatibility = JavaVersion.VERSION_24
+  targetCompatibility = JavaVersion.VERSION_24
 }
 
 tasks {
   withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     compilerOptions {
-      jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
+      jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_24
       freeCompilerArgs.add("-Xannotation-default-target=param-property")
     }
   }
