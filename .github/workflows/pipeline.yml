@@ -46,7 +46,7 @@ jobs:
     secrets: inherit
     with:
       java-version: '25'
-      postgres-tag: '16'
+      postgres-tag: '17'
       postgres-db: 'health-and-medication-data'
       postgres-username: 'health-and-medication-data'
       postgres-password: 'health-and-medication-data'
