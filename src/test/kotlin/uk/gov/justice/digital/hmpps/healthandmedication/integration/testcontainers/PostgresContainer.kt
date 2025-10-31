@@ -15,7 +15,7 @@ object PostgresContainer {
       return null
     }
     log.info("Creating a Postgres database")
-    return PostgreSQLContainer<Nothing>("postgres:16").apply {
+    return PostgreSQLContainer<Nothing>("postgres:17").apply {
       withEnv("HOSTNAME_EXTERNAL", "localhost")
       withEnv("PORT_EXTERNAL", "5432")
       withDatabaseName("health-and-medication-data")
