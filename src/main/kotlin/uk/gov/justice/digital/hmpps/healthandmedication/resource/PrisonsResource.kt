@@ -9,6 +9,7 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -52,9 +53,36 @@ class PrisonsResource(private val prisonerHealthService: PrisonerHealthService) 
     ],
   )
   fun postHealthAndMedicationData(
-    @Schema(description = "The prisoner number", example = "A1234AA", required = true)
+    @Schema(description = "The prison id", example = "KMI", required = true)
     @PathVariable prisonId: String,
     @Valid @RequestBody request: HealthAndMedicationForPrisonRequest,
   ) = prisonerHealthService.getHealthForPrison(prisonId, request)
     ?: throw HealthAndMedicationDataNotFoundException(prisonId)
+
+  @GetMapping("/filters")
+  @ResponseStatus(HttpStatus.OK)
+  @PreAuthorize("hasRole('ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RO')")
+  @Operation(
+    description = "Requires role `ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RO`",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Returns a list of available filters for health and medication data",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Missing required role. Requires ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RO",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun getFilterOptions(
+    @Schema(description = "The prison id", example = "KMI", required = true)
+    @PathVariable prisonId: String,
+  ) = prisonerHealthService.getHealthFiltersForPrison(prisonId)
 }

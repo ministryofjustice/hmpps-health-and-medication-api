@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.healthandmedication.jpa.FoodAllergy
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.MedicalDietaryRequirement
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PersonalisedDietaryRequirement
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PrisonerHealth
+import uk.gov.justice.digital.hmpps.healthandmedication.jpa.ReferenceDataCode
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.PrisonerHealthRepository
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.ReferenceDataCodeRepository
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.HealthAndMedicationForPrisonRequest
@@ -19,6 +20,8 @@ import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.Pag
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.UpdateDietAndAllergyRequest
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.UpdateSmokerStatusRequest
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.DietAndAllergyResponse
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.HealthAndMedicationFilter
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.HealthAndMedicationFiltersResponse
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.HealthAndMedicationForPrisonDto
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.HealthAndMedicationForPrisonResponse
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.HealthAndMedicationResponse
@@ -102,6 +105,31 @@ class PrisonerHealthService(
     return null
   }
 
+  fun getHealthFiltersForPrison(prisonId: String): HealthAndMedicationFiltersResponse {
+    val prisoners = prisonerSearchClient.getPrisonersForPrison(prisonId)
+
+    if (!prisoners.isNullOrEmpty()) {
+      val prisonerNumbers = prisoners.map { it.prisonerNumber }.toMutableList()
+      val healthData = prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(prisonerNumbers)
+
+      return HealthAndMedicationFiltersResponse(
+        foodAllergy = calculateFiltersFromReferenceData(healthData, { it.foodAllergies }, { it.allergy }),
+        personalisedDiet = calculateFiltersFromReferenceData(
+          healthData,
+          { it.personalisedDietaryRequirements },
+          { it.dietaryRequirement },
+        ),
+        medicalDiet = calculateFiltersFromReferenceData(
+          healthData,
+          { it.medicalDietaryRequirements },
+          { it.dietaryRequirement },
+        ),
+      )
+    }
+
+    return HealthAndMedicationFiltersResponse()
+  }
+
   @Transactional
   fun updateDietAndAllergyData(
     prisonerNumber: String,
@@ -167,5 +195,21 @@ class PrisonerHealthService(
   private fun newHealthFor(prisonerNumber: String): PrisonerHealth {
     validatePrisonerNumber(prisonerSearchClient, prisonerNumber)
     return PrisonerHealth(prisonerNumber)
+  }
+
+  private fun <T> calculateFiltersFromReferenceData(
+    data: List<PrisonerHealth>,
+    categoryMapper: (PrisonerHealth) -> Iterable<T>,
+    itemMapper: (T) -> ReferenceDataCode,
+  ): List<HealthAndMedicationFilter> = data.flatMap(categoryMapper)
+    .groupingBy(itemMapper)
+    .eachCount()
+    .map { HealthAndMedicationFilter(getDescription(it.key), it.key.id, it.value) }
+
+  private fun getDescription(referenceDataCode: ReferenceDataCode): String = when (referenceDataCode.id) {
+    "FOOD_ALLERGY_OTHER" -> "Other food allergy"
+    "PERSONALISED_DIET_OTHER" -> "Other personalised diet"
+    "MEDICAL_DIET_OTHER" -> "Other medical diet"
+    else -> referenceDataCode.description
   }
 }

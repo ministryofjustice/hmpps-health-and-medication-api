@@ -51,6 +51,8 @@ import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.Ref
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.UpdateDietAndAllergyRequest
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.UpdateSmokerStatusRequest
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.DietAndAllergyResponse
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.HealthAndMedicationFilter
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.HealthAndMedicationFiltersResponse
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.HealthAndMedicationForPrisonDto
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.HealthAndMedicationForPrisonResponse
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.HealthAndMedicationResponse
@@ -91,11 +93,11 @@ class PrisonerHealthServiceTest {
   fun beforeEach() {
     whenever(authenticationFacade.getUserOrSystemInContext()).thenReturn(USER1)
     whenever(referenceDataCodeRepository.findById(SMOKER_CODE.id)).thenReturn(Optional.of(SMOKER_CODE))
-    whenever(referenceDataCodeRepository.findById(FOOD_ALLERGY_CODE.id)).thenReturn(Optional.of(FOOD_ALLERGY_CODE))
-    whenever(referenceDataCodeRepository.findById(MEDICAL_DIET_CODE.id)).thenReturn(Optional.of(MEDICAL_DIET_CODE))
-    whenever(referenceDataCodeRepository.findById(PERSONALISED_DIET_CODE.id)).thenReturn(
+    whenever(referenceDataCodeRepository.findById(FOOD_ALLERGY_PEANUTS_CODE.id)).thenReturn(Optional.of(FOOD_ALLERGY_PEANUTS_CODE))
+    whenever(referenceDataCodeRepository.findById(MEDICAL_DIET_COELIAC_CODE.id)).thenReturn(Optional.of(MEDICAL_DIET_COELIAC_CODE))
+    whenever(referenceDataCodeRepository.findById(PERSONALISED_DIET_VEGAN_CODE.id)).thenReturn(
       Optional.of(
-        PERSONALISED_DIET_CODE,
+        PERSONALISED_DIET_VEGAN_CODE,
       ),
     )
   }
@@ -116,9 +118,9 @@ class PrisonerHealthServiceTest {
         Optional.of(
           PrisonerHealth(
             prisonerNumber = PRISONER_NUMBER,
-            foodAllergies = mutableSetOf(FOOD_ALLERGY_DBO),
-            medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_DBO),
-            personalisedDietaryRequirements = mutableSetOf(PERSONALISED_DIET_DBO),
+            foodAllergies = mutableSetOf(FOOD_ALLERGY_PEANUTS),
+            medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_COELIAC),
+            personalisedDietaryRequirements = mutableSetOf(PERSONALISED_DIET_VEGAN),
 
             fieldMetadata = mutableMapOf(
               FOOD_ALLERGY to FieldMetadata(
@@ -156,9 +158,9 @@ class PrisonerHealthServiceTest {
               listOf(
                 ReferenceDataSelection(
                   ReferenceDataValue(
-                    id = FOOD_ALLERGY_CODE.id,
-                    code = FOOD_ALLERGY_CODE.code,
-                    description = FOOD_ALLERGY_CODE.description,
+                    id = FOOD_ALLERGY_PEANUTS_CODE.id,
+                    code = FOOD_ALLERGY_PEANUTS_CODE.code,
+                    description = FOOD_ALLERGY_PEANUTS_CODE.description,
                   ),
                 ),
               ),
@@ -170,9 +172,9 @@ class PrisonerHealthServiceTest {
               listOf(
                 ReferenceDataSelection(
                   ReferenceDataValue(
-                    id = MEDICAL_DIET_CODE.id,
-                    code = MEDICAL_DIET_CODE.code,
-                    description = MEDICAL_DIET_CODE.description,
+                    id = MEDICAL_DIET_COELIAC_CODE.id,
+                    code = MEDICAL_DIET_COELIAC_CODE.code,
+                    description = MEDICAL_DIET_COELIAC_CODE.description,
                   ),
                 ),
               ),
@@ -184,9 +186,9 @@ class PrisonerHealthServiceTest {
               listOf(
                 ReferenceDataSelection(
                   ReferenceDataValue(
-                    id = PERSONALISED_DIET_CODE.id,
-                    code = PERSONALISED_DIET_CODE.code,
-                    description = PERSONALISED_DIET_CODE.description,
+                    id = PERSONALISED_DIET_VEGAN_CODE.id,
+                    code = PERSONALISED_DIET_VEGAN_CODE.code,
+                    description = PERSONALISED_DIET_VEGAN_CODE.description,
                   ),
                 ),
               ),
@@ -223,19 +225,19 @@ class PrisonerHealthServiceTest {
       ).isEqualTo(
         DietAndAllergyResponse(
           foodAllergies = ValueWithMetadata(
-            listOf(ReferenceDataSelection(FOOD_ALLERGY_CODE.toSimpleDto())),
+            listOf(ReferenceDataSelection(FOOD_ALLERGY_PEANUTS_CODE.toSimpleDto())),
             NOW,
             USER1,
             PRISON_ID,
           ),
           medicalDietaryRequirements = ValueWithMetadata(
-            listOf(ReferenceDataSelection(MEDICAL_DIET_CODE.toSimpleDto())),
+            listOf(ReferenceDataSelection(MEDICAL_DIET_COELIAC_CODE.toSimpleDto())),
             NOW,
             USER1,
             PRISON_ID,
           ),
           personalisedDietaryRequirements = ValueWithMetadata(
-            listOf(ReferenceDataSelection(PERSONALISED_DIET_CODE.toSimpleDto())),
+            listOf(ReferenceDataSelection(PERSONALISED_DIET_VEGAN_CODE.toSimpleDto())),
             NOW,
             USER1,
             PRISON_ID,
@@ -251,9 +253,9 @@ class PrisonerHealthServiceTest {
 
       with(savedPrisonerHealth.firstValue) {
         assertThat(prisonerNumber).isEqualTo(PRISONER_NUMBER)
-        assertThat(foodAllergies).containsAll(listOf(FOOD_ALLERGY_DBO))
-        assertThat(medicalDietaryRequirements).containsAll(listOf(MEDICAL_DIET_DBO))
-        assertThat(personalisedDietaryRequirements).containsAll(listOf(PERSONALISED_DIET_DBO))
+        assertThat(foodAllergies).containsAll(listOf(FOOD_ALLERGY_PEANUTS))
+        assertThat(medicalDietaryRequirements).containsAll(listOf(MEDICAL_DIET_COELIAC))
+        assertThat(personalisedDietaryRequirements).containsAll(listOf(PERSONALISED_DIET_VEGAN))
 
         expectFieldHistory(
           FOOD_ALLERGY,
@@ -261,7 +263,7 @@ class PrisonerHealthServiceTest {
           HistoryComparison(
             value = JsonObject(
               field = FOOD_ALLERGY,
-              value = FoodAllergyHistory(FOOD_ALLERGY_CODE.id),
+              value = FoodAllergyHistory(FOOD_ALLERGY_PEANUTS_CODE.id),
             ),
             createdAt = NOW,
             createdBy = USER1,
@@ -274,7 +276,7 @@ class PrisonerHealthServiceTest {
           HistoryComparison(
             value = JsonObject(
               field = MEDICAL_DIET,
-              value = MedicalDietaryRequirementHistory(MEDICAL_DIET_CODE.id),
+              value = MedicalDietaryRequirementHistory(MEDICAL_DIET_COELIAC_CODE.id),
             ),
             createdAt = NOW,
             createdBy = USER1,
@@ -287,7 +289,7 @@ class PrisonerHealthServiceTest {
           HistoryComparison(
             value = JsonObject(
               field = PERSONALISED_DIET,
-              value = PersonalisedDietaryRequirementHistory(PERSONALISED_DIET_CODE.id),
+              value = PersonalisedDietaryRequirementHistory(PERSONALISED_DIET_VEGAN_CODE.id),
             ),
             createdAt = NOW,
             createdBy = USER1,
@@ -305,9 +307,9 @@ class PrisonerHealthServiceTest {
         Optional.of(
           PrisonerHealth(
             prisonerNumber = PRISONER_NUMBER,
-            foodAllergies = mutableSetOf(FOOD_ALLERGY_DBO),
-            medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_DBO),
-            personalisedDietaryRequirements = mutableSetOf(PERSONALISED_DIET_DBO),
+            foodAllergies = mutableSetOf(FOOD_ALLERGY_PEANUTS),
+            medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_COELIAC),
+            personalisedDietaryRequirements = mutableSetOf(PERSONALISED_DIET_VEGAN),
             cateringInstructions = CateringInstructions(PRISONER_NUMBER, "outdated instructions"),
           ).also {
             it.updateFieldHistory(
@@ -352,7 +354,7 @@ class PrisonerHealthServiceTest {
           firstHistory(
             JsonObject(
               field = FOOD_ALLERGY,
-              value = FoodAllergyHistory(FOOD_ALLERGY_CODE.id),
+              value = FoodAllergyHistory(FOOD_ALLERGY_PEANUTS_CODE.id),
             ),
           ),
           secondHistory(
@@ -369,7 +371,7 @@ class PrisonerHealthServiceTest {
           firstHistory(
             JsonObject(
               field = MEDICAL_DIET,
-              value = MedicalDietaryRequirementHistory(MEDICAL_DIET_CODE.id),
+              value = MedicalDietaryRequirementHistory(MEDICAL_DIET_COELIAC_CODE.id),
             ),
           ),
           secondHistory(
@@ -386,7 +388,7 @@ class PrisonerHealthServiceTest {
           firstHistory(
             JsonObject(
               field = PERSONALISED_DIET,
-              value = PersonalisedDietaryRequirementHistory(PERSONALISED_DIET_CODE.id),
+              value = PersonalisedDietaryRequirementHistory(PERSONALISED_DIET_VEGAN_CODE.id),
             ),
           ),
           secondHistory(
@@ -526,6 +528,92 @@ class PrisonerHealthServiceTest {
   }
 
   @Nested
+  inner class GetHealthFiltersForPrison {
+    @BeforeEach
+    fun beforeEach() {
+      whenever(prisonerSearchClient.getPrisonersForPrison(PRISON_ID))
+        .thenReturn(listOf(PRISONER_SEARCH_RESPONSE))
+    }
+
+    @Test
+    fun `Calculates available filters based on existing health and medication data for prison`() {
+      whenever(
+        prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(
+          mutableListOf(
+            PRISONER_NUMBER,
+          ),
+        ),
+      ).thenReturn(
+        listOf(
+          PRISONER_HEALTH,
+          PrisonerHealth(
+            prisonerNumber = "A1234BB",
+            foodAllergies = mutableSetOf(FOOD_ALLERGY_PEANUTS, FOOD_ALLERGY_OTHER),
+            medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_COELIAC, MEDICAL_DIET_OTHER),
+            personalisedDietaryRequirements = mutableSetOf(PERSONALISED_DIET_VEGAN, PERSONALISED_DIET_OTHER),
+          ),
+        ),
+      )
+
+      assertThat(
+        underTest.getHealthFiltersForPrison(PRISON_ID),
+      ).isEqualTo(
+        HealthAndMedicationFiltersResponse(
+          foodAllergy = listOf(
+            HealthAndMedicationFilter("Peanuts", "FOOD_ALLERGY_PEANUTS", 2),
+            HealthAndMedicationFilter("Other food allergy", "FOOD_ALLERGY_OTHER", 1),
+          ),
+          medicalDiet = listOf(
+            HealthAndMedicationFilter("Coeliac", "MEDICAL_DIET_COELIAC", 2),
+            HealthAndMedicationFilter("Other medical diet", "MEDICAL_DIET_OTHER", 1),
+          ),
+          personalisedDiet = listOf(
+            HealthAndMedicationFilter("Vegan", "PERSONALISED_DIET_VEGAN", 1),
+            HealthAndMedicationFilter("Other personalised diet", "PERSONALISED_DIET_OTHER", 1),
+          ),
+        ),
+      )
+    }
+
+    @Test
+    fun `Returns an empty list when no matching prisoners are found`() {
+      whenever(
+        prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(
+          mutableListOf(
+            PRISONER_NUMBER,
+          ),
+        ),
+      ).thenReturn(emptyList())
+
+      assertThat(
+        underTest.getHealthFiltersForPrison(PRISON_ID),
+      ).isEqualTo(
+        HealthAndMedicationFiltersResponse(
+          foodAllergy = emptyList(),
+          personalisedDiet = emptyList(),
+          medicalDiet = emptyList(),
+        ),
+      )
+    }
+
+    @Test
+    fun `Returns an empty list when no matching prison is found`() {
+      whenever(prisonerSearchClient.getPrisonersForPrison("ABC"))
+        .thenReturn(null)
+
+      assertThat(
+        underTest.getHealthFiltersForPrison("ABC"),
+      ).isEqualTo(
+        HealthAndMedicationFiltersResponse(
+          foodAllergy = emptyList(),
+          personalisedDiet = emptyList(),
+          medicalDiet = emptyList(),
+        ),
+      )
+    }
+  }
+
+  @Nested
   inner class SmokerStatusUpdate {
     @Test
     fun `can update the smoker vaper status`() {
@@ -549,80 +637,89 @@ class PrisonerHealthServiceTest {
 
     val NOW = ZonedDateTime.now()
 
-    val SMOKER_CODE = ReferenceDataCode(
+    private fun referenceDataDomain(code: String, description: String) = ReferenceDataDomain(
+      code = code,
+      createdBy = USER1,
+      createdAt = NOW,
+      listSequence = 0,
+      description = description,
+    )
+
+    private fun referenceDataCode(id: String, code: String, description: String, domain: ReferenceDataDomain) = ReferenceDataCode(
+      id = id,
+      code = code,
+      createdBy = USER1,
+      createdAt = NOW,
+      description = description,
+      listSequence = 1,
+      domain = domain,
+    )
+
+    val SMOKER_CODE = referenceDataCode(
       id = "SMOKER_YES",
       code = "YES",
-      createdBy = USER1,
-      createdAt = NOW,
       description = "Yes, they smoke",
-      listSequence = 1,
-      domain = ReferenceDataDomain(
-        code = "SMOKER",
-        createdBy = USER1,
-        createdAt = NOW,
-        listSequence = 0,
-        description = "Smoker",
-      ),
+      domain = referenceDataDomain("SMOKER", "Smoker"),
     )
 
-    val FOOD_ALLERGY_CODE = ReferenceDataCode(
+    val FOOD_ALLERGY_PEANUTS_CODE = referenceDataCode(
       id = "FOOD_ALLERGY_PEANUTS",
       code = "PEANUTS",
-      createdBy = USER1,
-      createdAt = NOW,
       description = "Peanuts",
-      listSequence = 9,
-      domain = ReferenceDataDomain(
-        code = "FOOD_ALLERGY",
-        createdBy = USER1,
-        createdAt = NOW,
-        listSequence = 0,
-        description = "Food allergy",
-      ),
+      domain = referenceDataDomain("FOOD_ALLERGY", "Food allergy"),
     )
+    val FOOD_ALLERGY_PEANUTS = FoodAllergy(prisonerNumber = PRISONER_NUMBER, allergy = FOOD_ALLERGY_PEANUTS_CODE)
 
-    val FOOD_ALLERGY_DBO = FoodAllergy(prisonerNumber = PRISONER_NUMBER, allergy = FOOD_ALLERGY_CODE)
+    val FOOD_ALLERGY_OTHER_CODE = referenceDataCode(
+      id = "FOOD_ALLERGY_OTHER",
+      code = "OTHER",
+      description = "Other",
+      domain = referenceDataDomain("FOOD_ALLERGY", "Food allergy"),
+    )
+    val FOOD_ALLERGY_OTHER = FoodAllergy(prisonerNumber = PRISONER_NUMBER, allergy = FOOD_ALLERGY_OTHER_CODE)
 
-    val MEDICAL_DIET_CODE = ReferenceDataCode(
+    val MEDICAL_DIET_COELIAC_CODE = referenceDataCode(
       id = "MEDICAL_DIET_COELIAC",
       code = "COELIAC",
-      createdBy = USER1,
-      createdAt = NOW,
       description = "Coeliac",
-      listSequence = 0,
-      domain = ReferenceDataDomain(
-        code = "MEDICAL_DIET",
-        createdBy = USER1,
-        createdAt = NOW,
-        listSequence = 0,
-        description = "Medical diet",
-      ),
+      domain = referenceDataDomain("MEDICAL_DIET", "Medical diet"),
     )
-
-    val MEDICAL_DIET_DBO = MedicalDietaryRequirement(
+    val MEDICAL_DIET_COELIAC = MedicalDietaryRequirement(
       prisonerNumber = PRISONER_NUMBER,
-      dietaryRequirement = MEDICAL_DIET_CODE,
+      dietaryRequirement = MEDICAL_DIET_COELIAC_CODE,
     )
 
-    val PERSONALISED_DIET_CODE = ReferenceDataCode(
+    val MEDICAL_DIET_OTHER_CODE = referenceDataCode(
+      id = "MEDICAL_DIET_OTHER",
+      code = "OTHER",
+      description = "Other",
+      domain = referenceDataDomain("MEDICAL_DIET", "Medical diet"),
+    )
+    val MEDICAL_DIET_OTHER = MedicalDietaryRequirement(
+      prisonerNumber = PRISONER_NUMBER,
+      dietaryRequirement = MEDICAL_DIET_OTHER_CODE,
+    )
+
+    val PERSONALISED_DIET_VEGAN_CODE = referenceDataCode(
       id = "PERSONALISED_DIET_VEGAN",
       code = "VEGAN",
-      createdBy = USER1,
-      createdAt = NOW,
       description = "Vegan",
-      listSequence = 0,
-      domain = ReferenceDataDomain(
-        code = "PERSONALISED_DIET",
-        createdBy = USER1,
-        createdAt = NOW,
-        listSequence = 0,
-        description = "Personalised diet",
-      ),
+      domain = referenceDataDomain("PERSONALISED_DIET", "Personalised diet"),
+    )
+    val PERSONALISED_DIET_VEGAN = PersonalisedDietaryRequirement(
+      prisonerNumber = PRISONER_NUMBER,
+      dietaryRequirement = PERSONALISED_DIET_VEGAN_CODE,
     )
 
-    val PERSONALISED_DIET_DBO = PersonalisedDietaryRequirement(
+    val PERSONALISED_DIET_OTHER_CODE = referenceDataCode(
+      id = "PERSONALISED_DIET_OTHER",
+      code = "OTHER",
+      description = "Other",
+      domain = referenceDataDomain("PERSONALISED_DIET", "Personalised diet"),
+    )
+    val PERSONALISED_DIET_OTHER = PersonalisedDietaryRequirement(
       prisonerNumber = PRISONER_NUMBER,
-      dietaryRequirement = PERSONALISED_DIET_CODE,
+      dietaryRequirement = PERSONALISED_DIET_OTHER_CODE,
     )
 
     val PRISONER_SEARCH_RESPONSE =
@@ -636,9 +733,9 @@ class PrisonerHealthServiceTest {
 
     val DIET_AND_ALLERGY_UPDATE_REQUEST =
       UpdateDietAndAllergyRequest(
-        foodAllergies = listOf(ReferenceDataIdSelection(FOOD_ALLERGY_CODE.id)),
-        medicalDietaryRequirements = listOf(ReferenceDataIdSelection(MEDICAL_DIET_CODE.id)),
-        personalisedDietaryRequirements = listOf(ReferenceDataIdSelection(PERSONALISED_DIET_CODE.id)),
+        foodAllergies = listOf(ReferenceDataIdSelection(FOOD_ALLERGY_PEANUTS_CODE.id)),
+        medicalDietaryRequirements = listOf(ReferenceDataIdSelection(MEDICAL_DIET_COELIAC_CODE.id)),
+        personalisedDietaryRequirements = listOf(ReferenceDataIdSelection(PERSONALISED_DIET_VEGAN_CODE.id)),
         cateringInstructions = "Some catering instructions.",
       )
 
@@ -652,10 +749,10 @@ class PrisonerHealthServiceTest {
     val PRISONER_HEALTH = PrisonerHealth(
       prisonerNumber = PRISONER_NUMBER,
       medicalDietaryRequirements = mutableSetOf(
-        MEDICAL_DIET_DBO,
+        MEDICAL_DIET_COELIAC,
       ),
       foodAllergies = mutableSetOf(
-        FOOD_ALLERGY_DBO,
+        FOOD_ALLERGY_PEANUTS,
       ),
       fieldMetadata = mutableMapOf(
         MEDICAL_DIET to FieldMetadata(
