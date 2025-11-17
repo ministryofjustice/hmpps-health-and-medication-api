@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.InjectMocks
 import org.mockito.Mock
@@ -46,6 +48,7 @@ import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.utils.exp
 import uk.gov.justice.digital.hmpps.healthandmedication.mapper.toSimpleDto
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.ReferenceDataValue
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.HealthAndMedicationForPrisonRequest
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.HealthAndMedicationRequestFilters
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.PageMeta
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.ReferenceDataIdSelection
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.UpdateDietAndAllergyRequest
@@ -62,6 +65,7 @@ import uk.gov.justice.digital.hmpps.healthandmedication.utils.AuthenticationFaca
 import java.time.Clock
 import java.time.ZonedDateTime
 import java.util.Optional
+import java.util.stream.Stream
 
 @ExtendWith(MockitoExtension::class)
 @MockitoSettings(strictness = LENIENT)
@@ -93,8 +97,16 @@ class PrisonerHealthServiceTest {
   fun beforeEach() {
     whenever(authenticationFacade.getUserOrSystemInContext()).thenReturn(USER1)
     whenever(referenceDataCodeRepository.findById(SMOKER_CODE.id)).thenReturn(Optional.of(SMOKER_CODE))
-    whenever(referenceDataCodeRepository.findById(FOOD_ALLERGY_PEANUTS_CODE.id)).thenReturn(Optional.of(FOOD_ALLERGY_PEANUTS_CODE))
-    whenever(referenceDataCodeRepository.findById(MEDICAL_DIET_COELIAC_CODE.id)).thenReturn(Optional.of(MEDICAL_DIET_COELIAC_CODE))
+    whenever(referenceDataCodeRepository.findById(FOOD_ALLERGY_PEANUTS_CODE.id)).thenReturn(
+      Optional.of(
+        FOOD_ALLERGY_PEANUTS_CODE,
+      ),
+    )
+    whenever(referenceDataCodeRepository.findById(MEDICAL_DIET_COELIAC_CODE.id)).thenReturn(
+      Optional.of(
+        MEDICAL_DIET_COELIAC_CODE,
+      ),
+    )
     whenever(referenceDataCodeRepository.findById(PERSONALISED_DIET_VEGAN_CODE.id)).thenReturn(
       Optional.of(
         PERSONALISED_DIET_VEGAN_CODE,
@@ -449,20 +461,56 @@ class PrisonerHealthServiceTest {
 
     @Nested
     inner class PrisonerHealthFetching {
+      private val secondPrisonerNumber = "A1234BB"
+      private val secondPrisonerHealth = PrisonerHealth(
+        prisonerNumber = secondPrisonerNumber,
+        foodAllergies = mutableSetOf(FOOD_ALLERGY_PEANUTS, FOOD_ALLERGY_OTHER),
+        medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_COELIAC, MEDICAL_DIET_OTHER),
+        personalisedDietaryRequirements = mutableSetOf(PERSONALISED_DIET_VEGAN, PERSONALISED_DIET_OTHER),
+      )
+
+      private val firstPrisonerHealthResponse = HealthAndMedicationForPrisonDto(
+        prisonerNumber = PRISONER_NUMBER,
+        firstName = PRISONER_FIRST_NAME,
+        lastName = PRISONER_LAST_NAME,
+        location = PRISONER_LOCATION,
+        health = PRISONER_HEALTH.toHealthDto(),
+      )
+      val secondPrisonerHealthResponse = HealthAndMedicationForPrisonDto(
+        prisonerNumber = secondPrisonerNumber,
+        firstName = PRISONER_FIRST_NAME,
+        lastName = PRISONER_LAST_NAME,
+        location = PRISONER_LOCATION,
+        health = secondPrisonerHealth.toHealthDto(),
+      )
+
       @BeforeEach
       fun beforeEach() {
         whenever(prisonerSearchClient.getPrisonersForPrison(PRISON_ID))
-          .thenReturn(listOf(PRISONER_SEARCH_RESPONSE))
+          .thenReturn(
+            listOf(
+              PRISONER_SEARCH_RESPONSE,
+              PrisonerDto(
+                prisonerNumber = secondPrisonerNumber,
+                prisonId = PRISON_ID,
+                firstName = PRISONER_FIRST_NAME,
+                lastName = PRISONER_LAST_NAME,
+                cellLocation = PRISONER_LOCATION,
+              ),
+            ),
+          )
 
         whenever(
           prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(
             mutableListOf(
               PRISONER_NUMBER,
+              secondPrisonerNumber,
             ),
           ),
         ).thenReturn(
           listOf(
             PRISONER_HEALTH,
+            secondPrisonerHealth,
           ),
         )
       }
@@ -473,6 +521,7 @@ class PrisonerHealthServiceTest {
           prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(
             mutableListOf(
               PRISONER_NUMBER,
+              secondPrisonerNumber,
             ),
           ),
         ).thenReturn(emptyList())
@@ -497,32 +546,143 @@ class PrisonerHealthServiceTest {
       }
 
       @Test
-      fun `it fetches the health information for the returned prisoners`() {
+      fun `it fetches the health information for the returned prisoners with no filters specified`() {
         assertThat(
           underTest.getHealthForPrison(PRISON_ID, HealthAndMedicationForPrisonRequest(1, 10)),
         ).isEqualTo(
           HealthAndMedicationForPrisonResponse(
             content = listOf(
-              HealthAndMedicationForPrisonDto(
-                prisonerNumber = PRISONER_NUMBER,
-                firstName = PRISONER_FIRST_NAME,
-                lastName = PRISONER_LAST_NAME,
-                location = PRISONER_LOCATION,
-                health = PRISONER_HEALTH.toHealthDto(),
-              ),
+              firstPrisonerHealthResponse,
+              secondPrisonerHealthResponse,
             ),
             metadata = PageMeta(
               first = true,
               last = true,
-              numberOfElements = 1,
+              numberOfElements = 2,
               offset = 0,
               pageNumber = 1,
               size = 10,
-              totalElements = 1,
+              totalElements = 2,
               totalPages = 1,
             ),
           ),
         )
+      }
+
+      @Test
+      fun `Returns no results if the provided page number is too high`() {
+        assertThat(
+          underTest.getHealthForPrison(PRISON_ID, HealthAndMedicationForPrisonRequest(2, 10)),
+        ).isEqualTo(
+          HealthAndMedicationForPrisonResponse(
+            content = listOf(),
+            metadata = PageMeta(
+              first = false,
+              last = true,
+              numberOfElements = 0,
+              offset = 10,
+              pageNumber = 2,
+              size = 10,
+              totalElements = 2,
+              totalPages = 1,
+            ),
+          ),
+        )
+      }
+
+      @Nested
+      inner class Filtering {
+        @Test
+        fun `it returns an empty response if no filters match`() {
+          assertThat(
+            underTest.getHealthForPrison(
+              PRISON_ID,
+              HealthAndMedicationForPrisonRequest(
+                page = 1,
+                size = 10,
+                filters = HealthAndMedicationRequestFilters(foodAllergies = setOf("NO_MATCH")),
+              ),
+            ),
+          ).isEqualTo(
+            HealthAndMedicationForPrisonResponse(
+              content = listOf(),
+              metadata = PageMeta(
+                first = true,
+                last = true,
+                numberOfElements = 0,
+                offset = 0,
+                pageNumber = 1,
+                size = 10,
+                totalElements = 0,
+                totalPages = 1,
+              ),
+            ),
+          )
+        }
+
+        @ParameterizedTest
+        @MethodSource("uk.gov.justice.digital.hmpps.healthandmedication.service.PrisonerHealthServiceTest#singleHealthAndMedicationFilters")
+        fun `it returns results matching a single provided filter`(filters: HealthAndMedicationRequestFilters) {
+          assertThat(
+            underTest.getHealthForPrison(
+              PRISON_ID,
+              HealthAndMedicationForPrisonRequest(
+                page = 1,
+                size = 10,
+                filters = filters,
+              ),
+            ),
+          ).isEqualTo(
+            HealthAndMedicationForPrisonResponse(
+              content = listOf(secondPrisonerHealthResponse),
+              metadata = PageMeta(
+                first = true,
+                last = true,
+                numberOfElements = 1,
+                offset = 0,
+                pageNumber = 1,
+                size = 10,
+                totalElements = 1,
+                totalPages = 1,
+              ),
+            ),
+          )
+        }
+
+        @Test
+        fun `returns results matching any filter when multiple filters are provided`() {
+          assertThat(
+            underTest.getHealthForPrison(
+              PRISON_ID,
+              HealthAndMedicationForPrisonRequest(
+                page = 1,
+                size = 10,
+                filters = HealthAndMedicationRequestFilters(
+                  foodAllergies = setOf("PEANUTS", "TREE_NUTS"),
+                  personalisedDiet = setOf("KOSHER"),
+                  medicalDiet = setOf("NUTRIENT_DEFICIENCY"),
+                ),
+              ),
+            ),
+          ).isEqualTo(
+            HealthAndMedicationForPrisonResponse(
+              content = listOf(
+                firstPrisonerHealthResponse,
+                secondPrisonerHealthResponse,
+              ),
+              metadata = PageMeta(
+                first = true,
+                last = true,
+                numberOfElements = 2,
+                offset = 0,
+                pageNumber = 1,
+                size = 10,
+                totalElements = 2,
+                totalPages = 1,
+              ),
+            ),
+          )
+        }
       }
     }
   }
@@ -560,16 +720,16 @@ class PrisonerHealthServiceTest {
       ).isEqualTo(
         HealthAndMedicationFiltersResponse(
           foodAllergy = listOf(
-            HealthAndMedicationFilter("Peanuts", "FOOD_ALLERGY_PEANUTS", 2),
-            HealthAndMedicationFilter("Other food allergy", "FOOD_ALLERGY_OTHER", 1),
+            HealthAndMedicationFilter("Peanuts", "PEANUTS", 2),
+            HealthAndMedicationFilter("Other food allergy", "OTHER", 1),
           ),
           medicalDiet = listOf(
-            HealthAndMedicationFilter("Coeliac", "MEDICAL_DIET_COELIAC", 2),
-            HealthAndMedicationFilter("Other medical diet", "MEDICAL_DIET_OTHER", 1),
+            HealthAndMedicationFilter("Coeliac", "COELIAC", 2),
+            HealthAndMedicationFilter("Other medical diet", "OTHER", 1),
           ),
           personalisedDiet = listOf(
-            HealthAndMedicationFilter("Vegan", "PERSONALISED_DIET_VEGAN", 1),
-            HealthAndMedicationFilter("Other personalised diet", "PERSONALISED_DIET_OTHER", 1),
+            HealthAndMedicationFilter("Vegan", "VEGAN", 1),
+            HealthAndMedicationFilter("Other personalised diet", "OTHER", 1),
           ),
         ),
       )
@@ -770,6 +930,13 @@ class PrisonerHealthServiceTest {
           PRISON_ID,
         ),
       ),
+    )
+
+    @JvmStatic
+    fun singleHealthAndMedicationFilters(): Stream<Arguments> = Stream.of(
+      Arguments.of(HealthAndMedicationRequestFilters(foodAllergies = setOf("OTHER"))),
+      Arguments.of(HealthAndMedicationRequestFilters(personalisedDiet = setOf("OTHER"))),
+      Arguments.of(HealthAndMedicationRequestFilters(medicalDiet = setOf("OTHER"))),
     )
   }
 }

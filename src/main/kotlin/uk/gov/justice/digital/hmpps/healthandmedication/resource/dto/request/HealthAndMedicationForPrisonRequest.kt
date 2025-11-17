@@ -33,4 +33,19 @@ data class HealthAndMedicationForPrisonRequest(
 
   @Parameter(description = "The sort to apply to the results", example = "prisonerNumber,desc")
   override val sort: String = "",
+
+  @Parameter(
+    description = "Optional filters to apply to the results. Returned results will match at least one " +
+      "filter, but do not need to match all filters (i.e. filters are applied using OR logic)",
+  )
+  val filters: HealthAndMedicationRequestFilters? = null,
 ) : PagedRequest
+
+data class HealthAndMedicationRequestFilters(
+  @Parameter(description = "Food allergy filters. Should match FOOD_ALLERGY reference data codes")
+  val foodAllergies: Set<String> = emptySet(),
+  @Parameter(description = "Personalised diet filters. Should match PERSONALISED_DIET reference data codes")
+  val personalisedDiet: Set<String> = emptySet(),
+  @Parameter(description = "Medical diet filters. Should match MEDICAL_DIET reference data codes")
+  val medicalDiet: Set<String> = emptySet(),
+)

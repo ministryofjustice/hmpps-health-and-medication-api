@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.healthandmedication.jpa.ReferenceDataCode
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.PrisonerHealthRepository
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.ReferenceDataCodeRepository
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.HealthAndMedicationForPrisonRequest
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.HealthAndMedicationRequestFilters
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.PageMeta
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.UpdateDietAndAllergyRequest
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.UpdateSmokerStatusRequest
@@ -25,6 +26,9 @@ import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.He
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.HealthAndMedicationForPrisonDto
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.HealthAndMedicationForPrisonResponse
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.HealthAndMedicationResponse
+import uk.gov.justice.digital.hmpps.healthandmedication.service.PrisonerHealthService.ReferenceDataCategory.FOOD_ALLERGY
+import uk.gov.justice.digital.hmpps.healthandmedication.service.PrisonerHealthService.ReferenceDataCategory.MEDICAL_DIET
+import uk.gov.justice.digital.hmpps.healthandmedication.service.PrisonerHealthService.ReferenceDataCategory.PERSONALISED_DIET
 import uk.gov.justice.digital.hmpps.healthandmedication.utils.AuthenticationFacade
 import uk.gov.justice.digital.hmpps.healthandmedication.utils.Pagination
 import uk.gov.justice.digital.hmpps.healthandmedication.utils.toReferenceDataCode
@@ -67,22 +71,25 @@ class PrisonerHealthService(
     if (!prisoners.isNullOrEmpty()) {
       val prisonerNumbers = prisoners.map { it.prisonerNumber }.toMutableList()
 
-      // Fetch all non-empty health data for the given prisoner numbers
+      // Fetch all non-empty health data for the given prisoner numbers and apply filtering
       val healthData = prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(prisonerNumbers)
+        .filter { request.filters == null || matchesAnyFilter(it, request.filters) }
 
       // This maintains the order from the prisoner search API so that we're able to have sorting
       val healthForPrison =
-        prisonerNumbers.intersect(healthData.map { it.prisonerNumber }.toSet()).toList().map { prisonerNumber ->
-          val health = healthData.find { it.prisonerNumber == prisonerNumber }!!
-          val prisoner = prisoners.find { prisoner -> prisoner.prisonerNumber == prisonerNumber }!!
-          HealthAndMedicationForPrisonDto(
-            firstName = prisoner.firstName,
-            lastName = prisoner.lastName,
-            location = prisoner.cellLocation,
-            prisonerNumber = prisonerNumber,
-            health = health.toHealthDto(),
-          )
-        }
+        prisonerNumbers.intersect(healthData.map { it.prisonerNumber }.toSet())
+          .toList()
+          .map { prisonerNumber ->
+            val health = healthData.find { it.prisonerNumber == prisonerNumber }!!
+            val prisoner = prisoners.find { prisoner -> prisoner.prisonerNumber == prisonerNumber }!!
+            HealthAndMedicationForPrisonDto(
+              firstName = prisoner.firstName,
+              lastName = prisoner.lastName,
+              location = prisoner.cellLocation,
+              prisonerNumber = prisonerNumber,
+              health = health.toHealthDto(),
+            )
+          }
 
       val (content, metadata) = Pagination.paginateCollection(request.page, request.size, healthForPrison)
 
@@ -113,16 +120,18 @@ class PrisonerHealthService(
       val healthData = prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(prisonerNumbers)
 
       return HealthAndMedicationFiltersResponse(
-        foodAllergy = calculateFiltersFromReferenceData(healthData, { it.foodAllergies }, { it.allergy }),
+        foodAllergy = calculateFiltersFromReferenceData(healthData, { it.foodAllergies }, { it.allergy }, FOOD_ALLERGY),
         personalisedDiet = calculateFiltersFromReferenceData(
           healthData,
           { it.personalisedDietaryRequirements },
           { it.dietaryRequirement },
+          PERSONALISED_DIET,
         ),
         medicalDiet = calculateFiltersFromReferenceData(
           healthData,
           { it.medicalDietaryRequirements },
           { it.dietaryRequirement },
+          MEDICAL_DIET,
         ),
       )
     }
@@ -192,6 +201,13 @@ class PrisonerHealthService(
     prisonApiClient.updateSmokerStatus(prisonerNumber, request.convertToPrisonApiRequest())
   }
 
+  private fun matchesAnyFilter(
+    value: PrisonerHealth,
+    filters: HealthAndMedicationRequestFilters,
+  ): Boolean = value.foodAllergies.any { filters.foodAllergies.contains(it.allergy.code) } ||
+    value.medicalDietaryRequirements.any { filters.medicalDiet.contains(it.dietaryRequirement.code) } ||
+    value.personalisedDietaryRequirements.any { filters.personalisedDiet.contains(it.dietaryRequirement.code) }
+
   private fun newHealthFor(prisonerNumber: String): PrisonerHealth {
     validatePrisonerNumber(prisonerSearchClient, prisonerNumber)
     return PrisonerHealth(prisonerNumber)
@@ -201,15 +217,27 @@ class PrisonerHealthService(
     data: List<PrisonerHealth>,
     categoryMapper: (PrisonerHealth) -> Iterable<T>,
     itemMapper: (T) -> ReferenceDataCode,
+    category: ReferenceDataCategory,
   ): List<HealthAndMedicationFilter> = data.flatMap(categoryMapper)
     .groupingBy(itemMapper)
     .eachCount()
-    .map { HealthAndMedicationFilter(getDescription(it.key), it.key.id, it.value) }
+    .map { HealthAndMedicationFilter(getDescription(it.key, category), it.key.code, it.value) }
 
-  private fun getDescription(referenceDataCode: ReferenceDataCode): String = when (referenceDataCode.id) {
-    "FOOD_ALLERGY_OTHER" -> "Other food allergy"
-    "PERSONALISED_DIET_OTHER" -> "Other personalised diet"
-    "MEDICAL_DIET_OTHER" -> "Other medical diet"
-    else -> referenceDataCode.description
+  private fun getDescription(referenceDataCode: ReferenceDataCode, category: ReferenceDataCategory): String {
+    if (referenceDataCode.code == "OTHER") {
+      return when (category) {
+        FOOD_ALLERGY -> "Other food allergy"
+        PERSONALISED_DIET -> "Other personalised diet"
+        MEDICAL_DIET -> "Other medical diet"
+      }
+    }
+
+    return referenceDataCode.description
+  }
+
+  private enum class ReferenceDataCategory {
+    FOOD_ALLERGY,
+    MEDICAL_DIET,
+    PERSONALISED_DIET,
   }
 }
