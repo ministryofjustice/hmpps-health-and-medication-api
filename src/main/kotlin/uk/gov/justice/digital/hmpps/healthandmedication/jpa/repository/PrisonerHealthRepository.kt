@@ -11,7 +11,7 @@ interface PrisonerHealthRepository : JpaRepository<PrisonerHealth, String> {
     """
     SELECT h FROM PrisonerHealth h
     WHERE h.prisonerNumber IN :prisonerNumbers
-    AND 
+    AND (
         EXISTS (
             SELECT 1 from FoodAllergy fa WHERE fa.prisonerNumber = h.prisonerNumber
         )
@@ -24,6 +24,7 @@ interface PrisonerHealthRepository : JpaRepository<PrisonerHealth, String> {
         OR EXISTS (
             SELECT 1 from CateringInstructions ci WHERE ci.prisonerNumber = h.prisonerNumber
         )
+    )
     """,
   )
   fun findAllPrisonersWithDietaryNeeds(

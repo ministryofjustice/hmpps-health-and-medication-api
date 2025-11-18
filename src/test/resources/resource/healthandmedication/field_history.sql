@@ -9,4 +9,8 @@ VALUES (-201, 'A1234AA', 'FOOD_ALLERGY', null, null,
         '{ "field": "PERSONALISED_DIET", "value": { "personalisedDietaryRequirements": [{ "value": "PERSONALISED_DIET_KOSHER" }]}}',
         '2024-01-02 09:10:11.123', 'USER1', 'STI'),
        (-204, 'A1234AA', 'CATERING_INSTRUCTIONS', null, 'Serve dessert before the main course.',
-        null, '2024-01-02 09:10:11.123', 'USER1', 'STI');
+        null, '2024-01-02 09:10:11.123', 'USER1', 'STI'),
+
+       (-205, 'B1234CC', 'FOOD_ALLERGY', null, null,
+        '{ "field": "FOOD_ALLERGY", "value": { "allergies": [{ "value": "FOOD_ALLERGY_SOYA" }]}}',
+        '2024-01-02 09:10:11.123', 'USER1', 'STI');
