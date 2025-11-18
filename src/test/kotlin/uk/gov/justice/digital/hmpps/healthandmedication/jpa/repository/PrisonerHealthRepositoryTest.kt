@@ -99,6 +99,43 @@ class PrisonerHealthRepositoryTest : RepositoryTest() {
   }
 
   @Test
+  fun `can get health info for specified prisoners`() {
+    val secondPrisonerNumber = "A1234AA"
+    val eggAllergy = generateAllergy("FOOD_ALLERGY_EGG")
+    val milkAllergy = generateAllergy("FOOD_ALLERGY_MILK")
+    val nutrientDeficiency = generateMedicalDietaryRequirement("MEDICAL_DIET_NUTRIENT_DEFICIENCY")
+
+    val firstPrisonerHealth = PrisonerHealth(
+      prisonerNumber = PRISONER_NUMBER,
+      foodAllergies = mutableSetOf(eggAllergy, milkAllergy),
+      medicalDietaryRequirements = mutableSetOf(nutrientDeficiency),
+    )
+    val secondPrisonerHealth = PrisonerHealth(
+      prisonerNumber = secondPrisonerNumber,
+      foodAllergies = mutableSetOf(
+        generateAllergy("FOOD_ALLERGY_MILK", secondPrisonerNumber),
+        generateAllergy("FOOD_ALLERGY_TREE_NUTS", secondPrisonerNumber),
+      ),
+      personalisedDietaryRequirements = mutableSetOf(
+        generatePersonalisedDietaryRequirement("PERSONALISED_DIET_VEGAN", secondPrisonerNumber),
+      ),
+    )
+
+    save(firstPrisonerHealth)
+    save(secondPrisonerHealth)
+
+    val response = repository.findAllPrisonersWithDietaryNeeds(mutableSetOf(PRISONER_NUMBER))
+    assertThat(response.size).isEqualTo(1)
+    assertThat(response[0]).isEqualTo(
+      PrisonerHealth(
+        prisonerNumber = PRISONER_NUMBER,
+        foodAllergies = mutableSetOf(eggAllergy, milkAllergy),
+        medicalDietaryRequirements = mutableSetOf(nutrientDeficiency),
+      ),
+    )
+  }
+
+  @Test
   fun `can test for equality`() {
     val eggAllergy = generateAllergy("FOOD_ALLERGY_EGG")
     val milkAllergy = generateAllergy("FOOD_ALLERGY_MILK")
@@ -159,18 +196,18 @@ class PrisonerHealthRepositoryTest : RepositoryTest() {
     ).isInstanceOf(String::class.java)
   }
 
-  private fun generateAllergy(id: String) = FoodAllergy(
-    prisonerNumber = PRISONER_NUMBER,
+  private fun generateAllergy(id: String, prisonerNumber: String = PRISONER_NUMBER) = FoodAllergy(
+    prisonerNumber = prisonerNumber,
     allergy = toReferenceDataCode(referenceDataCodeRepository, id)!!,
   )
 
-  private fun generateMedicalDietaryRequirement(id: String) = MedicalDietaryRequirement(
-    prisonerNumber = PRISONER_NUMBER,
+  private fun generateMedicalDietaryRequirement(id: String, prisonerNumber: String = PRISONER_NUMBER) = MedicalDietaryRequirement(
+    prisonerNumber = prisonerNumber,
     dietaryRequirement = toReferenceDataCode(referenceDataCodeRepository, id)!!,
   )
 
-  private fun generatePersonalisedDietaryRequirement(id: String) = PersonalisedDietaryRequirement(
-    prisonerNumber = PRISONER_NUMBER,
+  private fun generatePersonalisedDietaryRequirement(id: String, prisonerNumber: String = PRISONER_NUMBER) = PersonalisedDietaryRequirement(
+    prisonerNumber = prisonerNumber,
     dietaryRequirement = toReferenceDataCode(referenceDataCodeRepository, id)!!,
   )
 

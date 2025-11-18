@@ -120,14 +120,14 @@ class PrisonerHealthService(
       val healthData = prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(prisonerNumbers)
 
       return HealthAndMedicationFiltersResponse(
-        foodAllergy = calculateFiltersFromReferenceData(healthData, { it.foodAllergies }, { it.allergy }, FOOD_ALLERGY),
-        personalisedDiet = calculateFiltersFromReferenceData(
+        foodAllergies = calculateFiltersFromReferenceData(healthData, { it.foodAllergies }, { it.allergy }, FOOD_ALLERGY),
+        personalisedDietaryRequirements = calculateFiltersFromReferenceData(
           healthData,
           { it.personalisedDietaryRequirements },
           { it.dietaryRequirement },
           PERSONALISED_DIET,
         ),
-        medicalDiet = calculateFiltersFromReferenceData(
+        medicalDietaryRequirements = calculateFiltersFromReferenceData(
           healthData,
           { it.medicalDietaryRequirements },
           { it.dietaryRequirement },
@@ -205,8 +205,8 @@ class PrisonerHealthService(
     value: PrisonerHealth,
     filters: HealthAndMedicationRequestFilters,
   ): Boolean = value.foodAllergies.any { filters.foodAllergies.contains(it.allergy.code) } ||
-    value.medicalDietaryRequirements.any { filters.medicalDiet.contains(it.dietaryRequirement.code) } ||
-    value.personalisedDietaryRequirements.any { filters.personalisedDiet.contains(it.dietaryRequirement.code) }
+    value.medicalDietaryRequirements.any { filters.medicalDietaryRequirements.contains(it.dietaryRequirement.code) } ||
+    value.personalisedDietaryRequirements.any { filters.personalisedDietaryRequirements.contains(it.dietaryRequirement.code) }
 
   private fun newHealthFor(prisonerNumber: String): PrisonerHealth {
     validatePrisonerNumber(prisonerSearchClient, prisonerNumber)

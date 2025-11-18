@@ -659,8 +659,8 @@ class PrisonerHealthServiceTest {
                 size = 10,
                 filters = HealthAndMedicationRequestFilters(
                   foodAllergies = setOf("PEANUTS", "TREE_NUTS"),
-                  personalisedDiet = setOf("KOSHER"),
-                  medicalDiet = setOf("NUTRIENT_DEFICIENCY"),
+                  personalisedDietaryRequirements = setOf("KOSHER"),
+                  medicalDietaryRequirements = setOf("NUTRIENT_DEFICIENCY"),
                 ),
               ),
             ),
@@ -719,15 +719,15 @@ class PrisonerHealthServiceTest {
         underTest.getHealthFiltersForPrison(PRISON_ID),
       ).isEqualTo(
         HealthAndMedicationFiltersResponse(
-          foodAllergy = listOf(
+          foodAllergies = listOf(
             HealthAndMedicationFilter("Peanuts", "PEANUTS", 2),
             HealthAndMedicationFilter("Other food allergy", "OTHER", 1),
           ),
-          medicalDiet = listOf(
+          medicalDietaryRequirements = listOf(
             HealthAndMedicationFilter("Coeliac", "COELIAC", 2),
             HealthAndMedicationFilter("Other medical diet", "OTHER", 1),
           ),
-          personalisedDiet = listOf(
+          personalisedDietaryRequirements = listOf(
             HealthAndMedicationFilter("Vegan", "VEGAN", 1),
             HealthAndMedicationFilter("Other personalised diet", "OTHER", 1),
           ),
@@ -749,9 +749,9 @@ class PrisonerHealthServiceTest {
         underTest.getHealthFiltersForPrison(PRISON_ID),
       ).isEqualTo(
         HealthAndMedicationFiltersResponse(
-          foodAllergy = emptyList(),
-          personalisedDiet = emptyList(),
-          medicalDiet = emptyList(),
+          foodAllergies = emptyList(),
+          personalisedDietaryRequirements = emptyList(),
+          medicalDietaryRequirements = emptyList(),
         ),
       )
     }
@@ -765,9 +765,9 @@ class PrisonerHealthServiceTest {
         underTest.getHealthFiltersForPrison("ABC"),
       ).isEqualTo(
         HealthAndMedicationFiltersResponse(
-          foodAllergy = emptyList(),
-          personalisedDiet = emptyList(),
-          medicalDiet = emptyList(),
+          foodAllergies = emptyList(),
+          personalisedDietaryRequirements = emptyList(),
+          medicalDietaryRequirements = emptyList(),
         ),
       )
     }
@@ -935,8 +935,8 @@ class PrisonerHealthServiceTest {
     @JvmStatic
     fun singleHealthAndMedicationFilters(): Stream<Arguments> = Stream.of(
       Arguments.of(HealthAndMedicationRequestFilters(foodAllergies = setOf("OTHER"))),
-      Arguments.of(HealthAndMedicationRequestFilters(personalisedDiet = setOf("OTHER"))),
-      Arguments.of(HealthAndMedicationRequestFilters(medicalDiet = setOf("OTHER"))),
+      Arguments.of(HealthAndMedicationRequestFilters(personalisedDietaryRequirements = setOf("OTHER"))),
+      Arguments.of(HealthAndMedicationRequestFilters(medicalDietaryRequirements = setOf("OTHER"))),
     )
   }
 }
