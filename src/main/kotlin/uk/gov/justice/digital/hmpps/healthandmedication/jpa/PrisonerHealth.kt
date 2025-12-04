@@ -46,6 +46,10 @@ class PrisonerHealth(
   @JoinColumn(name = "prisoner_number", referencedColumnName = "prisoner_number")
   var cateringInstructions: CateringInstructions? = null,
 
+  @OneToOne(cascade = [ALL], orphanRemoval = true)
+  @JoinColumn(name = "prisoner_number", referencedColumnName = "prisoner_number")
+  var location: PrisonerLocation? = null,
+
   // Stores snapshots of each update to a prisoner's health information
   @OneToMany(mappedBy = "prisonerNumber", fetch = LAZY, cascade = [ALL], orphanRemoval = true)
   @SortNatural
@@ -143,6 +147,8 @@ class PrisonerHealth(
     if (foodAllergies != other.foodAllergies) return false
     if (medicalDietaryRequirements != other.medicalDietaryRequirements) return false
     if (personalisedDietaryRequirements != other.personalisedDietaryRequirements) return false
+    if (cateringInstructions != other.cateringInstructions) return false
+    if (location != other.location) return false
 
     return true
   }
@@ -152,6 +158,8 @@ class PrisonerHealth(
     result = 31 * result + foodAllergies.hashCode()
     result = 31 * result + medicalDietaryRequirements.hashCode()
     result = 31 * result + personalisedDietaryRequirements.hashCode()
+    result = 31 * result + cateringInstructions.hashCode()
+    result = 31 * result + location.hashCode()
     return result
   }
 

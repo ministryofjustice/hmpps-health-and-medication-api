@@ -12,6 +12,7 @@ generic-service:
     API_HMPPS_AUTH_BASE_URL: "https://sign-in-preprod.hmpps.service.justice.gov.uk/auth"
     API_PRISONER_SEARCH_BASE_URL: "https://prisoner-search-preprod.prison.service.justice.gov.uk"
     API_PRISON_API_BASE_URL: "https://prison-api-preprod.prison.service.justice.gov.uk"
+    HMPPS_SQS_ENABLED: false
 
 # CloudPlatform AlertManager receiver to route prometheus alerts to slack
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts

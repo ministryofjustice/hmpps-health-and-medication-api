@@ -9,6 +9,7 @@ generic-service:
     API_HMPPS_AUTH_BASE_URL: "https://sign-in.hmpps.service.justice.gov.uk/auth"
     API_PRISONER_SEARCH_BASE_URL: "https://prisoner-search.prison.service.justice.gov.uk"
     API_PRISON_API_BASE_URL: "https://prison-api.prison.service.justice.gov.uk"
+    HMPPS_SQS_ENABLED: false
 
   postgresDatabaseRestore:
     enabled: true

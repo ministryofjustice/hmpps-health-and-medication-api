@@ -46,12 +46,23 @@ class WebClientConfiguration(
 
   @Bean
   @RequestScope
-  fun prisonApiWebClient(
+  fun usernameAwarePrisonApiWebClient(
     clientRegistrationRepository: ClientRegistrationRepository,
     oAuth2AuthorizedClientService: OAuth2AuthorizedClientService,
     builder: Builder,
   ) = builder.authorisedWebClient(
     usernameAwareTokenRequestOAuth2AuthorizedClientManager(clientRegistrationRepository, oAuth2AuthorizedClientService),
+    "hmpps-health-and-medication-api",
+    prisonApiBaseUri,
+    prisonApiTimeout,
+  )
+
+  @Bean
+  fun prisonApiWebClient(
+    authorizedClientManager: OAuth2AuthorizedClientManager,
+    builder: Builder,
+  ) = builder.authorisedWebClient(
+    authorizedClientManager,
     "hmpps-health-and-medication-api",
     prisonApiBaseUri,
     prisonApiTimeout,

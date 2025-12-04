@@ -28,3 +28,24 @@ spring:
 database:
   username: health-and-medication-data
   password: health-and-medication-data
+
+hmpps.sqs:
+  enabled: true
+  provider: localstack
+  queues:
+    hmppsdomaineventsqueue:
+      queueName: ${random.uuid}
+      dlqName: ${random.uuid}
+      subscribeTopicId: hmppseventtopic
+      subscribeFilter: >
+        {
+          "eventType": [
+            "prisoner-offender-search.prisoner.received",
+            "prisoner-offender-search.prisoner.released",
+            "prison-offender-events.prisoner.merged",
+            "prison-offender-events.prisoner.cell.move"
+          ]
+        }
+  topics:
+    hmppseventtopic:
+      arn: arn:aws:sns:eu-west-2:000000000000:${random.uuid}

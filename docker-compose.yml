@@ -44,5 +44,19 @@ services:
       - POSTGRES_DB=health-and-medication-data
       - TZ="Europe/London"
 
+  localstack:
+    image: localstack/localstack:4
+    networks:
+      - hmpps
+    container_name: localstack
+    ports:
+      - "4567:4566"
+    environment:
+      - SERVICES=sqs,sns
+      - DEBUG=${DEBUG-}
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
 networks:
   hmpps:

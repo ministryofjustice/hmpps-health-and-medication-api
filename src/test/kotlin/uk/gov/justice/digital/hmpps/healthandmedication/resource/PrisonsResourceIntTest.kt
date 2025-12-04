@@ -3,10 +3,10 @@ package uk.gov.justice.digital.hmpps.healthandmedication.resource
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.wiremock.PRISON_ID
+import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.utils.RepopulateDb
 
 class PrisonsResourceIntTest : IntegrationTestBase() {
 
@@ -47,13 +47,7 @@ class PrisonsResourceIntTest : IntegrationTestBase() {
     @Nested
     inner class HappyPath {
       @Test
-      @Sql("classpath:jpa/repository/reset.sql")
-      @Sql("classpath:resource/healthandmedication/health.sql")
-      @Sql("classpath:resource/healthandmedication/food_allergies.sql")
-      @Sql("classpath:resource/healthandmedication/medical_dietary_requirements.sql")
-      @Sql("classpath:resource/healthandmedication/personalised_dietary_requirements.sql")
-      @Sql("classpath:resource/healthandmedication/field_metadata.sql")
-      @Sql("classpath:resource/healthandmedication/field_history.sql")
+      @RepopulateDb
       fun `can get available filters and counts`() {
         val response = getAvailableFilters()
 
@@ -136,13 +130,7 @@ class PrisonsResourceIntTest : IntegrationTestBase() {
     @Nested
     inner class HappyPath {
       @Test
-      @Sql("classpath:jpa/repository/reset.sql")
-      @Sql("classpath:resource/healthandmedication/health.sql")
-      @Sql("classpath:resource/healthandmedication/food_allergies.sql")
-      @Sql("classpath:resource/healthandmedication/medical_dietary_requirements.sql")
-      @Sql("classpath:resource/healthandmedication/personalised_dietary_requirements.sql")
-      @Sql("classpath:resource/healthandmedication/field_metadata.sql")
-      @Sql("classpath:resource/healthandmedication/field_history.sql")
+      @RepopulateDb
       fun `can get bulk health data for prison`() {
         val response = getBulkHealthData(BASIC_BULK_HEALTH_REQUEST)
 
@@ -241,13 +229,7 @@ class PrisonsResourceIntTest : IntegrationTestBase() {
       }
 
       @Test
-      @Sql("classpath:jpa/repository/reset.sql")
-      @Sql("classpath:resource/healthandmedication/health.sql")
-      @Sql("classpath:resource/healthandmedication/food_allergies.sql")
-      @Sql("classpath:resource/healthandmedication/medical_dietary_requirements.sql")
-      @Sql("classpath:resource/healthandmedication/personalised_dietary_requirements.sql")
-      @Sql("classpath:resource/healthandmedication/field_metadata.sql")
-      @Sql("classpath:resource/healthandmedication/field_history.sql")
+      @RepopulateDb
       fun `can apply filters`() {
         val response = getBulkHealthData(FILTERED_BULK_HEALTH_REQUEST)
 

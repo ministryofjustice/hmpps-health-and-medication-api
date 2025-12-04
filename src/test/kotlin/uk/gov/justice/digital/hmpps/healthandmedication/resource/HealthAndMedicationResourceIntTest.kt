@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.healthandmedication.jpa.MedicalDietaryRequir
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.MedicalDietaryRequirementItem
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PersonalisedDietaryRequirementHistory
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.utils.HistoryComparison
+import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.utils.RepopulateDb
 import java.time.Clock
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -221,13 +222,7 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
       }
 
       @Test
-      @Sql("classpath:jpa/repository/reset.sql")
-      @Sql("classpath:resource/healthandmedication/health.sql")
-      @Sql("classpath:resource/healthandmedication/food_allergies.sql")
-      @Sql("classpath:resource/healthandmedication/medical_dietary_requirements.sql")
-      @Sql("classpath:resource/healthandmedication/personalised_dietary_requirements.sql")
-      @Sql("classpath:resource/healthandmedication/field_metadata.sql")
-      @Sql("classpath:resource/healthandmedication/field_history.sql")
+      @RepopulateDb
       fun `can update existing diet and allergy data`() {
         expectFieldHistory(
           FOOD_ALLERGY,
