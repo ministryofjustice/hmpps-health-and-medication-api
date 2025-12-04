@@ -42,6 +42,7 @@ import kotlin.jvm.optionals.getOrNull
 class PrisonerHealthService(
   private val prisonerSearchClient: PrisonerSearchClient,
   private val prisonApiClient: PrisonApiClient,
+  private val prisonerLocationService: PrisonerLocationService,
   private val prisonerHealthRepository: PrisonerHealthRepository,
   private val referenceDataCodeRepository: ReferenceDataCodeRepository,
   private val authenticationFacade: AuthenticationFacade,
@@ -180,8 +181,10 @@ class PrisonerHealthService(
 
       cateringInstructions = request.cateringInstructions?.takeIf { it.isNotBlank() }
         ?.let { CateringInstructions(prisonerNumber, it) }
+
+      location = prisonerLocationService.getLatestLocationData(prisonerNumber)
     }.also {
-      val currentPrisonCode = prisonerSearchClient.getPrisoner(prisonerNumber)?.prisonId
+      val currentPrisonCode = it.location?.prisonId
       it.updateFieldHistory(now, authenticationFacade.getUserOrSystemInContext(), currentPrisonCode!!)
     }
 

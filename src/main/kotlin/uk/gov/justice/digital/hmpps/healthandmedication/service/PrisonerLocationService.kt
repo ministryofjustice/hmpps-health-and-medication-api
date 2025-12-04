@@ -24,6 +24,10 @@ class PrisonerLocationService(
     val prisonerSearchInfo = prisonerSearchClient.getPrisoner(prisonerNumber)
     val topLocationLevel = housingLocation?.levels?.find { it.level == 1 }
 
+    if (housingLocation == null && prisonerSearchInfo == null) {
+      return null
+    }
+
     return PrisonerLocation(
       prisonerNumber = prisonerNumber,
       prisonId = prisonerSearchInfo?.prisonId,
@@ -41,5 +45,7 @@ class PrisonerLocationService(
     }
   }
 
-  private fun buildLocationString(levels: List<HousingLevelDto>?): String? = levels?.sortedBy { it.level }?.joinToString("-") { it.code }?.takeIf { it.isNotBlank() }
+  private fun buildLocationString(levels: List<HousingLevelDto>?): String? = levels?.sortedBy { it.level }
+    ?.joinToString("-") { it.code }
+    ?.takeIf { it.isNotBlank() }
 }

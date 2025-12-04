@@ -91,11 +91,10 @@ class PrisonerLocationServiceTest {
 
     @Test
     fun `no data found in upstream APIs`() {
-      val expected = PrisonerLocation(prisonerNumber = PRISONER_NUMBER)
       whenever(prisonerSearchClient.getPrisoner(PRISONER_NUMBER)).thenReturn(null)
       whenever(prisonApiClient.getHousingLocation(PRISONER_NUMBER)).thenReturn(null)
 
-      assertThat(underTest.getLatestLocationData(PRISONER_NUMBER)).isEqualTo(expected)
+      assertThat(underTest.getLatestLocationData(PRISONER_NUMBER)).isNull()
     }
 
     @Test
