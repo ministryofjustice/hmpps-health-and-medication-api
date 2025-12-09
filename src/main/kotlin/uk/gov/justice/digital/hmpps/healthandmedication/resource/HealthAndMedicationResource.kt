@@ -30,9 +30,9 @@ class HealthAndMedicationResource(private val prisonerHealthService: PrisonerHea
 
   @GetMapping
   @ResponseStatus(HttpStatus.OK)
-  @PreAuthorize("hasRole('ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RO')")
+  @PreAuthorize("hasAnyRole('ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RO', 'ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RW')")
   @Operation(
-    description = "Requires role `ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RO`",
+    description = "Requires role `ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RO` or `ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RW`",
     responses = [
       ApiResponse(
         responseCode = "200",
