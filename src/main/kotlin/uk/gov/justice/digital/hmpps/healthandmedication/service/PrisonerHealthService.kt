@@ -146,6 +146,7 @@ class PrisonerHealthService(
     request: UpdateDietAndAllergyRequest,
   ): DietAndAllergyResponse {
     val now = ZonedDateTime.now(clock)
+    val currentLocation = prisonerLocationService.getLatestLocationData(prisonerNumber)
     val health = prisonerHealthRepository.findById(prisonerNumber).orElseGet {
       newHealthFor(prisonerNumber)
     }.apply {
@@ -182,7 +183,7 @@ class PrisonerHealthService(
       cateringInstructions = request.cateringInstructions?.takeIf { it.isNotBlank() }
         ?.let { CateringInstructions(prisonerNumber, it) }
 
-      location = prisonerLocationService.getLatestLocationData(prisonerNumber)
+      location = currentLocation
     }.also {
       val currentPrisonCode = it.location?.prisonId
       it.updateFieldHistory(now, authenticationFacade.getUserOrSystemInContext(), currentPrisonCode!!)
