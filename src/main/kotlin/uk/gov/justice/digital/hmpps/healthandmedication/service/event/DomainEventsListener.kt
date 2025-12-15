@@ -6,6 +6,7 @@ import io.awspring.cloud.sqs.annotation.SqsListener
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Service
+import uk.gov.justice.digital.hmpps.healthandmedication.service.event.handler.PrisonerCellMoveHandler
 import uk.gov.justice.digital.hmpps.healthandmedication.service.event.handler.PrisonerMergedHandler
 import uk.gov.justice.digital.hmpps.healthandmedication.service.event.handler.PrisonerUpdatedHandler
 
@@ -15,6 +16,7 @@ class DomainEventsListener(
   private val objectMapper: ObjectMapper,
   private val prisonerUpdatedHandler: PrisonerUpdatedHandler,
   private val prisonerMergedHandler: PrisonerMergedHandler,
+  private val prisonerCellMoveHandler: PrisonerCellMoveHandler,
 ) {
   init {
     log.info("Created SQS Domain Events Listener")
@@ -24,7 +26,8 @@ class DomainEventsListener(
   fun receive(notification: Notification) {
     val event = objectMapper.readValue<HmppsDomainEvent>(notification.message)
     when (notification.eventType) {
-      PRISONER_RECEIVED, PRISONER_RELEASED, PRISONER_CELL_MOVE -> prisonerUpdatedHandler.handle(event)
+      PRISONER_RECEIVED, PRISONER_RELEASED -> prisonerUpdatedHandler.handle(event)
+      PRISONER_CELL_MOVE -> prisonerCellMoveHandler.handle(event)
       PRISONER_MERGED -> prisonerMergedHandler.handle(event)
     }
   }

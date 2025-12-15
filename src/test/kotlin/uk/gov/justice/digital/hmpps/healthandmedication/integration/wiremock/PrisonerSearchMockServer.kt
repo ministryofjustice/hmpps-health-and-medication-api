@@ -45,6 +45,7 @@ class PrisonerSearchServer : WireMockServer(WIREMOCK_PORT) {
                 prisonerNumber = prisonNumber,
                 prisonId = PRISON_ID,
                 lastAdmissionDate = LocalDate.parse("2025-11-28"),
+                cellLocation = "E-9-011",
               ),
             ),
           )

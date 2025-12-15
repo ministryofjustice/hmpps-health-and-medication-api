@@ -16,10 +16,7 @@ class PrisonerLocation(
   val prisonId: String? = null,
 
   @Column(name = "l1_location")
-  val topLevelCode: String? = null,
-
-  @Column(name = "l1_description")
-  val topLevelDescription: String? = null,
+  val topLocationLevel: String? = null,
 
   val location: String? = null,
 
@@ -34,8 +31,7 @@ class PrisonerLocation(
 
     if (prisonerNumber != other.prisonerNumber) return false
     if (prisonId != other.prisonId) return false
-    if (topLevelCode != other.topLevelCode) return false
-    if (topLevelDescription != other.topLevelDescription) return false
+    if (topLocationLevel != other.topLocationLevel) return false
     if (location != other.location) return false
     if (lastAdmissionDate != other.lastAdmissionDate) return false
 
@@ -45,10 +41,11 @@ class PrisonerLocation(
   override fun hashCode(): Int {
     var result = prisonerNumber.hashCode()
     result = 31 * result + (prisonId?.hashCode() ?: 0)
-    result = 31 * result + (topLevelCode?.hashCode() ?: 0)
-    result = 31 * result + (topLevelDescription?.hashCode() ?: 0)
+    result = 31 * result + (topLocationLevel?.hashCode() ?: 0)
     result = 31 * result + (location?.hashCode() ?: 0)
     result = 31 * result + (lastAdmissionDate?.hashCode() ?: 0)
     return result
   }
+
+  override fun toString(): String = "PrisonerLocation(prisonerNumber='$prisonerNumber', prisonId=$prisonId, topLocationLevel=$topLocationLevel, location=$location, lastAdmissionDate=$lastAdmissionDate)"
 }

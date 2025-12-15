@@ -8,13 +8,13 @@ import uk.gov.justice.digital.hmpps.healthandmedication.service.event.nomsNumber
 
 @Transactional
 @Service
-class PrisonerUpdatedHandler(private val prisonerLocationService: PrisonerLocationService) {
+class PrisonerCellMoveHandler(private val prisonerLocationService: PrisonerLocationService) {
   fun handle(event: HmppsDomainEvent) {
-    // The prisoner.received and prisoner.released events handled here both originate from Prisoner Search, so the
-    // location information will definitely be indexed there and we don't need to call Prison API.
+    // We cannot rely on Prisoner Search to get the location for the cell.move event, as the new location may not yet be
+    // indexed at the time of processing this event, so we fetch it from Prison API in this instance.
     prisonerLocationService.updateLocationDataToLatest(
       event.additionalInformation.nomsNumber,
-      usePrisonerSearchOnly = true,
+      usePrisonerSearchOnly = false,
     )
   }
 }

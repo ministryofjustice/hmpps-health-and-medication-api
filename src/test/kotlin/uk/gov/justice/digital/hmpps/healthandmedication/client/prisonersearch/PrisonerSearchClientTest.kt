@@ -38,6 +38,7 @@ class PrisonerSearchClientTest {
         prisonerNumber = PRISONER_NUMBER,
         prisonId = PRISON_ID,
         lastAdmissionDate = LocalDate.parse("2025-11-28"),
+        cellLocation = "E-9-011",
       ),
     )
   }

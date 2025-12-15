@@ -5,35 +5,32 @@ import org.awaitility.kotlin.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.awaitility.kotlin.withPollDelay
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ValueSource
+import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.wiremock.PRISONER_NUMBER
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PrisonerLocation
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.utils.RepopulateDb
-import uk.gov.justice.digital.hmpps.healthandmedication.service.event.DomainEventsListener.Companion.PRISONER_RECEIVED
-import uk.gov.justice.digital.hmpps.healthandmedication.service.event.DomainEventsListener.Companion.PRISONER_RELEASED
+import uk.gov.justice.digital.hmpps.healthandmedication.service.event.DomainEventsListener.Companion.PRISONER_CELL_MOVE
 import uk.gov.justice.digital.hmpps.healthandmedication.service.event.PersonReference.Companion.withPrisonNumber
 import java.time.Duration.ofSeconds
 import java.time.LocalDate
 import java.time.ZonedDateTime
 
-class PrisonerUpdatedIntTest : IntegrationTestBase() {
+class PrisonerCellMovedIntTest : IntegrationTestBase() {
 
   companion object {
     private const val PRISONER_NUMBER_NOT_FOUND = "Z9999ZZ"
   }
 
-  @ParameterizedTest(name = "{0}")
-  @ValueSource(strings = [PRISONER_RECEIVED, PRISONER_RELEASED])
-  fun `message ignored if prisoner does not have any existing health and medication data`(eventType: String) {
+  @Test
+  fun `message ignored if prisoner does not have any existing health and medication data`() {
     assertThat(prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(mutableSetOf(PRISONER_NUMBER_NOT_FOUND))).isEmpty()
     assertThat(prisonerLocationRepository.findByPrisonerNumber(PRISONER_NUMBER_NOT_FOUND)).isNull()
 
     sendDomainEvent(
       domainEvent(
         prisonerNumber = PRISONER_NUMBER_NOT_FOUND,
-        eventType = eventType,
+        eventType = PRISONER_CELL_MOVE,
       ),
     )
 
@@ -42,10 +39,9 @@ class PrisonerUpdatedIntTest : IntegrationTestBase() {
     assertThat(prisonerLocationRepository.findByPrisonerNumber(PRISONER_NUMBER_NOT_FOUND)).isNull()
   }
 
-  @ParameterizedTest(name = "{0}")
-  @ValueSource(strings = [PRISONER_RECEIVED, PRISONER_RELEASED])
+  @Test
   @RepopulateDb
-  fun `event causes location data to be updated`(eventType: String) {
+  fun `event causes location data to be updated`() {
     val before = PrisonerLocation(
       prisonerNumber = PRISONER_NUMBER,
       prisonId = "STI",
@@ -66,7 +62,7 @@ class PrisonerUpdatedIntTest : IntegrationTestBase() {
     sendDomainEvent(
       domainEvent(
         prisonerNumber = PRISONER_NUMBER,
-        eventType = eventType,
+        eventType = PRISONER_CELL_MOVE,
       ),
     )
 

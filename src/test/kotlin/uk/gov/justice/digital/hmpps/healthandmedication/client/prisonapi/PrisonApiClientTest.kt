@@ -13,13 +13,13 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.request.PrisonApiSmokerStatus.Y
 import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.request.PrisonApiSmokerStatusUpdate
-import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.response.HousingLevelDto
-import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.response.PrisonerHousingLocationDto
+import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.response.AssignedLivingUnitDto
+import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.response.OffenderDto
 import uk.gov.justice.digital.hmpps.healthandmedication.config.DownstreamServiceException
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.wiremock.PRISONER_NUMBER
-import uk.gov.justice.digital.hmpps.healthandmedication.integration.wiremock.PRISONER_NUMBER_EMPTY_RESPONSE
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.wiremock.PRISONER_NUMBER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.wiremock.PRISONER_NUMBER_THROW_EXCEPTION
+import uk.gov.justice.digital.hmpps.healthandmedication.integration.wiremock.PRISON_ID
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.wiremock.PrisonApiMockServer
 
 class PrisonApiClientTest {
@@ -72,53 +72,46 @@ class PrisonApiClientTest {
   }
 
   @Nested
-  inner class GetHousingLocation {
+  inner class GetOffender {
     @BeforeEach
     fun resetMocks() {
       server.resetRequests()
-      server.stubGetHousingLocation()
+      server.stubGetOffender()
       val webClient = WebClient.create("http://localhost:${server.port()}")
       client = PrisonApiClient(webClient)
     }
 
     @Test
     fun success() {
-      val expected = PrisonerHousingLocationDto(
-        listOf(
-          HousingLevelDto(1, "E", "Wing E"),
-          HousingLevelDto(2, "9", "Block 9"),
-          HousingLevelDto(3, "011", "Cell 011"),
+      val expected = OffenderDto(
+        PRISONER_NUMBER,
+        AssignedLivingUnitDto(
+          PRISON_ID,
+          "MOORLAND CLOSED (HMP & YOI)",
+          "E-9-011",
+          123,
         ),
       )
 
-      val result = client.getHousingLocation(PRISONER_NUMBER)
-
-      assertThat(result).isEqualTo(expected)
-    }
-
-    @Test
-    fun `empty housing location`() {
-      val expected = PrisonerHousingLocationDto(null)
-
-      val result = client.getHousingLocation(PRISONER_NUMBER_EMPTY_RESPONSE)
+      val result = client.getOffender(PRISONER_NUMBER)
 
       assertThat(result).isEqualTo(expected)
     }
 
     @Test
     fun `prisoner not found`() {
-      assertNull(client.getHousingLocation(PRISONER_NUMBER_NOT_FOUND))
+      assertNull(client.getOffender(PRISONER_NUMBER_NOT_FOUND))
     }
 
     @Test
     fun `downstream service exception`() {
       assertThatThrownBy {
-        client.getHousingLocation(PRISONER_NUMBER_THROW_EXCEPTION)
+        client.getOffender(PRISONER_NUMBER_THROW_EXCEPTION)
       }
         .isInstanceOf(DownstreamServiceException::class.java)
-        .hasMessage("Get housing location request failed")
+        .hasMessage("Get offender request failed")
         .hasCauseInstanceOf(WebClientResponseException::class.java)
-        .hasRootCauseMessage("500 Internal Server Error from GET http://localhost:8091/api/offenders/${PRISONER_NUMBER_THROW_EXCEPTION}/housing-location")
+        .hasRootCauseMessage("500 Internal Server Error from GET http://localhost:8091/api/offenders/${PRISONER_NUMBER_THROW_EXCEPTION}")
     }
   }
 

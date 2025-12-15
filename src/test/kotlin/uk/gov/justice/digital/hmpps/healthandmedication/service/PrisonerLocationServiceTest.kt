@@ -2,9 +2,12 @@ package uk.gov.justice.digital.hmpps.healthandmedication.service
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
@@ -16,8 +19,8 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.mockito.quality.Strictness.LENIENT
 import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.PrisonApiClient
-import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.response.HousingLevelDto
-import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.response.PrisonerHousingLocationDto
+import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.response.AssignedLivingUnitDto
+import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.response.OffenderDto
 import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.response.PrisonerDto
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PrisonerHealth
@@ -47,12 +50,14 @@ class PrisonerLocationServiceTest {
 
   @BeforeEach
   fun beforeEach() {
-    whenever(prisonApiClient.getHousingLocation(PRISONER_NUMBER)).thenReturn(
-      PrisonerHousingLocationDto(
-        listOf(
-          HousingLevelDto(3, "014", "Cell 14"),
-          HousingLevelDto(1, "E", "E Wing"),
-          HousingLevelDto(2, "2", "Block 2"),
+    whenever(prisonApiClient.getOffender(PRISONER_NUMBER)).thenReturn(
+      OffenderDto(
+        PRISONER_NUMBER,
+        AssignedLivingUnitDto(
+          agencyId = "STI",
+          agencyName = "STYAL (HMP & YOI)",
+          description = "E-2-014",
+          locationId = 123,
         ),
       ),
     )
@@ -62,7 +67,7 @@ class PrisonerLocationServiceTest {
         prisonId = "STI",
         firstName = "John",
         lastName = "Smith",
-        cellLocation = null,
+        cellLocation = "E-2-014",
         lastAdmissionDate = LocalDate.parse("2025-11-01"),
       ),
     )
@@ -71,20 +76,20 @@ class PrisonerLocationServiceTest {
     )
   }
 
+  @DisplayName("GetLatestLocationData - Prisoner Search Only")
   @Nested
-  inner class GetLatestLocationData {
+  inner class GetLatestLocationDataPrisonerSearchOnly {
     @Test
     fun `should fetch latest location data`() {
       val expected = PrisonerLocation(
         prisonerNumber = PRISONER_NUMBER,
         prisonId = "STI",
-        topLevelCode = "E",
-        topLevelDescription = "E Wing",
+        topLocationLevel = "E",
         location = "E-2-014",
         lastAdmissionDate = LocalDate.parse("2025-11-01"),
       )
 
-      val location = underTest.getLatestLocationData(PRISONER_NUMBER)
+      val location = underTest.getLatestLocationData(PRISONER_NUMBER, usePrisonerSearchOnly = true)
 
       assertThat(location).isEqualTo(expected)
     }
@@ -92,39 +97,30 @@ class PrisonerLocationServiceTest {
     @Test
     fun `no data found in upstream APIs`() {
       whenever(prisonerSearchClient.getPrisoner(PRISONER_NUMBER)).thenReturn(null)
-      whenever(prisonApiClient.getHousingLocation(PRISONER_NUMBER)).thenReturn(null)
+      whenever(prisonApiClient.getOffender(PRISONER_NUMBER)).thenReturn(null)
 
-      assertThat(underTest.getLatestLocationData(PRISONER_NUMBER)).isNull()
-    }
-
-    @Test
-    fun `no data from Prison API`() {
-      val expected = PrisonerLocation(
-        prisonerNumber = PRISONER_NUMBER,
-        prisonId = "STI",
-        lastAdmissionDate = LocalDate.parse("2025-11-01"),
-      )
-      whenever(prisonApiClient.getHousingLocation(PRISONER_NUMBER)).thenReturn(null)
-
-      assertThat(underTest.getLatestLocationData(PRISONER_NUMBER)).isEqualTo(expected)
+      assertThat(underTest.getLatestLocationData(PRISONER_NUMBER, usePrisonerSearchOnly = true)).isNull()
     }
 
     @Test
     fun `no data from Prisoner Search API`() {
-      val expected = PrisonerLocation(
-        prisonerNumber = PRISONER_NUMBER,
-        topLevelCode = "E",
-        topLevelDescription = "E Wing",
-        location = "E-2-014",
-      )
       whenever(prisonerSearchClient.getPrisoner(PRISONER_NUMBER)).thenReturn(null)
 
-      assertThat(underTest.getLatestLocationData(PRISONER_NUMBER)).isEqualTo(expected)
+      assertThat(underTest.getLatestLocationData(PRISONER_NUMBER, usePrisonerSearchOnly = true)).isNull()
     }
 
     @Test
     fun `empty location data`() {
-      whenever(prisonApiClient.getHousingLocation(PRISONER_NUMBER)).thenReturn(PrisonerHousingLocationDto(listOf()))
+      whenever(prisonerSearchClient.getPrisoner(PRISONER_NUMBER)).thenReturn(
+        PrisonerDto(
+          prisonerNumber = PRISONER_NUMBER,
+          prisonId = "STI",
+          firstName = "John",
+          lastName = "Smith",
+          cellLocation = null,
+          lastAdmissionDate = LocalDate.parse("2025-11-01"),
+        ),
+      )
 
       val expected = PrisonerLocation(
         prisonerNumber = PRISONER_NUMBER,
@@ -132,14 +128,84 @@ class PrisonerLocationServiceTest {
         lastAdmissionDate = LocalDate.parse("2025-11-01"),
       )
 
-      val location = underTest.getLatestLocationData(PRISONER_NUMBER)
+      val location = underTest.getLatestLocationData(PRISONER_NUMBER, usePrisonerSearchOnly = true)
 
       assertThat(location).isEqualTo(expected)
     }
 
     @Test
     fun `no location data (prisoner not currently in prison)`() {
-      whenever(prisonApiClient.getHousingLocation(PRISONER_NUMBER)).thenReturn(PrisonerHousingLocationDto(null))
+      whenever(prisonerSearchClient.getPrisoner(PRISONER_NUMBER)).thenReturn(
+        PrisonerDto(
+          prisonerNumber = PRISONER_NUMBER,
+          prisonId = null,
+          firstName = "John",
+          lastName = "Smith",
+          cellLocation = null,
+          lastAdmissionDate = LocalDate.parse("2025-11-01"),
+        ),
+      )
+
+      val expected = PrisonerLocation(
+        prisonerNumber = PRISONER_NUMBER,
+        lastAdmissionDate = LocalDate.parse("2025-11-01"),
+      )
+
+      val location = underTest.getLatestLocationData(PRISONER_NUMBER, usePrisonerSearchOnly = true)
+
+      assertThat(location).isEqualTo(expected)
+    }
+  }
+
+  @DisplayName("GetLatestLocationData - Prisoner Search & Prison API")
+  @Nested
+  inner class GetLatestLocationDataPrisoner {
+    @Test
+    fun `should fetch latest location data`() {
+      val expected = PrisonerLocation(
+        prisonerNumber = PRISONER_NUMBER,
+        prisonId = "STI",
+        topLocationLevel = "E",
+        location = "E-2-014",
+        lastAdmissionDate = LocalDate.parse("2025-11-01"),
+      )
+
+      val location = underTest.getLatestLocationData(PRISONER_NUMBER, usePrisonerSearchOnly = false)
+
+      assertThat(location).isEqualTo(expected)
+    }
+
+    @Test
+    fun `no data from Prisoner Search API`() {
+      whenever(prisonerSearchClient.getPrisoner(PRISONER_NUMBER)).thenReturn(null)
+
+      assertThat(underTest.getLatestLocationData(PRISONER_NUMBER, usePrisonerSearchOnly = false)).isNull()
+    }
+
+    @Test
+    fun `no data from Prison API`() {
+      whenever(prisonApiClient.getOffender(PRISONER_NUMBER)).thenReturn(null)
+      val expected = PrisonerLocation(
+        prisonerNumber = PRISONER_NUMBER,
+        lastAdmissionDate = LocalDate.parse("2025-11-01"),
+      )
+
+      assertThat(underTest.getLatestLocationData(PRISONER_NUMBER, usePrisonerSearchOnly = false)).isEqualTo(expected)
+    }
+
+    @Test
+    fun `empty location data`() {
+      whenever(prisonApiClient.getOffender(PRISONER_NUMBER)).thenReturn(
+        OffenderDto(
+          PRISONER_NUMBER,
+          AssignedLivingUnitDto(
+            agencyId = "STI",
+            agencyName = "STYAL (HMP & YOI)",
+            description = null,
+            locationId = 123,
+          ),
+        ),
+      )
 
       val expected = PrisonerLocation(
         prisonerNumber = PRISONER_NUMBER,
@@ -147,7 +213,26 @@ class PrisonerLocationServiceTest {
         lastAdmissionDate = LocalDate.parse("2025-11-01"),
       )
 
-      val location = underTest.getLatestLocationData(PRISONER_NUMBER)
+      val location = underTest.getLatestLocationData(PRISONER_NUMBER, usePrisonerSearchOnly = false)
+
+      assertThat(location).isEqualTo(expected)
+    }
+
+    @Test
+    fun `no location data (prisoner not currently in prison)`() {
+      whenever(prisonApiClient.getOffender(PRISONER_NUMBER)).thenReturn(
+        OffenderDto(
+          PRISONER_NUMBER,
+          null,
+        ),
+      )
+
+      val expected = PrisonerLocation(
+        prisonerNumber = PRISONER_NUMBER,
+        lastAdmissionDate = LocalDate.parse("2025-11-01"),
+      )
+
+      val location = underTest.getLatestLocationData(PRISONER_NUMBER, usePrisonerSearchOnly = false)
 
       assertThat(location).isEqualTo(expected)
     }
@@ -155,31 +240,32 @@ class PrisonerLocationServiceTest {
 
   @Nested
   inner class UpdateLocationDataToLatest {
-    @Test
-    fun `should be able to fetch and persist latest location data`() {
+    @ParameterizedTest
+    @ValueSource(booleans = [true, false])
+    fun `should be able to fetch and persist latest location data`(usePrisonerSearchOnly: Boolean) {
       val savedLocation = argumentCaptor<PrisonerLocation>()
       whenever(prisonerLocationRepository.save(savedLocation.capture())).thenAnswer { savedLocation.firstValue }
       val expected = PrisonerLocation(
         prisonerNumber = PRISONER_NUMBER,
         prisonId = "STI",
-        topLevelCode = "E",
-        topLevelDescription = "E Wing",
+        topLocationLevel = "E",
         location = "E-2-014",
         lastAdmissionDate = LocalDate.parse("2025-11-01"),
       )
 
-      underTest.updateLocationDataToLatest(PRISONER_NUMBER)
+      underTest.updateLocationDataToLatest(PRISONER_NUMBER, usePrisonerSearchOnly)
 
       assertThat(savedLocation.firstValue).isEqualTo(expected)
     }
 
-    @Test
-    fun `does not persist latest location data if there is no existing health data for the prisoner`() {
+    @ParameterizedTest
+    @ValueSource(booleans = [true, false])
+    fun `does not persist latest location data if there is no existing health data for the prisoner`(usePrisonerSearchOnly: Boolean) {
       whenever(prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(mutableSetOf(PRISONER_NUMBER))).thenReturn(
         listOf(),
       )
 
-      underTest.updateLocationDataToLatest(PRISONER_NUMBER)
+      underTest.updateLocationDataToLatest(PRISONER_NUMBER, usePrisonerSearchOnly)
 
       verify(prisonerLocationRepository, never()).save(any())
     }

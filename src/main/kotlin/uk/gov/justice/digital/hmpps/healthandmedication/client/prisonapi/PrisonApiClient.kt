@@ -3,7 +3,7 @@ package uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
 import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.request.PrisonApiSmokerStatusUpdate
-import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.response.PrisonerHousingLocationDto
+import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.response.OffenderDto
 import uk.gov.justice.digital.hmpps.healthandmedication.config.DownstreamServiceException
 
 class PrisonApiClient(private val webClient: WebClient) {
@@ -19,16 +19,16 @@ class PrisonApiClient(private val webClient: WebClient) {
     throw DownstreamServiceException("Update smoker status request failed", e)
   }
 
-  fun getHousingLocation(offenderNo: String) = try {
+  fun getOffender(offenderNo: String) = try {
     webClient
       .get()
-      .uri("/api/offenders/{offenderNo}/housing-location", offenderNo)
+      .uri("/api/offenders/{offenderNo}", offenderNo)
       .retrieve()
-      .bodyToMono(PrisonerHousingLocationDto::class.java)
+      .bodyToMono(OffenderDto::class.java)
       .block()
   } catch (e: NotFound) {
     null
   } catch (e: Exception) {
-    throw DownstreamServiceException("Get housing location request failed", e)
+    throw DownstreamServiceException("Get offender request failed", e)
   }
 }

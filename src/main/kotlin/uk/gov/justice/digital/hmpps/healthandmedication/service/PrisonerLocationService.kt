@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.PrisonApiClient
-import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.response.HousingLevelDto
 import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PrisonerLocation
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.PrisonerHealthRepository
@@ -19,33 +18,31 @@ class PrisonerLocationService(
   private val prisonerHealthRepository: PrisonerHealthRepository,
 ) {
 
-  fun getLatestLocationData(prisonerNumber: String): PrisonerLocation? {
-    val housingLocation = prisonApiClient.getHousingLocation(prisonerNumber)
-    val prisonerSearchInfo = prisonerSearchClient.getPrisoner(prisonerNumber)
-    val topLocationLevel = housingLocation?.levels?.find { it.level == 1 }
+  fun getLatestLocationData(prisonerNumber: String, usePrisonerSearchOnly: Boolean): PrisonerLocation? {
+    val prisonerSearchInfo = prisonerSearchClient.getPrisoner(prisonerNumber) ?: return null
 
-    if (housingLocation == null && prisonerSearchInfo == null) {
-      return null
+    val (prisonId, location) = if (usePrisonerSearchOnly) {
+      Pair(prisonerSearchInfo.prisonId, prisonerSearchInfo.cellLocation)
+    } else {
+      val offender = prisonApiClient.getOffender(prisonerNumber)
+      Pair(offender?.assignedLivingUnit?.agencyId, offender?.assignedLivingUnit?.description)
     }
 
     return PrisonerLocation(
       prisonerNumber = prisonerNumber,
-      prisonId = prisonerSearchInfo?.prisonId,
-      topLevelCode = topLocationLevel?.code,
-      topLevelDescription = topLocationLevel?.description,
-      location = buildLocationString(housingLocation?.levels),
-      lastAdmissionDate = prisonerSearchInfo?.lastAdmissionDate,
+      prisonId = prisonId,
+      topLocationLevel = getTopLevelLocation(location),
+      location = location,
+      lastAdmissionDate = prisonerSearchInfo.lastAdmissionDate,
     )
   }
 
   @Transactional
-  fun updateLocationDataToLatest(prisonerNumber: String) {
+  fun updateLocationDataToLatest(prisonerNumber: String, usePrisonerSearchOnly: Boolean) {
     if (prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(mutableSetOf(prisonerNumber)).isNotEmpty()) {
-      getLatestLocationData(prisonerNumber)?.let { prisonerLocationRepository.save(it) }
+      getLatestLocationData(prisonerNumber, usePrisonerSearchOnly)?.let { prisonerLocationRepository.save(it) }
     }
   }
 
-  private fun buildLocationString(levels: List<HousingLevelDto>?): String? = levels?.sortedBy { it.level }
-    ?.joinToString("-") { it.code }
-    ?.takeIf { it.isNotBlank() }
+  private fun getTopLevelLocation(location: String?): String? = location?.split("-")?.first()
 }

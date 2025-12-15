@@ -3,7 +3,6 @@ CREATE TABLE prisoner_location
     prisoner_number      VARCHAR(7)    NOT NULL,
     prison_id            VARCHAR(3),
     l1_location          VARCHAR(12),
-    l1_description       VARCHAR(40),
     location             VARCHAR(51),
     last_admission_date  DATE,
 
@@ -17,6 +16,5 @@ COMMENT ON TABLE prisoner_location IS 'The location related information for a pr
 COMMENT ON COLUMN prisoner_location.prisoner_number IS 'The identifier of a prisoner (also often called prison number, NOMS number, offender number...)';
 COMMENT ON COLUMN prisoner_location.prison_id IS 'The identifier for the prison that the prisoner is currently in';
 COMMENT ON COLUMN prisoner_location.l1_location IS 'The level 1 (top level) location code from NOMIS. This is the highest level of the prisoner location hierarchy';
-COMMENT ON COLUMN prisoner_location.l1_description IS 'A description of the level 1 location';
 COMMENT ON COLUMN prisoner_location.location IS 'The full location of the prisoner within the prison';
 COMMENT ON COLUMN prisoner_location.last_admission_date IS 'The most recent prisoner admission date';

@@ -13,8 +13,8 @@ import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.springframework.http.HttpStatus
-import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.response.HousingLevelDto
-import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.response.PrisonerHousingLocationDto
+import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.response.AssignedLivingUnitDto
+import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.response.OffenderDto
 
 internal const val PRISON_API_NOT_FOUND_RESPONSE = """
   {
@@ -53,26 +53,26 @@ class PrisonApiMockServer : WireMockServer(WIREMOCK_PORT) {
     )
   }
 
-  fun stubGetHousingLocation() {
-    val endpoint = "housing-location"
+  fun stubGetOffender() {
     stubOffenderGetEndpoint(
-      endpoint,
+      null,
       HttpStatus.OK,
       PRISONER_NUMBER,
       mapper.writeValueAsString(
-        PrisonerHousingLocationDto(
-          listOf(
-            HousingLevelDto(1, "E", "Wing E"),
-            HousingLevelDto(2, "9", "Block 9"),
-            HousingLevelDto(3, "011", "Cell 011"),
+        OffenderDto(
+          PRISONER_NUMBER,
+          AssignedLivingUnitDto(
+            PRISON_ID,
+            "MOORLAND CLOSED (HMP & YOI)",
+            "E-9-011",
+            123,
           ),
         ),
       ),
     )
-    stubOffenderGetEndpoint(endpoint, HttpStatus.OK, PRISONER_NUMBER_EMPTY_RESPONSE, "{}")
-    stubOffenderGetEndpoint(endpoint, HttpStatus.INTERNAL_SERVER_ERROR, PRISONER_NUMBER_THROW_EXCEPTION)
+    stubOffenderGetEndpoint(null, HttpStatus.INTERNAL_SERVER_ERROR, PRISONER_NUMBER_THROW_EXCEPTION)
     stubOffenderGetEndpoint(
-      endpoint,
+      null,
       HttpStatus.NOT_FOUND,
       PRISONER_NUMBER_NOT_FOUND,
       PRISON_API_NOT_FOUND_RESPONSE.trimIndent(),
@@ -89,9 +89,10 @@ class PrisonApiMockServer : WireMockServer(WIREMOCK_PORT) {
     )
   }
 
-  private fun stubOffenderGetEndpoint(endpoint: String, status: HttpStatus, prisonerNumber: String, body: String? = null) {
+  private fun stubOffenderGetEndpoint(endpoint: String?, status: HttpStatus, prisonerNumber: String, body: String? = null) {
+    val suffix = endpoint?.let { "/$it" } ?: ""
     stubFor(
-      get(urlPathMatching("/api/offenders/$prisonerNumber/$endpoint")).willReturn(
+      get(urlPathMatching("/api/offenders/${prisonerNumber}$suffix")).willReturn(
         aResponse().withHeader("Content-Type", "application/json")
           .withStatus(status.value())
           .withBody(body),
@@ -113,7 +114,7 @@ class PrisonApiExtension :
   override fun beforeEach(context: ExtensionContext) {
     prisonApi.resetAll()
     prisonApi.stubUpdateSmokerStatus()
-    prisonApi.stubGetHousingLocation()
+    prisonApi.stubGetOffender()
   }
 
   override fun afterAll(context: ExtensionContext): Unit = prisonApi.stop()

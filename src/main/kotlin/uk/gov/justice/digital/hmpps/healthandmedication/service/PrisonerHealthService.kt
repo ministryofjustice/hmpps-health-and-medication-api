@@ -146,7 +146,7 @@ class PrisonerHealthService(
     request: UpdateDietAndAllergyRequest,
   ): DietAndAllergyResponse {
     val now = ZonedDateTime.now(clock)
-    val currentLocation = prisonerLocationService.getLatestLocationData(prisonerNumber)
+    val currentLocation = prisonerLocationService.getLatestLocationData(prisonerNumber, usePrisonerSearchOnly = true)
     val health = prisonerHealthRepository.findById(prisonerNumber).orElseGet {
       newHealthFor(prisonerNumber)
     }.apply {

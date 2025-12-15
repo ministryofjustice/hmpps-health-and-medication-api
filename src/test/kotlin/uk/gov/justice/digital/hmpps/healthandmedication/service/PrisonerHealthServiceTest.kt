@@ -224,7 +224,7 @@ class PrisonerHealthServiceTest {
 
     @BeforeEach
     fun beforeEach() {
-      whenever(prisonerLocationService.getLatestLocationData(PRISONER_NUMBER)).thenReturn(PRISONER_LOCATION)
+      whenever(prisonerLocationService.getLatestLocationData(PRISONER_NUMBER, usePrisonerSearchOnly = true)).thenReturn(PRISONER_LOCATION)
       whenever(prisonerHealthRepository.save(savedPrisonerHealth.capture())).thenAnswer { savedPrisonerHealth.firstValue }
     }
 
@@ -918,8 +918,7 @@ class PrisonerHealthServiceTest {
     val PRISONER_LOCATION = PrisonerLocation(
       prisonerNumber = PRISONER_NUMBER,
       prisonId = PRISON_ID,
-      topLevelCode = "RECP",
-      topLevelDescription = "Reception",
+      topLocationLevel = "RECP",
       location = "RECP",
       lastAdmissionDate = LocalDate.parse("2025-11-01"),
     )
