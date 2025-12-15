@@ -28,3 +28,15 @@ spring:
 database:
   username: health-and-medication-data
   password: health-and-medication-data
+
+hmpps:
+  sar:
+    tests:
+      attachments-expected: true
+      expected-flyway-schema-version: 19
+      expected-jpa-entity-schema:
+        path: /sar/entity-schema-snapshot.json
+      expected-api-response:
+        path: /sar/expected-api-response.json
+      expected-render-result:
+        path: /sar/expected-render-result.html
