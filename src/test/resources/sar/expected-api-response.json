@@ -1,0 +1,61 @@
+[
+  {
+    "fieldHistoryId": -201,
+    "prisonerNumber": "A1234AA",
+    "fieldHistoryType": "Food Allergies",
+    "fieldHistoryValue": [
+      {
+        "value": "Soya",
+        "comment": "Allergic to soya."
+      }
+    ],
+    "createdAt": "2024-01-02T09:10:11+0000",
+    "createdBy": "USER1",
+    "mergedAt": null,
+    "mergedFrom": null,
+    "prisonId": "STI"
+  },
+  {
+    "fieldHistoryId": -202,
+    "prisonerNumber": "A1234AA",
+    "fieldHistoryType": "Medical Dietary Requirements",
+    "fieldHistoryValue": [
+      {
+        "value": "Low cholesterol",
+        "comment": "Requires low cholesterol diet."
+      }
+    ],
+    "createdAt": "2024-01-02T09:10:11+0000",
+    "createdBy": "USER1",
+    "mergedAt": null,
+    "mergedFrom": null,
+    "prisonId": "STI"
+  },
+  {
+    "fieldHistoryId": -203,
+    "prisonerNumber": "A1234AA",
+    "fieldHistoryType": "Personalised Dietary Requirements",
+    "fieldHistoryValue": [
+      {
+        "value": "Kosher",
+        "comment": "Requires kosher meals."
+      }
+    ],
+    "createdAt": "2024-01-02T09:10:11+0000",
+    "createdBy": "USER1",
+    "mergedAt": null,
+    "mergedFrom": null,
+    "prisonId": "STI"
+  },
+  {
+    "fieldHistoryId": -204,
+    "prisonerNumber": "A1234AA",
+    "fieldHistoryType": "Catering Instructions",
+    "fieldHistoryValue": "Serve dessert before the main course.",
+    "createdAt": "2024-01-02T09:10:11+0000",
+    "createdBy": "USER1",
+    "mergedAt": null,
+    "mergedFrom": null,
+    "prisonId": "STI"
+  }
+]

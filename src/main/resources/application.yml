@@ -94,3 +94,9 @@ management:
     info:
       cache:
         time-to-live: 2000ms
+
+hmpps:
+  sar:
+    template:
+      path: /sar/templates/sar_template.mustache
+      enabled: true
