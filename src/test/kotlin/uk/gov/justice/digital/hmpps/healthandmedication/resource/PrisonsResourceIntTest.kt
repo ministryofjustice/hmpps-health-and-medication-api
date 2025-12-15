@@ -150,7 +150,7 @@ class PrisonsResourceIntTest : IntegrationTestBase() {
                             "code": "SOYA",
                             "description": "Soya"
                           },
-                          "comment" : null
+                          "comment" : "Allergic to soya."
                         }
                       ],
                       "lastModifiedAt": "2024-01-02T09:10:11+0000",
@@ -165,7 +165,7 @@ class PrisonsResourceIntTest : IntegrationTestBase() {
                             "code": "LOW_CHOLESTEROL",
                             "description": "Low cholesterol"
                           },
-                          "comment" : null 
+                          "comment" : "Requires low cholesterol diet."
                         } 
                       ],
                       "lastModifiedAt": "2024-01-02T09:10:11+0000",
@@ -180,7 +180,7 @@ class PrisonsResourceIntTest : IntegrationTestBase() {
                             "code": "KOSHER",
                             "description": "Kosher"
                           },
-                          "comment" : null 
+                          "comment" : "Requires kosher meals."
                         } 
                       ],
                       "lastModifiedAt": "2024-01-02T09:10:11+0000",
@@ -249,7 +249,7 @@ class PrisonsResourceIntTest : IntegrationTestBase() {
                             "code": "SOYA",
                             "description": "Soya"
                           },
-                          "comment" : null
+                          "comment" : "Allergic to soya."
                         }
                       ],
                       "lastModifiedAt": "2024-01-02T09:10:11+0000",
@@ -264,7 +264,7 @@ class PrisonsResourceIntTest : IntegrationTestBase() {
                             "code": "LOW_CHOLESTEROL",
                             "description": "Low cholesterol"
                           },
-                          "comment" : null 
+                          "comment" : "Requires low cholesterol diet."
                         } 
                       ],
                       "lastModifiedAt": "2024-01-02T09:10:11+0000",
@@ -279,7 +279,7 @@ class PrisonsResourceIntTest : IntegrationTestBase() {
                             "code": "KOSHER",
                             "description": "Kosher"
                           },
-                          "comment" : null 
+                          "comment" : "Requires kosher meals."
                         } 
                       ],
                       "lastModifiedAt": "2024-01-02T09:10:11+0000",

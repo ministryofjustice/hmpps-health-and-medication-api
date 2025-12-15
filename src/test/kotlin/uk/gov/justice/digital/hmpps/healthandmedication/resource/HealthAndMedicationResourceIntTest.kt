@@ -17,10 +17,12 @@ import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicatio
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.wiremock.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.FoodAllergyHistory
+import uk.gov.justice.digital.hmpps.healthandmedication.jpa.FoodAllergyHistoryItem
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.JsonObject
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.MedicalDietaryRequirementHistory
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.MedicalDietaryRequirementItem
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PersonalisedDietaryRequirementHistory
+import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PersonalisedDietaryRequirementItem
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.utils.HistoryComparison
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.utils.RepopulateDb
 import java.time.Clock
@@ -227,23 +229,48 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
         expectFieldHistory(
           FOOD_ALLERGY,
           HistoryComparison(
-            value = JsonObject(FOOD_ALLERGY, FoodAllergyHistory("FOOD_ALLERGY_SOYA")),
+            value = JsonObject(
+              FOOD_ALLERGY,
+              FoodAllergyHistory(listOf(FoodAllergyHistoryItem("FOOD_ALLERGY_SOYA", "Allergic to soya."))),
+            ),
             createdAt = THEN,
             createdBy = USER1,
           ),
         )
+
         expectFieldHistory(
           MEDICAL_DIET,
           HistoryComparison(
-            value = JsonObject(MEDICAL_DIET, MedicalDietaryRequirementHistory("MEDICAL_DIET_LOW_CHOLESTEROL")),
+            value = JsonObject(
+              MEDICAL_DIET,
+              MedicalDietaryRequirementHistory(
+                listOf(
+                  MedicalDietaryRequirementItem(
+                    "MEDICAL_DIET_LOW_CHOLESTEROL",
+                    "Requires low cholesterol diet.",
+                  ),
+                ),
+              ),
+            ),
             createdAt = THEN,
             createdBy = USER1,
           ),
         )
+
         expectFieldHistory(
           PERSONALISED_DIET,
           HistoryComparison(
-            value = JsonObject(PERSONALISED_DIET, PersonalisedDietaryRequirementHistory("PERSONALISED_DIET_KOSHER")),
+            value = JsonObject(
+              PERSONALISED_DIET,
+              PersonalisedDietaryRequirementHistory(
+                listOf(
+                  PersonalisedDietaryRequirementItem(
+                    "PERSONALISED_DIET_KOSHER",
+                    "Requires kosher meals.",
+                  ),
+                ),
+              ),
+            ),
             createdAt = THEN,
             createdBy = USER1,
           ),
@@ -257,7 +284,10 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
         expectFieldHistory(
           FOOD_ALLERGY,
           HistoryComparison(
-            value = JsonObject(FOOD_ALLERGY, FoodAllergyHistory("FOOD_ALLERGY_SOYA")),
+            value = JsonObject(
+              FOOD_ALLERGY,
+              FoodAllergyHistory(listOf(FoodAllergyHistoryItem("FOOD_ALLERGY_SOYA", "Allergic to soya."))),
+            ),
             createdAt = THEN,
             createdBy = USER1,
           ),
@@ -270,7 +300,17 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
         expectFieldHistory(
           MEDICAL_DIET,
           HistoryComparison(
-            value = JsonObject(MEDICAL_DIET, MedicalDietaryRequirementHistory("MEDICAL_DIET_LOW_CHOLESTEROL")),
+            value = JsonObject(
+              MEDICAL_DIET,
+              MedicalDietaryRequirementHistory(
+                listOf(
+                  MedicalDietaryRequirementItem(
+                    "MEDICAL_DIET_LOW_CHOLESTEROL",
+                    "Requires low cholesterol diet.",
+                  ),
+                ),
+              ),
+            ),
             createdAt = THEN,
             createdBy = USER1,
           ),
@@ -293,7 +333,14 @@ class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
         expectFieldHistory(
           PERSONALISED_DIET,
           HistoryComparison(
-            value = JsonObject(PERSONALISED_DIET, PersonalisedDietaryRequirementHistory("PERSONALISED_DIET_KOSHER")),
+            value = JsonObject(
+              PERSONALISED_DIET,
+              PersonalisedDietaryRequirementHistory(
+                listOf(
+                  PersonalisedDietaryRequirementItem("PERSONALISED_DIET_KOSHER", "Requires kosher meals."),
+                ),
+              ),
+            ),
             createdAt = THEN,
             createdBy = USER1,
           ),

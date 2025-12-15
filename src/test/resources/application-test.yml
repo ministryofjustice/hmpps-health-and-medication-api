@@ -29,23 +29,35 @@ database:
   username: health-and-medication-data
   password: health-and-medication-data
 
-hmpps.sqs:
-  enabled: true
-  provider: localstack
-  queues:
-    hmppsdomaineventsqueue:
-      queueName: ${random.uuid}
-      dlqName: ${random.uuid}
-      subscribeTopicId: hmppseventtopic
-      subscribeFilter: >
-        {
-          "eventType": [
-            "prisoner-offender-search.prisoner.received",
-            "prisoner-offender-search.prisoner.released",
-            "prison-offender-events.prisoner.merged",
-            "prison-offender-events.prisoner.cell.move"
-          ]
-        }
-  topics:
-    hmppseventtopic:
-      arn: arn:aws:sns:eu-west-2:000000000000:${random.uuid}
+hmpps:
+  sar:
+    tests:
+      attachments-expected: true
+      expected-flyway-schema-version: 19
+      expected-jpa-entity-schema:
+        path: /sar/entity-schema-snapshot.json
+      expected-api-response:
+        path: /sar/expected-api-response.json
+      expected-render-result:
+        path: /sar/expected-render-result.html
+
+  sqs:
+    enabled: true
+    provider: localstack
+    queues:
+      hmppsdomaineventsqueue:
+        queueName: ${random.uuid}
+        dlqName: ${random.uuid}
+        subscribeTopicId: hmppseventtopic
+        subscribeFilter: >
+          {
+            "eventType": [
+              "prisoner-offender-search.prisoner.received",
+              "prisoner-offender-search.prisoner.released",
+              "prison-offender-events.prisoner.merged",
+              "prison-offender-events.prisoner.cell.move"
+            ]
+          }
+    topics:
+      hmppseventtopic:
+        arn: arn:aws:sns:eu-west-2:000000000000:${random.uuid}
