@@ -46,6 +46,4 @@ class PrisonerLocation(
     result = 31 * result + (lastAdmissionDate?.hashCode() ?: 0)
     return result
   }
-
-  override fun toString(): String = "PrisonerLocation(prisonerNumber='$prisonerNumber', prisonId=$prisonId, topLocationLevel=$topLocationLevel, location=$location, lastAdmissionDate=$lastAdmissionDate)"
 }
