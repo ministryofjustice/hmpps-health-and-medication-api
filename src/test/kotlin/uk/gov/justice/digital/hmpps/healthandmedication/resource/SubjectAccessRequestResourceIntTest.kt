@@ -183,7 +183,9 @@ class SubjectAccessRequestResourceIntTest : IntegrationTestBase() {
           "lastModifiedAt": "2024-06-14T09:10:11+0100",
           "lastModifiedBy": "USER1",
           "lastModifiedPrisonId": "MDI"
-        }
+        },
+        "topLevelLocation": "E",
+        "lastAdmissionDate": "2025-11-28"
       }
       """.trimIndent()
 

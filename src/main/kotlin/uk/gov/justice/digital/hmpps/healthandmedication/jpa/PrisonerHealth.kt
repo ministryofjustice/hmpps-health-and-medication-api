@@ -103,6 +103,8 @@ class PrisonerHealth(
       { it.instructions },
       CATERING_INSTRUCTIONS,
     ),
+    topLevelLocation = location?.topLocationLevel,
+    lastAdmissionDate = location?.lastAdmissionDate,
   )
 
   override fun updateFieldHistory(

@@ -266,6 +266,8 @@ class PrisonerHealthServiceTest {
             USER1,
             PRISON_ID,
           ),
+          topLevelLocation = "RECP",
+          lastAdmissionDate = LocalDate.parse("2025-11-01"),
         ),
       )
 
@@ -347,6 +349,8 @@ class PrisonerHealthServiceTest {
           medicalDietaryRequirements = ValueWithMetadata(emptyList(), NOW, USER1, PRISON_ID),
           personalisedDietaryRequirements = ValueWithMetadata(emptyList(), NOW, USER1, PRISON_ID),
           cateringInstructions = ValueWithMetadata(null, NOW, USER1, PRISON_ID),
+          topLevelLocation = "RECP",
+          lastAdmissionDate = LocalDate.parse("2025-11-01"),
         ),
       )
 
