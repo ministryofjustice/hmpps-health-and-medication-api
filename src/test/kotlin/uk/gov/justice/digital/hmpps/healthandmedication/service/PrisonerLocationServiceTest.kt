@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoSettings
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.never
+import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.mockito.quality.Strictness.LENIENT
@@ -268,6 +269,31 @@ class PrisonerLocationServiceTest {
       underTest.updateLocationDataToLatest(PRISONER_NUMBER, usePrisonerSearchOnly)
 
       verify(prisonerLocationRepository, never()).save(any())
+    }
+  }
+
+  @Nested
+  inner class MigrateLocationData {
+    @Test
+    fun `should migrate location data`() {
+      val savedValue = argumentCaptor<PrisonerLocation>()
+      whenever(prisonerHealthRepository.findAllPrisonersWithoutLocationData()).thenReturn(
+        listOf(
+          PrisonerHealth(PRISONER_NUMBER),
+        ),
+      )
+      whenever(prisonerLocationRepository.save(savedValue.capture())).thenAnswer { savedValue.firstValue }
+      val expectedSavedLocation = PrisonerLocation(
+        prisonerNumber = PRISONER_NUMBER,
+        prisonId = "STI",
+        lastAdmissionDate = LocalDate.parse("2025-11-01"),
+        topLocationLevel = "E",
+        location = "E-2-014",
+      )
+      underTest.migrateLocationData()
+
+      verify(prisonerLocationRepository, times(1)).save(any())
+      assertThat(savedValue.firstValue).isEqualTo(expectedSavedLocation)
     }
   }
 

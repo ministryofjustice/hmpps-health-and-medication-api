@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.healthandmedication.service
 
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -44,5 +45,20 @@ class PrisonerLocationService(
     }
   }
 
+  @Transactional
+  fun migrateLocationData() {
+    log.info("Migrating prisoner location data")
+    prisonerHealthRepository.findAllPrisonersWithoutLocationData()
+      .also { log.info("Found ${it.size} records requiring migration") }
+      .forEach {
+        updateLocationDataToLatest(it.prisonerNumber, usePrisonerSearchOnly = true)
+      }
+    log.info("Finished migrating prisoner location data")
+  }
+
   private fun getTopLevelLocation(location: String?): String? = location?.split("-")?.first()
+
+  companion object {
+    private val log = LoggerFactory.getLogger(PrisonerLocationService::class.java)
+  }
 }

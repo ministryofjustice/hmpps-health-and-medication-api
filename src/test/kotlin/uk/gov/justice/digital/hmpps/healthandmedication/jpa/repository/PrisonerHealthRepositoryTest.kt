@@ -4,10 +4,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.transaction.TestTransaction
+import uk.gov.justice.digital.hmpps.healthandmedication.jpa.CateringInstructions
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.FoodAllergy
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.MedicalDietaryRequirement
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PersonalisedDietaryRequirement
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PrisonerHealth
+import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PrisonerLocation
 import uk.gov.justice.digital.hmpps.healthandmedication.utils.toReferenceDataCode
 
 class PrisonerHealthRepositoryTest : RepositoryTest() {
@@ -196,6 +198,60 @@ class PrisonerHealthRepositoryTest : RepositoryTest() {
     ).isInstanceOf(String::class.java)
   }
 
+  @Test
+  fun `Correctly identifies records requiring migration`() {
+    listOf(
+      PrisonerHealth(
+        prisonerNumber = "M1111AA",
+        foodAllergies = mutableSetOf(generateAllergy("FOOD_ALLERGY_EGG", prisonerNumber = "M1111AA")),
+      ),
+      PrisonerHealth(
+        prisonerNumber = "M1111BB",
+        foodAllergies = mutableSetOf(generateAllergy("FOOD_ALLERGY_EGG", prisonerNumber = "M1111AA")),
+        location = PrisonerLocation("M1111BB", "MDI", "E", "E-1-009"),
+      ),
+      PrisonerHealth(
+        prisonerNumber = "M2222AA",
+        medicalDietaryRequirements = mutableSetOf(
+          generateMedicalDietaryRequirement("MEDICAL_DIET_LACTOSE_INTOLERANT", prisonerNumber = "M2222AA"),
+        ),
+      ),
+      PrisonerHealth(
+        prisonerNumber = "M2222BB",
+        medicalDietaryRequirements = mutableSetOf(
+          generateMedicalDietaryRequirement("MEDICAL_DIET_LACTOSE_INTOLERANT", prisonerNumber = "M2222AA"),
+        ),
+        location = PrisonerLocation("M1111BB", "MDI", "E", "E-1-009"),
+      ),
+      PrisonerHealth(
+        prisonerNumber = "M3333AA",
+        personalisedDietaryRequirements = mutableSetOf(
+          generatePersonalisedDietaryRequirement("PERSONALISED_DIET_VEGAN", prisonerNumber = "M3333AA"),
+        ),
+      ),
+      PrisonerHealth(
+        prisonerNumber = "M3333BB",
+        personalisedDietaryRequirements = mutableSetOf(
+          generatePersonalisedDietaryRequirement("PERSONALISED_DIET_VEGAN", prisonerNumber = "M3333AA"),
+        ),
+        location = PrisonerLocation("M1111BB", "MDI", "E", "E-1-009"),
+      ),
+      PrisonerHealth(
+        prisonerNumber = "M4444AA",
+        cateringInstructions = generateCateringInstructions(prisonerNumber = "M4444AA"),
+      ),
+      PrisonerHealth(
+        prisonerNumber = "M4444BB",
+        cateringInstructions = generateCateringInstructions(prisonerNumber = "M4444BB"),
+        location = PrisonerLocation("M4444BB", "MDI", "E", "E-1-009"),
+      ),
+    ).forEach { save(it) }
+
+    val response = repository.findAllPrisonersWithoutLocationData()
+
+    assertThat(response.map { it.prisonerNumber }).containsExactlyInAnyOrder("M1111AA", "M2222AA", "M3333AA", "M4444AA")
+  }
+
   private fun generateAllergy(id: String, prisonerNumber: String = PRISONER_NUMBER) = FoodAllergy(
     prisonerNumber = prisonerNumber,
     allergy = toReferenceDataCode(referenceDataCodeRepository, id)!!,
@@ -209,6 +265,14 @@ class PrisonerHealthRepositoryTest : RepositoryTest() {
   private fun generatePersonalisedDietaryRequirement(id: String, prisonerNumber: String = PRISONER_NUMBER) = PersonalisedDietaryRequirement(
     prisonerNumber = prisonerNumber,
     dietaryRequirement = toReferenceDataCode(referenceDataCodeRepository, id)!!,
+  )
+
+  private fun generateCateringInstructions(
+    instructions: String = "Some instructions",
+    prisonerNumber: String = PRISONER_NUMBER,
+  ) = CateringInstructions(
+    prisonerNumber = prisonerNumber,
+    instructions = instructions,
   )
 
   private companion object {

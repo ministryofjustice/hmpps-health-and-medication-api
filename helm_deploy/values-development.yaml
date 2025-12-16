@@ -13,6 +13,7 @@ generic-service:
     API_PRISONER_SEARCH_BASE_URL: "https://prisoner-search-dev.prison.service.justice.gov.uk"
     API_PRISON_API_BASE_URL: "https://prison-api-dev.prison.service.justice.gov.uk"
     HMPPS_SQS_ENABLED: true
+    MIGRATION_ENDPOINT_ENABLED: false
 
   scheduledDowntime:
     enabled: true
