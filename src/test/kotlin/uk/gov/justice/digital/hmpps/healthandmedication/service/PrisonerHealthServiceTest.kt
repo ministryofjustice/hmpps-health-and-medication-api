@@ -39,6 +39,7 @@ import uk.gov.justice.digital.hmpps.healthandmedication.jpa.MedicalDietaryRequir
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PersonalisedDietaryRequirement
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PersonalisedDietaryRequirementHistory
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PrisonerHealth
+import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PrisonerLocation
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.ReferenceDataCode
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.PrisonerHealthRepository
@@ -63,6 +64,7 @@ import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.Re
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.ValueWithMetadata
 import uk.gov.justice.digital.hmpps.healthandmedication.utils.AuthenticationFacade
 import java.time.Clock
+import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.Optional
 import java.util.stream.Stream
@@ -78,6 +80,9 @@ class PrisonerHealthServiceTest {
 
   @Mock
   lateinit var prisonerSearchClient: PrisonerSearchClient
+
+  @Mock
+  lateinit var prisonerLocationService: PrisonerLocationService
 
   @Mock
   lateinit var referenceDataCodeRepository: ReferenceDataCodeRepository
@@ -219,6 +224,7 @@ class PrisonerHealthServiceTest {
 
     @BeforeEach
     fun beforeEach() {
+      whenever(prisonerLocationService.getLatestLocationData(PRISONER_NUMBER, usePrisonerSearchOnly = true)).thenReturn(PRISONER_LOCATION)
       whenever(prisonerHealthRepository.save(savedPrisonerHealth.capture())).thenAnswer { savedPrisonerHealth.firstValue }
     }
 
@@ -260,6 +266,8 @@ class PrisonerHealthServiceTest {
             USER1,
             PRISON_ID,
           ),
+          topLevelLocation = "RECP",
+          lastAdmissionDate = LocalDate.parse("2025-11-01"),
         ),
       )
 
@@ -268,6 +276,7 @@ class PrisonerHealthServiceTest {
         assertThat(foodAllergies).containsAll(listOf(FOOD_ALLERGY_PEANUTS))
         assertThat(medicalDietaryRequirements).containsAll(listOf(MEDICAL_DIET_COELIAC))
         assertThat(personalisedDietaryRequirements).containsAll(listOf(PERSONALISED_DIET_VEGAN))
+        assertThat(location).isEqualTo(PRISONER_LOCATION)
 
         expectFieldHistory(
           FOOD_ALLERGY,
@@ -323,6 +332,7 @@ class PrisonerHealthServiceTest {
             medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_COELIAC),
             personalisedDietaryRequirements = mutableSetOf(PERSONALISED_DIET_VEGAN),
             cateringInstructions = CateringInstructions(PRISONER_NUMBER, "outdated instructions"),
+            location = null,
           ).also {
             it.updateFieldHistory(
               lastModifiedAt = NOW.minusDays(1),
@@ -339,6 +349,8 @@ class PrisonerHealthServiceTest {
           medicalDietaryRequirements = ValueWithMetadata(emptyList(), NOW, USER1, PRISON_ID),
           personalisedDietaryRequirements = ValueWithMetadata(emptyList(), NOW, USER1, PRISON_ID),
           cateringInstructions = ValueWithMetadata(null, NOW, USER1, PRISON_ID),
+          topLevelLocation = "RECP",
+          lastAdmissionDate = LocalDate.parse("2025-11-01"),
         ),
       )
 
@@ -359,6 +371,7 @@ class PrisonerHealthServiceTest {
         assertThat(foodAllergies).isEqualTo(mutableSetOf<FoodAllergy>())
         assertThat(medicalDietaryRequirements).isEqualTo(mutableSetOf<MedicalDietaryRequirement>())
         assertThat(personalisedDietaryRequirements).isEqualTo(mutableSetOf<PersonalisedDietaryRequirement>())
+        assertThat(location).isEqualTo(PRISONER_LOCATION)
 
         expectFieldHistory(
           FOOD_ALLERGY,
@@ -473,14 +486,14 @@ class PrisonerHealthServiceTest {
         prisonerNumber = PRISONER_NUMBER,
         firstName = PRISONER_FIRST_NAME,
         lastName = PRISONER_LAST_NAME,
-        location = PRISONER_LOCATION,
+        location = PRISONER_SEARCH_LOCATION,
         health = PRISONER_HEALTH.toHealthDto(),
       )
       val secondPrisonerHealthResponse = HealthAndMedicationForPrisonDto(
         prisonerNumber = secondPrisonerNumber,
         firstName = PRISONER_FIRST_NAME,
         lastName = PRISONER_LAST_NAME,
-        location = PRISONER_LOCATION,
+        location = PRISONER_SEARCH_LOCATION,
         health = secondPrisonerHealth.toHealthDto(),
       )
 
@@ -495,7 +508,7 @@ class PrisonerHealthServiceTest {
                 prisonId = PRISON_ID,
                 firstName = PRISONER_FIRST_NAME,
                 lastName = PRISONER_LAST_NAME,
-                cellLocation = PRISONER_LOCATION,
+                cellLocation = PRISONER_SEARCH_LOCATION,
               ),
             ),
           )
@@ -791,7 +804,7 @@ class PrisonerHealthServiceTest {
     const val PRISONER_NUMBER = "A1234AA"
     const val PRISONER_FIRST_NAME = "First"
     const val PRISONER_LAST_NAME = "Last"
-    const val PRISONER_LOCATION = "Recp"
+    const val PRISONER_SEARCH_LOCATION = "Recp"
     const val USER1 = "USER1"
     const val USER2 = "USER2"
 
@@ -888,7 +901,7 @@ class PrisonerHealthServiceTest {
         prisonId = PRISON_ID,
         firstName = PRISONER_FIRST_NAME,
         lastName = PRISONER_LAST_NAME,
-        cellLocation = PRISONER_LOCATION,
+        cellLocation = PRISONER_SEARCH_LOCATION,
       )
 
     val DIET_AND_ALLERGY_UPDATE_REQUEST =
@@ -904,6 +917,14 @@ class PrisonerHealthServiceTest {
       medicalDietaryRequirements = emptyList(),
       personalisedDietaryRequirements = emptyList(),
       cateringInstructions = null,
+    )
+
+    val PRISONER_LOCATION = PrisonerLocation(
+      prisonerNumber = PRISONER_NUMBER,
+      prisonId = PRISON_ID,
+      topLocationLevel = "RECP",
+      location = "RECP",
+      lastAdmissionDate = LocalDate.parse("2025-11-01"),
     )
 
     val PRISONER_HEALTH = PrisonerHealth(
@@ -930,6 +951,7 @@ class PrisonerHealthServiceTest {
           PRISON_ID,
         ),
       ),
+      location = PRISONER_LOCATION,
     )
 
     @JvmStatic

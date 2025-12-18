@@ -11,3 +11,4 @@ This is a Spring Boot service, written in Kotlin, which owns health and medicati
 
 1. [Building, Testing and Running](readme/build_test_run.md)
 2. [Architecture Decision Records](architecture-decision-record/README.md)
+3. [Subject Access Request](readme/sar.md)

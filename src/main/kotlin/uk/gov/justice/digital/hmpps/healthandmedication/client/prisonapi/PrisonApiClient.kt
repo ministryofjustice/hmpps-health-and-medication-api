@@ -1,13 +1,12 @@
 package uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi
 
-import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
 import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.request.PrisonApiSmokerStatusUpdate
+import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.response.OffenderDto
 import uk.gov.justice.digital.hmpps.healthandmedication.config.DownstreamServiceException
 
-@Component
-class PrisonApiClient(@Qualifier("prisonApiWebClient") private val webClient: WebClient) {
+class PrisonApiClient(private val webClient: WebClient) {
   fun updateSmokerStatus(offenderNo: String, updateSmokerStatus: PrisonApiSmokerStatusUpdate) = try {
     webClient
       .put()
@@ -18,5 +17,18 @@ class PrisonApiClient(@Qualifier("prisonApiWebClient") private val webClient: We
       .block()
   } catch (e: Exception) {
     throw DownstreamServiceException("Update smoker status request failed", e)
+  }
+
+  fun getOffender(offenderNo: String) = try {
+    webClient
+      .get()
+      .uri("/api/offenders/{offenderNo}", offenderNo)
+      .retrieve()
+      .bodyToMono(OffenderDto::class.java)
+      .block()
+  } catch (e: NotFound) {
+    null
+  } catch (e: Exception) {
+    throw DownstreamServiceException("Get offender request failed", e)
   }
 }

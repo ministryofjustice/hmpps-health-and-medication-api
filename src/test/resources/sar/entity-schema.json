@@ -1,0 +1,89 @@
+{
+  "CateringInstructions": {
+    "instructions": "String",
+    "prisonerNumber": "String"
+  },
+  "FieldHistory": {
+    "createdAt": "ZonedDateTime",
+    "createdBy": "String",
+    "field": "HealthAndMedicationField",
+    "fieldHistoryId": "long",
+    "mergedAt": "ZonedDateTime",
+    "mergedFrom": "String",
+    "prisonId": "String",
+    "prisonerNumber": "String",
+    "valueInt": "Integer",
+    "valueJson": "JsonObject",
+    "valueRef": "ReferenceDataCode",
+    "valueString": "String"
+  },
+  "FieldMetadata": {
+    "field": "HealthAndMedicationField",
+    "lastModifiedAt": "ZonedDateTime",
+    "lastModifiedBy": "String",
+    "lastModifiedPrisonId": "String",
+    "prisonerNumber": "String"
+  },
+  "FoodAllergy": {
+    "allergy": "ReferenceDataCode",
+    "commentText": "String",
+    "id": "long",
+    "prisonerNumber": "String"
+  },
+  "MedicalDietaryRequirement": {
+    "commentText": "String",
+    "dietaryRequirement": "ReferenceDataCode",
+    "id": "long",
+    "prisonerNumber": "String"
+  },
+  "PersonalisedDietaryRequirement": {
+    "commentText": "String",
+    "dietaryRequirement": "ReferenceDataCode",
+    "id": "long",
+    "prisonerNumber": "String"
+  },
+  "PrisonerHealth": {
+    "cateringInstructions": "CateringInstructions",
+    "fieldHistory": "SortedSet",
+    "fieldMetadata": "Map",
+    "foodAllergies": "Set",
+    "location": "PrisonerLocation",
+    "medicalDietaryRequirements": "Set",
+    "personalisedDietaryRequirements": "Set",
+    "prisonerNumber": "String"
+  },
+  "PrisonerLocation": {
+    "lastAdmissionDate": "LocalDate",
+    "location": "String",
+    "prisonId": "String",
+    "prisonerNumber": "String",
+    "topLocationLevel": "String"
+  },
+  "ReferenceDataCode": {
+    "code": "String",
+    "createdAt": "ZonedDateTime",
+    "createdBy": "String",
+    "deactivatedAt": "ZonedDateTime",
+    "deactivatedBy": "String",
+    "description": "String",
+    "domain": "ReferenceDataDomain",
+    "id": "String",
+    "lastModifiedAt": "ZonedDateTime",
+    "lastModifiedBy": "String",
+    "listSequence": "int"
+  },
+  "ReferenceDataDomain": {
+    "code": "String",
+    "createdAt": "ZonedDateTime",
+    "createdBy": "String",
+    "deactivatedAt": "ZonedDateTime",
+    "deactivatedBy": "String",
+    "description": "String",
+    "lastModifiedAt": "ZonedDateTime",
+    "lastModifiedBy": "String",
+    "listSequence": "int",
+    "parentDomainCode": "String",
+    "referenceDataCodes": "List",
+    "subDomains": "List"
+  }
+}

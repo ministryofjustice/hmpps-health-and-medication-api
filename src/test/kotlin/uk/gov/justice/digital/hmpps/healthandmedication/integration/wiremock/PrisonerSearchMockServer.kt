@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.response.PrisonerDto
 import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.response.PrisonerSearchResultDto
+import java.time.LocalDate
 
 class PrisonerSearchServer : WireMockServer(WIREMOCK_PORT) {
   companion object {
@@ -39,7 +40,14 @@ class PrisonerSearchServer : WireMockServer(WIREMOCK_PORT) {
         aResponse()
           .withHeader("Content-Type", "application/json")
           .withBody(
-            mapper.writeValueAsString(PrisonerDto(prisonerNumber = prisonNumber, prisonId = PRISON_ID)),
+            mapper.writeValueAsString(
+              PrisonerDto(
+                prisonerNumber = prisonNumber,
+                prisonId = PRISON_ID,
+                lastAdmissionDate = LocalDate.parse("2025-11-28"),
+                cellLocation = "E-9-011",
+              ),
+            ),
           )
           .withStatus(200),
       ),

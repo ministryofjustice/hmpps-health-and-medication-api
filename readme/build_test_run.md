@@ -30,7 +30,7 @@ development environment.
 The API also requires a PostgreSQL database which can be started via docker compose with:
 
 ```shell
-docker compose up health-and-medication-data-db
+docker compose up health-and-medication-data-db localstack
 ```
 
 The service can then be run in the following ways:

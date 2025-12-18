@@ -14,6 +14,9 @@ generic-service:
     host: app-hostname.local # override per environment
     tlsSecretName: hmpps-health-and-medication-api-cert
 
+  # Used to access resources like S3 buckets, SQS queues and SNS topics
+  serviceAccountName: health-and-medication-api-sa
+
   # Environment variables to load into the deployment
   env:
     JAVA_OPTS: "-Xmx512m"
@@ -29,6 +32,13 @@ generic-service:
     hmpps-health-and-medication-api:
       CLIENT_ID: "CLIENT_ID"
       CLIENT_SECRET: "CLIENT_SECRET"
+
+    hmpps-domain-events-topic:
+      HMPPS_SQS_TOPICS_HMPPSEVENTTOPIC_ARN: "topic_arn"
+    sqs-domain-events-secret:
+      HMPPS_SQS_QUEUES_HMPPSDOMAINEVENTSQUEUE_QUEUE_NAME: "queue_name"
+    sqs-domain-events-dlq-secret:
+      HMPPS_SQS_QUEUES_HMPPSDOMAINEVENTSQUEUE_DLQ_NAME: "queue_name"
 
     hmpps-health-and-medication-api-application-insights:
       APPLICATIONINSIGHTS_CONNECTION_STRING: "APPLICATIONINSIGHTS_CONNECTION_STRING"

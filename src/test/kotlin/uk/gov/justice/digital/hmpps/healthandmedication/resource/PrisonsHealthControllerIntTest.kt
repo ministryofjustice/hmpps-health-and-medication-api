@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.healthandmedication.controller
+package uk.gov.justice.digital.hmpps.healthandmedication.resource
 
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -27,20 +27,20 @@ class PrisonsHealthControllerIntTest : IntegrationTestBase() {
 
       @Test
       fun `access forbidden when no authority`() {
-        webTestClient.post().uri("/prisons/${PRISON_ID}").header("Content-Type", "application/json")
+        webTestClient.post().uri("/prisons/$PRISON_ID").header("Content-Type", "application/json")
           .bodyValue(VALID_REQUEST_BODY).exchange().expectStatus().isUnauthorized
       }
 
       @Test
       fun `access forbidden when no role`() {
-        webTestClient.post().uri("/prisons/${PRISON_ID}").headers(setAuthorisation(roles = listOf()))
+        webTestClient.post().uri("/prisons/$PRISON_ID").headers(setAuthorisation(roles = listOf()))
           .header("Content-Type", "application/json").bodyValue(VALID_REQUEST_BODY).exchange()
           .expectStatus().isForbidden
       }
 
       @Test
       fun `access forbidden with wrong role`() {
-        webTestClient.post().uri("/prisons/${PRISON_ID}")
+        webTestClient.post().uri("/prisons/$PRISON_ID")
           .headers(setAuthorisation(roles = listOf("ROLE_IS_WRONG"))).header("Content-Type", "application/json")
           .bodyValue(VALID_REQUEST_BODY).exchange().expectStatus().isForbidden
       }

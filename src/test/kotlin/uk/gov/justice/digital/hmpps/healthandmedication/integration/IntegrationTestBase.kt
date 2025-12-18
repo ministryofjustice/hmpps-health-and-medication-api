@@ -1,12 +1,16 @@
 package uk.gov.justice.digital.hmpps.healthandmedication.integration
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
 import org.springframework.http.HttpHeaders
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.test.web.reactive.server.WebTestClient
+import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.wiremock.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.wiremock.HmppsAuthApiExtension.Companion.hmppsAuth
@@ -19,6 +23,13 @@ import uk.gov.justice.digital.hmpps.healthandmedication.jpa.FieldMetadata
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.utils.HistoryComparison
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.utils.expectFieldHistory
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.utils.expectNoFieldHistoryFor
+import uk.gov.justice.digital.hmpps.healthandmedication.service.event.HmppsDomainEvent
+import uk.gov.justice.hmpps.sqs.HmppsQueue
+import uk.gov.justice.hmpps.sqs.HmppsQueueService
+import uk.gov.justice.hmpps.sqs.MissingQueueException
+import uk.gov.justice.hmpps.sqs.MissingTopicException
+import uk.gov.justice.hmpps.sqs.countAllMessagesOnQueue
+import uk.gov.justice.hmpps.sqs.publish
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 
 @ExtendWith(HmppsAuthApiExtension::class, PrisonApiExtension::class, PrisonerSearchExtension::class)
@@ -30,6 +41,35 @@ abstract class IntegrationTestBase : TestBase() {
 
   @Autowired
   protected lateinit var jwtAuthHelper: JwtAuthorisationHelper
+
+  @Autowired
+  lateinit var objectMapper: ObjectMapper
+
+  @MockitoSpyBean
+  lateinit var hmppsQueueService: HmppsQueueService
+
+  @BeforeEach
+  fun `clear queues`() {
+    hmppsDomainEventsQueue.sqsClient.purgeQueue(
+      PurgeQueueRequest.builder().queueUrl(hmppsDomainEventsQueue.queueUrl).build(),
+    ).get()
+  }
+
+  val domainEventsTopic by lazy {
+    hmppsQueueService.findByTopicId("hmppseventtopic")
+      ?: throw MissingTopicException("hmppseventtopic not found")
+  }
+
+  internal val hmppsDomainEventsQueue by lazy {
+    hmppsQueueService.findByQueueId("hmppsdomaineventsqueue")
+      ?: throw MissingQueueException("hmppsdomaineventsqueue queue not found")
+  }
+
+  internal fun sendDomainEvent(event: HmppsDomainEvent) {
+    domainEventsTopic.publish(event.eventType, objectMapper.writeValueAsString(event))
+  }
+
+  internal fun HmppsQueue.countAllMessagesOnQueue() = sqsClient.countAllMessagesOnQueue(queueUrl).get()
 
   internal fun setAuthorisation(
     username: String? = "AUTH_ADM",
