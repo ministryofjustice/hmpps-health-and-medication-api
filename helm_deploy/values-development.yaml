@@ -12,7 +12,6 @@ generic-service:
     API_HMPPS_AUTH_BASE_URL: "https://sign-in-dev.hmpps.service.justice.gov.uk/auth"
     API_PRISONER_SEARCH_BASE_URL: "https://prisoner-search-dev.prison.service.justice.gov.uk"
     API_PRISON_API_BASE_URL: "https://prison-api-dev.prison.service.justice.gov.uk"
-    MIGRATION_ENDPOINT_ENABLED: false
 
   scheduledDowntime:
     enabled: true
