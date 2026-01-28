@@ -54,10 +54,10 @@ class HealthAndMedicationExceptionHandler {
   @ExceptionHandler(MethodArgumentTypeMismatchException::class)
   fun handleMethodArgumentTypeMismatchException(e: MethodArgumentTypeMismatchException): ResponseEntity<ErrorResponse> {
     val type = e.requiredType
-    val message = if (type.isEnum) {
+    val message = if (type?.isEnum == true) {
       "Parameter ${e.name} must be one of the following ${StringUtils.join(type.enumConstants, ", ")}"
     } else {
-      "Parameter ${e.name} must be of type ${type.typeName}"
+      "Parameter ${e.name} must be of type ${type?.typeName}"
     }
 
     return ResponseEntity
@@ -89,7 +89,7 @@ class HealthAndMedicationExceptionHandler {
       ErrorResponse(
         status = BAD_REQUEST,
         userMessage = "Validation failure(s): ${
-          e.allErrors.map { it.defaultMessage }.distinct().sorted().joinToString("\n")
+          e.allErrors.mapNotNull { it.defaultMessage }.distinct().sorted().joinToString("\n")
         }",
         developerMessage = e.message,
       ),
@@ -125,7 +125,7 @@ class HealthAndMedicationExceptionHandler {
         ErrorResponse(
           status = BAD_REQUEST,
           userMessage = "Validation failure(s): ${
-            e.allErrors.map { it.defaultMessage }.distinct().sorted().joinToString("\n")
+            e.allErrors.mapNotNull { it.defaultMessage }.distinct().sorted().joinToString("\n")
           }",
           developerMessage = "${e.message} $validationErrors",
         ),

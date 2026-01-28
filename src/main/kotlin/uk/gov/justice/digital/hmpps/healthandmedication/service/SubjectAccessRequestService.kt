@@ -59,12 +59,12 @@ class SubjectAccessRequestService(
 
       val queryFromDate: ZonedDateTime = when (fromDate) {
         null -> ZonedDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault())
-        else -> fromDate!!.atStartOfDay(ZoneId.systemDefault())
+        else -> fromDate.atStartOfDay(ZoneId.systemDefault())
       }
 
       val queryToDate: ZonedDateTime = when (toDate) {
         null -> ZonedDateTime.of(3000, 1, 1, 23, 59, 59, 999999999, ZoneId.systemDefault())
-        else -> toDate!!.atStartOfDay(ZoneId.systemDefault()).withHour(23).withMinute(59).withSecond(59).withNano(999999999)
+        else -> toDate.atStartOfDay(ZoneId.systemDefault()).withHour(23).withMinute(59).withSecond(59).withNano(999999999)
       }
 
       val prisonerHealthHistoryWithinTimeframe: SortedSet<FieldHistory>? =
@@ -88,11 +88,11 @@ class SubjectAccessRequestService(
 
       val combinedPrisonerHistory: SortedSet<FieldHistory> = sortedSetOf(compareByDescending<FieldHistory> { it.fieldHistoryId }).apply {
         prisonerHealthHistoryWithinTimeframe?.let { addAll(it) }
-        latestPrisonerHistoryBeforeFromDate?.let { addAll(it) }
+        latestPrisonerHistoryBeforeFromDate.let { addAll(it) }
       }
 
       // Must return 204 if there is no data
-      if (combinedPrisonerHistory == null || combinedPrisonerHistory!!.isEmpty()) {
+      if (combinedPrisonerHistory.isEmpty()) {
         return null // Returns 204 and empty response body
       }
 
@@ -109,8 +109,8 @@ class SubjectAccessRequestService(
       //  - Flatten structure by brining important field data to the top e.g. fieldHistoryValue is set
       //    to the value.valueJson.value.allergies array rather than retaining the nested structure.
 
-      var transformedSubjectAccessRequestData: List<SubjectAccessRequestResponseDto> =
-        combinedPrisonerHistory.mapIndexed { index: Int, value: FieldHistory ->
+      val transformedSubjectAccessRequestData: List<SubjectAccessRequestResponseDto> =
+        combinedPrisonerHistory.mapIndexed { _: Int, value: FieldHistory ->
           SubjectAccessRequestResponseDto(
             fieldHistoryId = value.fieldHistoryId,
             prisonerNumber = value.prisonerNumber,
@@ -125,36 +125,36 @@ class SubjectAccessRequestService(
             },
             fieldHistoryValue = when (value.field.toString()) {
               "FOOD_ALLERGY" -> {
-                val fah: FoodAllergyHistory? = value?.valueJson?.value as FoodAllergyHistory?
-                fah?.allergies?.mapIndexed { i: Int, allergy: FoodAllergyHistoryItem ->
-                  val rd: ReferenceDataCode? = toReferenceDataCodeWrapped(allergy?.value)
-                  allergy?.copy(
-                    value = if (rd != null) rd.description else UNKNOWN_REFERENCE_DATA_DESCRIPTION,
-                    comment = allergy?.comment,
+                val fah: FoodAllergyHistory? = value.valueJson?.value as FoodAllergyHistory?
+                fah?.allergies?.map { allergy: FoodAllergyHistoryItem ->
+                  val rd: ReferenceDataCode? = toReferenceDataCodeWrapped(allergy.value)
+                  allergy.copy(
+                    value = rd?.description ?: UNKNOWN_REFERENCE_DATA_DESCRIPTION,
+                    comment = allergy.comment,
                   )
                 }
               }
               "MEDICAL_DIET" -> {
-                val mdr: MedicalDietaryRequirementHistory? = value?.valueJson?.value as MedicalDietaryRequirementHistory?
-                mdr?.medicalDietaryRequirements?.mapIndexed { i: Int, medicalDietaryRequirements: MedicalDietaryRequirementItem ->
-                  val rd: ReferenceDataCode? = toReferenceDataCodeWrapped(medicalDietaryRequirements?.value)
-                  medicalDietaryRequirements?.copy(
-                    value = if (rd != null) rd.description else UNKNOWN_REFERENCE_DATA_DESCRIPTION,
-                    comment = medicalDietaryRequirements?.comment,
+                val mdr: MedicalDietaryRequirementHistory? = value.valueJson?.value as MedicalDietaryRequirementHistory?
+                mdr?.medicalDietaryRequirements?.map { medicalDietaryRequirements: MedicalDietaryRequirementItem ->
+                  val rd: ReferenceDataCode? = toReferenceDataCodeWrapped(medicalDietaryRequirements.value)
+                  medicalDietaryRequirements.copy(
+                    value = rd?.description ?: UNKNOWN_REFERENCE_DATA_DESCRIPTION,
+                    comment = medicalDietaryRequirements.comment,
                   )
                 }
               }
               "PERSONALISED_DIET" -> {
-                var pdr: PersonalisedDietaryRequirementHistory? = value?.valueJson?.value as PersonalisedDietaryRequirementHistory?
-                pdr?.personalisedDietaryRequirements?.mapIndexed { i: Int, personalisedDietaryRequirements: PersonalisedDietaryRequirementItem ->
-                  val rd: ReferenceDataCode? = toReferenceDataCodeWrapped(personalisedDietaryRequirements?.value)
-                  personalisedDietaryRequirements?.copy(
-                    value = if (rd != null) rd.description else UNKNOWN_REFERENCE_DATA_DESCRIPTION,
-                    comment = personalisedDietaryRequirements?.comment,
+                val pdr: PersonalisedDietaryRequirementHistory? = value.valueJson?.value as PersonalisedDietaryRequirementHistory?
+                pdr?.personalisedDietaryRequirements?.map { personalisedDietaryRequirements: PersonalisedDietaryRequirementItem ->
+                  val rd: ReferenceDataCode? = toReferenceDataCodeWrapped(personalisedDietaryRequirements.value)
+                  personalisedDietaryRequirements.copy(
+                    value = rd?.description ?: UNKNOWN_REFERENCE_DATA_DESCRIPTION,
+                    comment = personalisedDietaryRequirements.comment,
                   )
                 }
               }
-              "CATERING_INSTRUCTIONS" -> value?.valueString
+              "CATERING_INSTRUCTIONS" -> value.valueString
               else -> ""
             },
             mergedAt = value.mergedAt,
@@ -164,7 +164,7 @@ class SubjectAccessRequestService(
         }.sortedByDescending { it.fieldHistoryId } // Most recent first
 
       return HmppsSubjectAccessRequestContent(
-        content = transformedSubjectAccessRequestData as List<SubjectAccessRequestResponseDto>,
+        content = transformedSubjectAccessRequestData,
       )
     } catch (e: Exception) {
       throw e // Return 500

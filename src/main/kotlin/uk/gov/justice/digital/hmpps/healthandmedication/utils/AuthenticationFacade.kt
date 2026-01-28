@@ -11,7 +11,7 @@ class AuthenticationFacade {
 
   fun getUserOrSystemInContext() = currentUsername ?: SYSTEM_USERNAME
 
-  val authentication: Authentication
+  val authentication: Authentication?
     get() = SecurityContextHolder.getContext().authentication
 
   val currentUsername: String?
@@ -30,6 +30,6 @@ class AuthenticationFacade {
   private val userPrincipal: Any?
     get() {
       val auth = authentication
-      return auth.principal
+      return auth?.principal
     }
 }

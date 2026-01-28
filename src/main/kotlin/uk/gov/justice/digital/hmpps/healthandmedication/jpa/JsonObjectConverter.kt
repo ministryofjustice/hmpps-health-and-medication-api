@@ -1,14 +1,14 @@
 package uk.gov.justice.digital.hmpps.healthandmedication.jpa
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.AttributeConverter
 import jakarta.persistence.Converter
 import org.springframework.stereotype.Component
+import tools.jackson.databind.json.JsonMapper
 
 @Converter
 @Component
-class JsonObjectConverter(val objectMapper: ObjectMapper) : AttributeConverter<JsonObject, String> {
-  override fun convertToDatabaseColumn(jsonObject: JsonObject?): String? = jsonObject?.let(objectMapper::writeValueAsString)
+class JsonObjectConverter(val jsonMapper: JsonMapper) : AttributeConverter<JsonObject, String> {
+  override fun convertToDatabaseColumn(jsonObject: JsonObject?): String? = jsonObject?.let(jsonMapper::writeValueAsString)
 
-  override fun convertToEntityAttribute(json: String?): JsonObject? = json?.let { objectMapper.readValue(it, JsonObject::class.java) }
+  override fun convertToEntityAttribute(json: String?): JsonObject? = json?.let { jsonMapper.readValue(it, JsonObject::class.java) }
 }

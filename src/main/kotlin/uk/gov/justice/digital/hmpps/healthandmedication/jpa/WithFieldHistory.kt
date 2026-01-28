@@ -6,7 +6,7 @@ import java.time.ZonedDateTime
 import java.util.SortedSet
 import kotlin.reflect.KMutableProperty0
 
-abstract class WithFieldHistory<T : AbstractAggregateRoot<T>?> : AbstractAggregateRoot<T>() {
+abstract class WithFieldHistory<T : AbstractAggregateRoot<T>> : AbstractAggregateRoot<T>() {
   abstract val prisonerNumber: String
   abstract val fieldHistory: SortedSet<FieldHistory>
   abstract val fieldMetadata: MutableMap<HealthAndMedicationField, FieldMetadata>

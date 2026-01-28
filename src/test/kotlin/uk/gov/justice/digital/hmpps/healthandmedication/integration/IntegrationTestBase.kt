@@ -1,16 +1,19 @@
 package uk.gov.justice.digital.hmpps.healthandmedication.integration
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
+import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient
+import org.springframework.context.annotation.Import
 import org.springframework.http.HttpHeaders
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.test.web.reactive.server.WebTestClient
 import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest
+import tools.jackson.databind.json.JsonMapper
+import uk.gov.justice.digital.hmpps.healthandmedication.config.FixedClockConfig
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.wiremock.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.wiremock.HmppsAuthApiExtension.Companion.hmppsAuth
@@ -33,7 +36,9 @@ import uk.gov.justice.hmpps.sqs.publish
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 
 @ExtendWith(HmppsAuthApiExtension::class, PrisonApiExtension::class, PrisonerSearchExtension::class)
+@Import(FixedClockConfig::class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
+@AutoConfigureWebTestClient
 abstract class IntegrationTestBase : TestBase() {
 
   @Autowired
@@ -43,7 +48,7 @@ abstract class IntegrationTestBase : TestBase() {
   protected lateinit var jwtAuthHelper: JwtAuthorisationHelper
 
   @Autowired
-  lateinit var objectMapper: ObjectMapper
+  lateinit var jsonMapper: JsonMapper
 
   @MockitoSpyBean
   lateinit var hmppsQueueService: HmppsQueueService
@@ -66,7 +71,7 @@ abstract class IntegrationTestBase : TestBase() {
   }
 
   internal fun sendDomainEvent(event: HmppsDomainEvent) {
-    domainEventsTopic.publish(event.eventType, objectMapper.writeValueAsString(event))
+    domainEventsTopic.publish(event.eventType, jsonMapper.writeValueAsString(event))
   }
 
   internal fun HmppsQueue.countAllMessagesOnQueue() = sqsClient.countAllMessagesOnQueue(queueUrl).get()
