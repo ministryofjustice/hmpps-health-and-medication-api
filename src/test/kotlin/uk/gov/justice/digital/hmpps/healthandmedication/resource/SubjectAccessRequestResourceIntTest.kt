@@ -3,14 +3,9 @@ package uk.gov.justice.digital.hmpps.healthandmedication.resource
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.springframework.boot.test.context.TestConfiguration
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Primary
 import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.json.JsonCompareMode
 import uk.gov.justice.digital.hmpps.healthandmedication.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.healthandmedication.integration.TestBase
-import java.time.Clock
 import java.time.ZonedDateTime
 
 /*
@@ -27,13 +22,6 @@ import java.time.ZonedDateTime
    - Does the endpoint respond with a response body in JSON format with a JSON object in the ‘content’ block?
 */
 class SubjectAccessRequestResourceIntTest : IntegrationTestBase() {
-
-  @TestConfiguration
-  class FixedClockConfig {
-    @Primary
-    @Bean
-    fun fixedClock(): Clock = clock
-  }
 
   @DisplayName("GET subject-access-request?prn=\${PRISONER_NUMBER")
   @Nested
@@ -125,7 +113,7 @@ class SubjectAccessRequestResourceIntTest : IntegrationTestBase() {
 
     const val EXPECTED_FIRST_FIELD_HISTORY_ID = 4
 
-    val NOW: ZonedDateTime = ZonedDateTime.now(TestBase.clock)
+    val NOW: ZonedDateTime = ZonedDateTime.now(clock)
 
     val VALID_DIET_AND_FOOD_ALLERGY_REQUEST =
       // language=json

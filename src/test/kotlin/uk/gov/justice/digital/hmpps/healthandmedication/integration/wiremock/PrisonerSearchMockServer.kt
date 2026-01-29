@@ -1,8 +1,5 @@
 package uk.gov.justice.digital.hmpps.healthandmedication.integration.wiremock
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.get
@@ -12,6 +9,7 @@ import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
+import tools.jackson.databind.json.JsonMapper
 import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.response.PrisonerDto
 import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.response.PrisonerSearchResultDto
 import java.time.LocalDate
@@ -21,7 +19,7 @@ class PrisonerSearchServer : WireMockServer(WIREMOCK_PORT) {
     private const val WIREMOCK_PORT = 8092
   }
 
-  private val mapper: ObjectMapper = jacksonObjectMapper().registerModule(JavaTimeModule())
+  private val mapper: JsonMapper = JsonMapper.builder().build()
 
   fun stubHealthPing(status: Int) {
     stubFor(

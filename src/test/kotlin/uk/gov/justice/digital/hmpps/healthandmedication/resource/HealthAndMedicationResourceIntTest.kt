@@ -4,9 +4,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.springframework.boot.test.context.TestConfiguration
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Primary
 import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.json.JsonCompareMode.STRICT
 import org.springframework.test.web.reactive.server.WebTestClient
@@ -25,18 +22,10 @@ import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PersonalisedDietaryR
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PersonalisedDietaryRequirementItem
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.utils.HistoryComparison
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.utils.RepopulateDb
-import java.time.Clock
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
 class HealthAndMedicationResourceIntTest : IntegrationTestBase() {
-
-  @TestConfiguration
-  class FixedClockConfig {
-    @Primary
-    @Bean
-    fun fixedClock(): Clock = clock
-  }
 
   @DisplayName("PUT /prisoners/{prisonerNumber}/diet-and-allergy")
   @Nested

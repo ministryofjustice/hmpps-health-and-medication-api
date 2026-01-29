@@ -12,10 +12,6 @@ spring:
 
   jackson:
     date-format: "yyyy-MM-dd'T'HH:mm:ssZ"
-    serialization:
-      write-dates-as-timestamps: false
-      write-dates-with-context-time-zone: true
-      write-dates-with-zone-id: false
     time-zone: "Europe/London"
 
   security:
