@@ -267,7 +267,7 @@ class PrisonerHealthServiceTest {
             PRISON_ID,
           ),
           topLevelLocation = "RECP",
-          lastAdmissionDate = LocalDate.parse("2025-11-01"),
+          lastAdmissionDate = OLDER_ADMISSION,
         ),
       )
 
@@ -350,7 +350,7 @@ class PrisonerHealthServiceTest {
           personalisedDietaryRequirements = ValueWithMetadata(emptyList(), NOW, USER1, PRISON_ID),
           cateringInstructions = ValueWithMetadata(null, NOW, USER1, PRISON_ID),
           topLevelLocation = "RECP",
-          lastAdmissionDate = LocalDate.parse("2025-11-01"),
+          lastAdmissionDate = OLDER_ADMISSION,
         ),
       )
 
@@ -480,6 +480,13 @@ class PrisonerHealthServiceTest {
         foodAllergies = mutableSetOf(FOOD_ALLERGY_PEANUTS, FOOD_ALLERGY_OTHER),
         medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_COELIAC, MEDICAL_DIET_OTHER),
         personalisedDietaryRequirements = mutableSetOf(PERSONALISED_DIET_VEGAN, PERSONALISED_DIET_OTHER),
+        location = PrisonerLocation(
+          prisonerNumber = secondPrisonerNumber,
+          prisonId = PRISON_ID,
+          topLocationLevel = "A",
+          location = "A-1-001",
+          lastAdmissionDate = RECENT_ADMISSION,
+        ),
       )
 
       private val firstPrisonerHealthResponse = HealthAndMedicationForPrisonDto(
@@ -674,6 +681,8 @@ class PrisonerHealthServiceTest {
                   foodAllergies = setOf("PEANUTS", "TREE_NUTS"),
                   personalisedDietaryRequirements = setOf("KOSHER"),
                   medicalDietaryRequirements = setOf("NUTRIENT_DEFICIENCY"),
+                  topLocationLevel = setOf("RECP"),
+                  recentArrival = true,
                 ),
               ),
             ),
@@ -724,6 +733,13 @@ class PrisonerHealthServiceTest {
             foodAllergies = mutableSetOf(FOOD_ALLERGY_PEANUTS, FOOD_ALLERGY_OTHER),
             medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_COELIAC, MEDICAL_DIET_OTHER),
             personalisedDietaryRequirements = mutableSetOf(PERSONALISED_DIET_VEGAN, PERSONALISED_DIET_OTHER),
+            location = PrisonerLocation(
+              prisonerNumber = "A1234BB",
+              prisonId = PRISON_ID,
+              topLocationLevel = "A",
+              location = "A-1-001",
+              lastAdmissionDate = RECENT_ADMISSION,
+            ),
           ),
         ),
       )
@@ -744,6 +760,11 @@ class PrisonerHealthServiceTest {
             HealthAndMedicationFilter("Vegan", "VEGAN", 1),
             HealthAndMedicationFilter("Other personalised diet", "OTHER", 1),
           ),
+          topLocationLevel = listOf(
+            HealthAndMedicationFilter("A", "A", 1),
+            HealthAndMedicationFilter("RECP", "RECP", 1),
+          ),
+          recentArrival = HealthAndMedicationFilter("Arrived in the last 3 days", "ARRIVED_LAST_3_DAYS", 1),
         ),
       )
     }
@@ -765,6 +786,8 @@ class PrisonerHealthServiceTest {
           foodAllergies = emptyList(),
           personalisedDietaryRequirements = emptyList(),
           medicalDietaryRequirements = emptyList(),
+          topLocationLevel = emptyList(),
+          recentArrival = null,
         ),
       )
     }
@@ -781,6 +804,8 @@ class PrisonerHealthServiceTest {
           foodAllergies = emptyList(),
           personalisedDietaryRequirements = emptyList(),
           medicalDietaryRequirements = emptyList(),
+          topLocationLevel = emptyList(),
+          recentArrival = null,
         ),
       )
     }
@@ -809,6 +834,8 @@ class PrisonerHealthServiceTest {
     const val USER2 = "USER2"
 
     val NOW = ZonedDateTime.now()
+    val RECENT_ADMISSION = LocalDate.now(Clock.fixed(NOW.toInstant(), NOW.zone)).minusDays(3)
+    val OLDER_ADMISSION = LocalDate.now(Clock.fixed(NOW.toInstant(), NOW.zone)).minusDays(10)
 
     private fun referenceDataDomain(code: String, description: String) = ReferenceDataDomain(
       code = code,
@@ -924,7 +951,7 @@ class PrisonerHealthServiceTest {
       prisonId = PRISON_ID,
       topLocationLevel = "RECP",
       location = "RECP",
-      lastAdmissionDate = LocalDate.parse("2025-11-01"),
+      lastAdmissionDate = OLDER_ADMISSION,
     )
 
     val PRISONER_HEALTH = PrisonerHealth(
@@ -959,6 +986,8 @@ class PrisonerHealthServiceTest {
       Arguments.of(HealthAndMedicationRequestFilters(foodAllergies = setOf("OTHER"))),
       Arguments.of(HealthAndMedicationRequestFilters(personalisedDietaryRequirements = setOf("OTHER"))),
       Arguments.of(HealthAndMedicationRequestFilters(medicalDietaryRequirements = setOf("OTHER"))),
+      Arguments.of(HealthAndMedicationRequestFilters(topLocationLevel = setOf("A"))),
+      Arguments.of(HealthAndMedicationRequestFilters(recentArrival = true)),
     )
   }
 }
