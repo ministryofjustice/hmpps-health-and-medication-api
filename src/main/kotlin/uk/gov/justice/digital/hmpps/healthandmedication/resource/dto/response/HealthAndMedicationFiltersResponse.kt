@@ -12,9 +12,15 @@ data class HealthAndMedicationFiltersResponse(
 
   @Schema(description = "Personalised diet filters")
   val personalisedDietaryRequirements: List<HealthAndMedicationFilter> = emptyList(),
+
+  @Schema(description = "Location filters")
+  val topLocationLevel: List<HealthAndMedicationFilter> = emptyList(),
+
+  @Schema(description = "Recent arrival filter")
+  val recentArrival: HealthAndMedicationFilter? = null,
 )
 
-@Schema(description = "Health and medication filter")
+@Schema(description = "Health and medication filter based on reference data")
 data class HealthAndMedicationFilter(
   @Schema(description = "The name of the filter")
   val name: String,

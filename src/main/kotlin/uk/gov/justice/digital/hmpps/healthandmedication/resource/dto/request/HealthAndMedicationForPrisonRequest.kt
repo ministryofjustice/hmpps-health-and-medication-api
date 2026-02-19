@@ -48,4 +48,8 @@ data class HealthAndMedicationRequestFilters(
   val medicalDietaryRequirements: Set<String> = emptySet(),
   @Parameter(description = "Personalised diet filters. Should match PERSONALISED_DIET reference data codes")
   val personalisedDietaryRequirements: Set<String> = emptySet(),
+  @Parameter(description = "Location filters. Filters by the prisoner's top-level location")
+  val topLocationLevel: Set<String> = emptySet(),
+  @Parameter(description = "Whether to include only prisoners who arrived within the past three days")
+  val recentArrival: Boolean? = null,
 )

@@ -34,6 +34,7 @@ import uk.gov.justice.digital.hmpps.healthandmedication.utils.Pagination
 import uk.gov.justice.digital.hmpps.healthandmedication.utils.toReferenceDataCode
 import uk.gov.justice.digital.hmpps.healthandmedication.utils.validatePrisonerNumber
 import java.time.Clock
+import java.time.LocalDate
 import java.time.ZonedDateTime
 import kotlin.jvm.optionals.getOrNull
 
@@ -71,10 +72,11 @@ class PrisonerHealthService(
 
     if (!prisoners.isNullOrEmpty()) {
       val prisonerNumbers = prisoners.map { it.prisonerNumber }.toMutableList()
+      val recentArrivalCutoff = LocalDate.now(clock).minusDays(3)
 
       // Fetch all non-empty health data for the given prisoner numbers and apply filtering
       val healthData = prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(prisonerNumbers)
-        .filter { request.filters == null || matchesAnyFilter(it, request.filters) }
+        .filter { request.filters == null || matchesAnyFilter(it, request.filters, recentArrivalCutoff) }
 
       // This maintains the order from the prisoner search API so that we're able to have sorting
       val healthForPrison =
@@ -119,21 +121,24 @@ class PrisonerHealthService(
     if (!prisoners.isNullOrEmpty()) {
       val prisonerNumbers = prisoners.map { it.prisonerNumber }.toMutableList()
       val healthData = prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(prisonerNumbers)
+      val recentArrivalCutoff = LocalDate.now(clock).minusDays(3)
 
       return HealthAndMedicationFiltersResponse(
-        foodAllergies = calculateFiltersFromReferenceData(healthData, { it.foodAllergies }, { it.allergy }, FOOD_ALLERGY),
-        personalisedDietaryRequirements = calculateFiltersFromReferenceData(
+        foodAllergies = calculateHealthFiltersFromReferenceData(healthData, { it.foodAllergies }, { it.allergy }, FOOD_ALLERGY),
+        personalisedDietaryRequirements = calculateHealthFiltersFromReferenceData(
           healthData,
           { it.personalisedDietaryRequirements },
           { it.dietaryRequirement },
           PERSONALISED_DIET,
         ),
-        medicalDietaryRequirements = calculateFiltersFromReferenceData(
+        medicalDietaryRequirements = calculateHealthFiltersFromReferenceData(
           healthData,
           { it.medicalDietaryRequirements },
           { it.dietaryRequirement },
           MEDICAL_DIET,
         ),
+        topLocationLevel = calculateLocationFilter(healthData),
+        recentArrival = calculateRecentArrivalFilter(healthData, recentArrivalCutoff),
       )
     }
 
@@ -208,16 +213,27 @@ class PrisonerHealthService(
   private fun matchesAnyFilter(
     value: PrisonerHealth,
     filters: HealthAndMedicationRequestFilters,
-  ): Boolean = value.foodAllergies.any { filters.foodAllergies.contains(it.allergy.code) } ||
-    value.medicalDietaryRequirements.any { filters.medicalDietaryRequirements.contains(it.dietaryRequirement.code) } ||
-    value.personalisedDietaryRequirements.any { filters.personalisedDietaryRequirements.contains(it.dietaryRequirement.code) }
+    recentArrivalCutoff: LocalDate,
+  ): Boolean {
+    val foodAllergyMatches = value.foodAllergies.any { filters.foodAllergies.contains(it.allergy.code) }
+    val medicalDietMatches = value.medicalDietaryRequirements.any { filters.medicalDietaryRequirements.contains(it.dietaryRequirement.code) }
+    val personalisedDietMatches = value.personalisedDietaryRequirements.any { filters.personalisedDietaryRequirements.contains(it.dietaryRequirement.code) }
+    val locationMatches = value.location?.topLocationLevel?.let { filters.topLocationLevel.contains(it) } ?: false
+    val recentArrivalMatches = if (filters.recentArrival == true) {
+      value.location?.lastAdmissionDate?.let { !it.isBefore(recentArrivalCutoff) } ?: false
+    } else {
+      false
+    }
+
+    return foodAllergyMatches || medicalDietMatches || personalisedDietMatches || locationMatches || recentArrivalMatches
+  }
 
   private fun newHealthFor(prisonerNumber: String): PrisonerHealth {
     validatePrisonerNumber(prisonerSearchClient, prisonerNumber)
     return PrisonerHealth(prisonerNumber)
   }
 
-  private fun <T> calculateFiltersFromReferenceData(
+  private fun <T> calculateHealthFiltersFromReferenceData(
     data: List<PrisonerHealth>,
     categoryMapper: (PrisonerHealth) -> Iterable<T>,
     itemMapper: (T) -> ReferenceDataCode,
@@ -226,6 +242,23 @@ class PrisonerHealthService(
     .groupingBy(itemMapper)
     .eachCount()
     .map { HealthAndMedicationFilter(getDescription(it.key, category), it.key.code, it.value) }
+
+  private fun calculateLocationFilter(data: List<PrisonerHealth>): List<HealthAndMedicationFilter> = data.mapNotNull { it.location?.topLocationLevel }
+    .groupingBy { it }
+    .eachCount()
+    .map { HealthAndMedicationFilter(it.key, it.key, it.value) }
+    .sortedBy { it.value }
+
+  private fun calculateRecentArrivalFilter(data: List<PrisonerHealth>, recentArrivalCutoff: LocalDate): HealthAndMedicationFilter? {
+    val recentArrivalCount = data.count { health ->
+      health.location?.lastAdmissionDate?.let { !it.isBefore(recentArrivalCutoff) } ?: false
+    }
+    return if (recentArrivalCount > 0) {
+      HealthAndMedicationFilter("Arrived in the last 3 days", "ARRIVED_LAST_3_DAYS", recentArrivalCount)
+    } else {
+      null
+    }
+  }
 
   private fun getDescription(referenceDataCode: ReferenceDataCode, category: ReferenceDataCategory): String {
     if (referenceDataCode.code == "OTHER") {
