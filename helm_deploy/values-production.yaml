@@ -27,6 +27,6 @@ generic-service:
 # CloudPlatform AlertManager receiver to route prometheus alerts to slack
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts
 generic-prometheus-alerts:
-  alertSeverity: hmpps-prisoner-profile-prod
+  alertSeverity: hmpps-connect-dps-prod # sent to #connect-dps-prod-alerts
   rdsAlertsDatabases:
     cloud-platform-2a10e6f376f54011: "HMPPS Health and Medication DB (prod)"
