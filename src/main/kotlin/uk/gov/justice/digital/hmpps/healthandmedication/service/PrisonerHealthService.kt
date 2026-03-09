@@ -76,7 +76,7 @@ class PrisonerHealthService(
 
       // Fetch all non-empty health data for the given prisoner numbers and apply filtering
       val healthData = prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(prisonerNumbers)
-        .filter { request.filters == null || matchesAnyFilter(it, request.filters, recentArrivalCutoff) }
+        .filter { request.filters == null || matchesFilters(it, request.filters, recentArrivalCutoff) }
 
       // This maintains the order from the prisoner search API so that we're able to have sorting
       val healthForPrison =
@@ -210,22 +210,40 @@ class PrisonerHealthService(
     prisonApiClient.updateSmokerStatus(prisonerNumber, request.convertToPrisonApiRequest())
   }
 
-  private fun matchesAnyFilter(
+  private fun matchesFilters(
     value: PrisonerHealth,
     filters: HealthAndMedicationRequestFilters,
     recentArrivalCutoff: LocalDate,
   ): Boolean {
-    val foodAllergyMatches = value.foodAllergies.any { filters.foodAllergies.contains(it.allergy.code) }
-    val medicalDietMatches = value.medicalDietaryRequirements.any { filters.medicalDietaryRequirements.contains(it.dietaryRequirement.code) }
-    val personalisedDietMatches = value.personalisedDietaryRequirements.any { filters.personalisedDietaryRequirements.contains(it.dietaryRequirement.code) }
-    val locationMatches = value.location?.topLocationLevel?.let { filters.topLocationLevel.contains(it) } ?: false
+    // Diet filters are OR'd together - any diet match satisfies this condition
+    val hasDietFilters = filters.foodAllergies.isNotEmpty() ||
+      filters.medicalDietaryRequirements.isNotEmpty() ||
+      filters.personalisedDietaryRequirements.isNotEmpty()
+
+    val dietMatches = if (hasDietFilters) {
+      val foodAllergyMatches = value.foodAllergies.any { filters.foodAllergies.contains(it.allergy.code) }
+      val medicalDietMatches = value.medicalDietaryRequirements.any { filters.medicalDietaryRequirements.contains(it.dietaryRequirement.code) }
+      val personalisedDietMatches = value.personalisedDietaryRequirements.any { filters.personalisedDietaryRequirements.contains(it.dietaryRequirement.code) }
+      foodAllergyMatches || medicalDietMatches || personalisedDietMatches
+    } else {
+      true
+    }
+
+    // Location is an AND filter
+    val locationMatches = if (filters.topLocationLevel.isNotEmpty()) {
+      value.location?.topLocationLevel?.let { filters.topLocationLevel.contains(it) } ?: false
+    } else {
+      true
+    }
+
+    // Recent arrival is an AND filter
     val recentArrivalMatches = if (filters.recentArrival == true) {
       value.location?.lastAdmissionDate?.let { !it.isBefore(recentArrivalCutoff) } ?: false
     } else {
-      false
+      true
     }
 
-    return foodAllergyMatches || medicalDietMatches || personalisedDietMatches || locationMatches || recentArrivalMatches
+    return dietMatches && locationMatches && recentArrivalMatches
   }
 
   private fun newHealthFor(prisonerNumber: String): PrisonerHealth {

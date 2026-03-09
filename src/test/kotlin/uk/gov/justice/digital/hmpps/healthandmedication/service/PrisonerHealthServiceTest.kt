@@ -670,7 +670,7 @@ class PrisonerHealthServiceTest {
         }
 
         @Test
-        fun `returns results matching any filter when multiple filters are provided`() {
+        fun `filters by multiple diet requirements when any match`() {
           assertThat(
             underTest.getHealthForPrison(
               PRISON_ID,
@@ -681,8 +681,6 @@ class PrisonerHealthServiceTest {
                   foodAllergies = setOf("PEANUTS", "TREE_NUTS"),
                   personalisedDietaryRequirements = setOf("KOSHER"),
                   medicalDietaryRequirements = setOf("NUTRIENT_DEFICIENCY"),
-                  topLocationLevel = setOf("RECP"),
-                  recentArrival = true,
                 ),
               ),
             ),
@@ -700,6 +698,131 @@ class PrisonerHealthServiceTest {
                 pageNumber = 1,
                 size = 10,
                 totalElements = 2,
+                totalPages = 1,
+              ),
+            ),
+          )
+        }
+
+        @Test
+        fun `filters by location and diet requirement together`() {
+          assertThat(
+            underTest.getHealthForPrison(
+              PRISON_ID,
+              HealthAndMedicationForPrisonRequest(
+                page = 1,
+                size = 10,
+                filters = HealthAndMedicationRequestFilters(
+                  foodAllergies = setOf("PEANUTS"),
+                  topLocationLevel = setOf("A"),
+                ),
+              ),
+            ),
+          ).isEqualTo(
+            HealthAndMedicationForPrisonResponse(
+              content = listOf(secondPrisonerHealthResponse),
+              metadata = PageMeta(
+                first = true,
+                last = true,
+                numberOfElements = 1,
+                offset = 0,
+                pageNumber = 1,
+                size = 10,
+                totalElements = 1,
+                totalPages = 1,
+              ),
+            ),
+          )
+        }
+
+        @Test
+        fun `filters by recent arrival and diet requirement together`() {
+          assertThat(
+            underTest.getHealthForPrison(
+              PRISON_ID,
+              HealthAndMedicationForPrisonRequest(
+                page = 1,
+                size = 10,
+                filters = HealthAndMedicationRequestFilters(
+                  foodAllergies = setOf("PEANUTS"),
+                  recentArrival = true,
+                ),
+              ),
+            ),
+          ).isEqualTo(
+            HealthAndMedicationForPrisonResponse(
+              content = listOf(secondPrisonerHealthResponse),
+              metadata = PageMeta(
+                first = true,
+                last = true,
+                numberOfElements = 1,
+                offset = 0,
+                pageNumber = 1,
+                size = 10,
+                totalElements = 1,
+                totalPages = 1,
+              ),
+            ),
+          )
+        }
+
+        @Test
+        fun `filters by location, recent arrival and diet requirement together`() {
+          assertThat(
+            underTest.getHealthForPrison(
+              PRISON_ID,
+              HealthAndMedicationForPrisonRequest(
+                page = 1,
+                size = 10,
+                filters = HealthAndMedicationRequestFilters(
+                  foodAllergies = setOf("PEANUTS"),
+                  topLocationLevel = setOf("A"),
+                  recentArrival = true,
+                ),
+              ),
+            ),
+          ).isEqualTo(
+            HealthAndMedicationForPrisonResponse(
+              content = listOf(secondPrisonerHealthResponse),
+              metadata = PageMeta(
+                first = true,
+                last = true,
+                numberOfElements = 1,
+                offset = 0,
+                pageNumber = 1,
+                size = 10,
+                totalElements = 1,
+                totalPages = 1,
+              ),
+            ),
+          )
+        }
+
+        @Test
+        fun `returns no results when location and recent arrival filters have no matches`() {
+          assertThat(
+            underTest.getHealthForPrison(
+              PRISON_ID,
+              HealthAndMedicationForPrisonRequest(
+                page = 1,
+                size = 10,
+                filters = HealthAndMedicationRequestFilters(
+                  topLocationLevel = setOf("RECP"),
+                  recentArrival = true,
+                ),
+              ),
+            ),
+          ).isEqualTo(
+            HealthAndMedicationForPrisonResponse(
+              content = listOf(),
+              metadata = PageMeta(
+                first = true,
+                last = true,
+                numberOfElements = 0,
+                offset = 0,
+                pageNumber = 1,
+                size = 10,
+                totalElements = 0,
                 totalPages = 1,
               ),
             ),
