@@ -65,3 +65,9 @@ hmpps:
 migration:
   endpoint:
     enabled: true
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true

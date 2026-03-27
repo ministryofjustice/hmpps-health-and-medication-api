@@ -96,3 +96,10 @@ hmpps:
     template:
       path: /sar/templates/sar_template.mustache
       enabled: true
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+    version: 5.32.1
