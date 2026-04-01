@@ -117,32 +117,43 @@ class PrisonerHealthService(
 
   fun getHealthFiltersForPrison(prisonId: String): HealthAndMedicationFiltersResponse {
     val prisoners = prisonerSearchClient.getPrisonersForPrison(prisonId)
+    if (prisoners.isNullOrEmpty()) return HealthAndMedicationFiltersResponse()
 
-    if (!prisoners.isNullOrEmpty()) {
-      val prisonerNumbers = prisoners.map { it.prisonerNumber }.toMutableList()
-      val healthData = prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(prisonerNumbers)
-      val recentArrivalCutoff = LocalDate.now(clock).minusDays(3)
+    val prisonerNumbers = prisoners.map { it.prisonerNumber }.toMutableList()
+    val healthData = prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(prisonerNumbers)
+    return buildFiltersResponse(healthData)
+  }
 
-      return HealthAndMedicationFiltersResponse(
-        foodAllergies = calculateHealthFiltersFromReferenceData(healthData, { it.foodAllergies }, { it.allergy }, FOOD_ALLERGY),
-        personalisedDietaryRequirements = calculateHealthFiltersFromReferenceData(
-          healthData,
-          { it.personalisedDietaryRequirements },
-          { it.dietaryRequirement },
-          PERSONALISED_DIET,
-        ),
-        medicalDietaryRequirements = calculateHealthFiltersFromReferenceData(
-          healthData,
-          { it.medicalDietaryRequirements },
-          { it.dietaryRequirement },
-          MEDICAL_DIET,
-        ),
-        topLocationLevel = calculateLocationFilter(healthData),
-        recentArrival = calculateRecentArrivalFilter(healthData, recentArrivalCutoff),
-      )
-    }
+  fun getFilteredHealthCountsForPrison(prisonId: String, filters: HealthAndMedicationRequestFilters): HealthAndMedicationFiltersResponse {
+    val prisoners = prisonerSearchClient.getPrisonersForPrison(prisonId)
+    if (prisoners.isNullOrEmpty()) return HealthAndMedicationFiltersResponse()
 
-    return HealthAndMedicationFiltersResponse()
+    val prisonerNumbers = prisoners.map { it.prisonerNumber }.toMutableList()
+    val healthData = prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(prisonerNumbers)
+    val recentArrivalCutoff = LocalDate.now(clock).minusDays(3)
+    val filteredHealthData = healthData.filter { matchesFilters(it, filters, recentArrivalCutoff) }
+    return buildFiltersResponse(filteredHealthData)
+  }
+
+  private fun buildFiltersResponse(healthData: List<PrisonerHealth>): HealthAndMedicationFiltersResponse {
+    val recentArrivalCutoff = LocalDate.now(clock).minusDays(3)
+    return HealthAndMedicationFiltersResponse(
+      foodAllergies = calculateHealthFiltersFromReferenceData(healthData, { it.foodAllergies }, { it.allergy }, FOOD_ALLERGY),
+      personalisedDietaryRequirements = calculateHealthFiltersFromReferenceData(
+        healthData,
+        { it.personalisedDietaryRequirements },
+        { it.dietaryRequirement },
+        PERSONALISED_DIET,
+      ),
+      medicalDietaryRequirements = calculateHealthFiltersFromReferenceData(
+        healthData,
+        { it.medicalDietaryRequirements },
+        { it.dietaryRequirement },
+        MEDICAL_DIET,
+      ),
+      topLocationLevel = calculateLocationFilter(healthData),
+      recentArrival = calculateRecentArrivalFilter(healthData, recentArrivalCutoff),
+    )
   }
 
   @Transactional

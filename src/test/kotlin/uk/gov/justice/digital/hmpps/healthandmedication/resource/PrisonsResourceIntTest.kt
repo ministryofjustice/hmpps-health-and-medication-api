@@ -81,9 +81,81 @@ class PrisonsResourceIntTest : IntegrationTestBase() {
       }
 
       private fun getAvailableFilters(): WebTestClient.ResponseSpec = webTestClient.get().uri("/prisons/${PRISON_ID}/filters")
-        .headers(
-          setAuthorisation(USER1, roles = listOf("ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RO")),
-        )
+        .headers(setAuthorisation(USER1, roles = listOf("ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RO")))
+        .header("Content-Type", "application/json")
+        .exchange()
+        .expectStatus().isOk
+    }
+  }
+
+  @DisplayName("GET /prisons/{prisonId}/filter-counts")
+  @Nested
+  inner class GetFilteredCounts {
+
+    @Nested
+    inner class Security {
+
+      @Test
+      fun `access forbidden when no authority`() {
+        webTestClient.get().uri("/prisons/${PRISON_ID}/filter-counts")
+          .header("Content-Type", "application/json")
+          .exchange()
+          .expectStatus().isUnauthorized
+      }
+
+      @Test
+      fun `access forbidden when no role`() {
+        webTestClient.get().uri("/prisons/${PRISON_ID}/filter-counts")
+          .headers(setAuthorisation(roles = listOf()))
+          .header("Content-Type", "application/json")
+          .exchange()
+          .expectStatus().isForbidden
+      }
+
+      @Test
+      fun `access forbidden with wrong role`() {
+        webTestClient.get().uri("/prisons/${PRISON_ID}/filter-counts")
+          .headers(setAuthorisation(roles = listOf("ROLE_IS_WRONG")))
+          .header("Content-Type", "application/json")
+          .exchange()
+          .expectStatus().isForbidden
+      }
+    }
+
+    @Nested
+    inner class HappyPath {
+      @Test
+      @RepopulateDb
+      fun `can get filter counts with no filters applied`() {
+        val response = getFilteredCounts("")
+
+        response.expectBody()
+          .jsonPath("$.foodAllergies[?(@.value=='SOYA')].count").isEqualTo(2)
+      }
+
+      @Test
+      @RepopulateDb
+      fun `can get filter counts with a filter applied`() {
+        val response = getFilteredCounts("?personalisedDietaryRequirements=KOSHER")
+
+        response.expectBody()
+          .jsonPath("$.foodAllergies[?(@.value=='SOYA')].count").isEqualTo(1)
+      }
+
+      @Test
+      @RepopulateDb
+      fun `can get filter counts with multiple filters applied`() {
+        val response = getFilteredCounts("?foodAllergies=SOYA&medicalDietaryRequirements=LOW_CHOLESTEROL&topLocationLevel=A&recentArrival=true")
+
+        response.expectBody()
+          .jsonPath("$.foodAllergies[?(@.value=='SOYA')].count").isEqualTo(1)
+          .jsonPath("$.medicalDietaryRequirements[?(@.value=='LOW_CHOLESTEROL')].count").isEqualTo(1)
+          .jsonPath("$.personalisedDietaryRequirements[?(@.value=='KOSHER')].count").isEqualTo(1)
+      }
+
+      private fun getFilteredCounts(queryParams: String): WebTestClient.ResponseSpec = webTestClient.get()
+        .uri("/prisons/${PRISON_ID}/filter-counts$queryParams")
+        .headers(setAuthorisation(USER1, roles = listOf("ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RO")))
         .header("Content-Type", "application/json")
         .exchange()
         .expectStatus().isOk

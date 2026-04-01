@@ -935,6 +935,329 @@ class PrisonerHealthServiceTest {
   }
 
   @Nested
+  inner class GetFilteredHealthCountsForPrison {
+    private val secondPrisonerNumber = "A1234BB"
+    private val secondPrisonerHealth = PrisonerHealth(
+      prisonerNumber = secondPrisonerNumber,
+      foodAllergies = mutableSetOf(FOOD_ALLERGY_PEANUTS, FOOD_ALLERGY_OTHER),
+      medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_COELIAC, MEDICAL_DIET_OTHER),
+      personalisedDietaryRequirements = mutableSetOf(PERSONALISED_DIET_VEGAN, PERSONALISED_DIET_OTHER),
+      location = PrisonerLocation(
+        prisonerNumber = secondPrisonerNumber,
+        prisonId = PRISON_ID,
+        topLocationLevel = "A",
+        location = "A-1-001",
+        lastAdmissionDate = RECENT_ADMISSION,
+      ),
+    )
+
+    @BeforeEach
+    fun beforeEach() {
+      whenever(prisonerSearchClient.getPrisonersForPrison(PRISON_ID))
+        .thenReturn(
+          listOf(
+            PRISONER_SEARCH_RESPONSE,
+            PrisonerDto(
+              prisonerNumber = secondPrisonerNumber,
+              prisonId = PRISON_ID,
+              firstName = PRISONER_FIRST_NAME,
+              lastName = PRISONER_LAST_NAME,
+              cellLocation = PRISONER_SEARCH_LOCATION,
+            ),
+          ),
+        )
+
+      whenever(
+        prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(
+          mutableListOf(PRISONER_NUMBER, secondPrisonerNumber),
+        ),
+      ).thenReturn(listOf(PRISONER_HEALTH, secondPrisonerHealth))
+    }
+
+    @Test
+    fun `returns empty response when no prisoners found`() {
+      whenever(prisonerSearchClient.getPrisonersForPrison("EMPTY"))
+        .thenReturn(null)
+
+      val result = underTest.getFilteredHealthCountsForPrison(
+        "EMPTY",
+        HealthAndMedicationRequestFilters(foodAllergies = setOf("PEANUTS")),
+      )
+
+      assertThat(result).isEqualTo(HealthAndMedicationFiltersResponse())
+    }
+
+    @Test
+    fun `returns empty counts when filters match no prisoners`() {
+      val result = underTest.getFilteredHealthCountsForPrison(
+        PRISON_ID,
+        HealthAndMedicationRequestFilters(topLocationLevel = setOf("NONEXISTENT")),
+      )
+
+      assertThat(result.foodAllergies).isEmpty()
+      assertThat(result.medicalDietaryRequirements).isEmpty()
+      assertThat(result.personalisedDietaryRequirements).isEmpty()
+      assertThat(result.topLocationLevel).isEmpty()
+      assertThat(result.recentArrival).isNull()
+    }
+
+    @Test
+    fun `returns all counts with no filters applied`() {
+      val result = underTest.getFilteredHealthCountsForPrison(
+        PRISON_ID,
+        HealthAndMedicationRequestFilters(),
+      )
+
+      assertThat(result).isEqualTo(
+        HealthAndMedicationFiltersResponse(
+          foodAllergies = listOf(
+            HealthAndMedicationFilter("Peanuts", "PEANUTS", 2),
+            HealthAndMedicationFilter("Other food allergy", "OTHER", 1),
+          ),
+          medicalDietaryRequirements = listOf(
+            HealthAndMedicationFilter("Coeliac", "COELIAC", 2),
+            HealthAndMedicationFilter("Other medical diet", "OTHER", 1),
+          ),
+          personalisedDietaryRequirements = listOf(
+            HealthAndMedicationFilter("Vegan", "VEGAN", 1),
+            HealthAndMedicationFilter("Other personalised diet", "OTHER", 1),
+          ),
+          topLocationLevel = listOf(
+            HealthAndMedicationFilter("A", "A", 1),
+            HealthAndMedicationFilter("RECP", "RECP", 1),
+          ),
+          recentArrival = HealthAndMedicationFilter("Arrived in the last 3 days", "ARRIVED_LAST_3_DAYS", 1),
+        ),
+      )
+    }
+
+    @Test
+    fun `works with multiple filters from the same AND category`() {
+      val coeliacInA = PrisonerHealth(
+        prisonerNumber = "A1234BB",
+        medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_COELIAC),
+        location = PrisonerLocation(
+          prisonerNumber = "A1234BB",
+          prisonId = PRISON_ID,
+          topLocationLevel = "A",
+          location = "A-1-001",
+          lastAdmissionDate = OLDER_ADMISSION,
+        ),
+      )
+      val coeliacInC = PrisonerHealth(
+        prisonerNumber = "A1234CC",
+        medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_COELIAC),
+        location = PrisonerLocation(
+          prisonerNumber = "A1234CC",
+          prisonId = PRISON_ID,
+          topLocationLevel = "C",
+          location = "C-1-001",
+          lastAdmissionDate = OLDER_ADMISSION,
+        ),
+      )
+      val coeliacInB = PrisonerHealth(
+        prisonerNumber = "A1234DD",
+        medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_COELIAC),
+        location = PrisonerLocation(
+          prisonerNumber = "A1234DD",
+          prisonId = PRISON_ID,
+          topLocationLevel = "B",
+          location = "B-1-001",
+          lastAdmissionDate = OLDER_ADMISSION,
+        ),
+      )
+
+      whenever(prisonerSearchClient.getPrisonersForPrison(PRISON_ID))
+        .thenReturn(listOf(PRISONER_SEARCH_RESPONSE))
+      whenever(
+        prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(mutableListOf(PRISONER_NUMBER)),
+      ).thenReturn(listOf(coeliacInA, coeliacInC, coeliacInB))
+
+      val result = underTest.getFilteredHealthCountsForPrison(
+        PRISON_ID,
+        HealthAndMedicationRequestFilters(
+          topLocationLevel = setOf("A", "C"),
+        ),
+      )
+
+      assertThat(result.topLocationLevel).containsExactlyInAnyOrder(
+        HealthAndMedicationFilter("A", "A", 1),
+        HealthAndMedicationFilter("C", "C", 1),
+      )
+      assertThat(result.medicalDietaryRequirements).containsExactly(
+        HealthAndMedicationFilter("Coeliac", "COELIAC", 2),
+      )
+    }
+
+    @Test
+    fun `works with multiple filters from different AND categories`() {
+      val recentPrisonerInA = PrisonerHealth(
+        prisonerNumber = "A1234BB",
+        foodAllergies = mutableSetOf(FOOD_ALLERGY_PEANUTS),
+        location = PrisonerLocation(
+          prisonerNumber = "A1234BB",
+          prisonId = PRISON_ID,
+          topLocationLevel = "A",
+          location = "A-1-001",
+          lastAdmissionDate = RECENT_ADMISSION,
+        ),
+      )
+      val recentPrisonerInB = PrisonerHealth(
+        prisonerNumber = "A1234CC",
+        foodAllergies = mutableSetOf(FOOD_ALLERGY_PEANUTS),
+        location = PrisonerLocation(
+          prisonerNumber = "A1234CC",
+          prisonId = PRISON_ID,
+          topLocationLevel = "B",
+          location = "B-1-001",
+          lastAdmissionDate = RECENT_ADMISSION,
+        ),
+      )
+
+      whenever(prisonerSearchClient.getPrisonersForPrison(PRISON_ID))
+        .thenReturn(listOf(PRISONER_SEARCH_RESPONSE))
+      whenever(
+        prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(mutableListOf(PRISONER_NUMBER)),
+      ).thenReturn(listOf(recentPrisonerInA, recentPrisonerInB))
+
+      val result = underTest.getFilteredHealthCountsForPrison(
+        PRISON_ID,
+        HealthAndMedicationRequestFilters(
+          topLocationLevel = setOf("A"),
+          recentArrival = true,
+        ),
+      )
+
+      assertThat(result.topLocationLevel).containsExactly(
+        HealthAndMedicationFilter("A", "A", 1),
+      )
+    }
+
+    @Test
+    fun `works with multiple filters from the same OR category`() {
+      val secondPrisonerNumber = "A1234BB"
+      val secondPrisonerHealth = PrisonerHealth(
+        prisonerNumber = secondPrisonerNumber,
+        foodAllergies = mutableSetOf(FOOD_ALLERGY_PEANUTS, FOOD_ALLERGY_OTHER),
+        location = PrisonerLocation(
+          prisonerNumber = secondPrisonerNumber,
+          prisonId = PRISON_ID,
+          topLocationLevel = "A",
+          location = "A-1-001",
+          lastAdmissionDate = RECENT_ADMISSION,
+        ),
+      )
+
+      whenever(prisonerSearchClient.getPrisonersForPrison(PRISON_ID))
+        .thenReturn(listOf(PRISONER_SEARCH_RESPONSE))
+      whenever(
+        prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(mutableListOf(PRISONER_NUMBER)),
+      ).thenReturn(listOf(PRISONER_HEALTH, secondPrisonerHealth))
+
+      val result = underTest.getFilteredHealthCountsForPrison(
+        PRISON_ID,
+        HealthAndMedicationRequestFilters(foodAllergies = setOf("PEANUTS", "OTHER")),
+      )
+
+      assertThat(result).isNotNull
+    }
+
+    @Test
+    fun `works with multiple filters from different OR categories`() {
+      val coeliacPrisoner = PrisonerHealth(
+        prisonerNumber = "A1234BB",
+        medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_COELIAC),
+        location = PrisonerLocation(
+          prisonerNumber = "A1234BB",
+          prisonId = PRISON_ID,
+          topLocationLevel = "A",
+          location = "A-1-001",
+          lastAdmissionDate = OLDER_ADMISSION,
+        ),
+      )
+      val veganPrisoner = PrisonerHealth(
+        prisonerNumber = "A1234CC",
+        personalisedDietaryRequirements = mutableSetOf(PERSONALISED_DIET_VEGAN),
+        location = PrisonerLocation(
+          prisonerNumber = "A1234CC",
+          prisonId = PRISON_ID,
+          topLocationLevel = "B",
+          location = "B-1-001",
+          lastAdmissionDate = OLDER_ADMISSION,
+        ),
+      )
+
+      whenever(prisonerSearchClient.getPrisonersForPrison(PRISON_ID))
+        .thenReturn(listOf(PRISONER_SEARCH_RESPONSE))
+      whenever(
+        prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(mutableListOf(PRISONER_NUMBER)),
+      ).thenReturn(listOf(coeliacPrisoner, veganPrisoner))
+
+      val result = underTest.getFilteredHealthCountsForPrison(
+        PRISON_ID,
+        HealthAndMedicationRequestFilters(
+          medicalDietaryRequirements = setOf("COELIAC"),
+          personalisedDietaryRequirements = setOf("VEGAN"),
+        ),
+      )
+
+      assertThat(result.medicalDietaryRequirements).containsExactly(
+        HealthAndMedicationFilter("Coeliac", "COELIAC", 1),
+      )
+      assertThat(result.personalisedDietaryRequirements).containsExactly(
+        HealthAndMedicationFilter("Vegan", "VEGAN", 1),
+      )
+    }
+
+    @Test
+    fun `works with multiple filters from both the AND and OR categories`() {
+      val coeliacInA = PrisonerHealth(
+        prisonerNumber = "A1234BB",
+        medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_COELIAC),
+        location = PrisonerLocation(
+          prisonerNumber = "A1234BB",
+          prisonId = PRISON_ID,
+          topLocationLevel = "A",
+          location = "A-1-001",
+          lastAdmissionDate = OLDER_ADMISSION,
+        ),
+      )
+      val coeliacInB = PrisonerHealth(
+        prisonerNumber = "A1234CC",
+        medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_COELIAC),
+        location = PrisonerLocation(
+          prisonerNumber = "A1234CC",
+          prisonId = PRISON_ID,
+          topLocationLevel = "B",
+          location = "B-1-001",
+          lastAdmissionDate = OLDER_ADMISSION,
+        ),
+      )
+
+      whenever(prisonerSearchClient.getPrisonersForPrison(PRISON_ID))
+        .thenReturn(listOf(PRISONER_SEARCH_RESPONSE))
+      whenever(
+        prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(mutableListOf(PRISONER_NUMBER)),
+      ).thenReturn(listOf(coeliacInA, coeliacInB))
+
+      val result = underTest.getFilteredHealthCountsForPrison(
+        PRISON_ID,
+        HealthAndMedicationRequestFilters(
+          medicalDietaryRequirements = setOf("COELIAC"),
+          topLocationLevel = setOf("A"),
+        ),
+      )
+
+      assertThat(result.topLocationLevel).containsExactly(
+        HealthAndMedicationFilter("A", "A", 1),
+      )
+      assertThat(result.medicalDietaryRequirements).containsExactly(
+        HealthAndMedicationFilter("Coeliac", "COELIAC", 1),
+      )
+    }
+  }
+
+  @Nested
   inner class SmokerStatusUpdate {
     @Test
     fun `can update the smoker vaper status`() {
