@@ -89,50 +89,23 @@ class PrisonsResource(private val prisonerHealthService: PrisonerHealthService) 
   )
   fun getFilterOptions(
     @PathVariable prisonId: String,
-  ) = prisonerHealthService.getHealthFiltersForPrison(prisonId)
-
-  @GetMapping("/filter-counts")
-  @ResponseStatus(HttpStatus.OK)
-  @PreAuthorize("hasAnyRole('ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RO', 'ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RW')")
-  @Operation(
-    description = "Requires role `ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RO` or `ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RW`",
-    responses = [
-      ApiResponse(
-        responseCode = "200",
-        description = "Returns recalculated filter counts based on selected filters",
+    @RequestParam(required = false) foodAllergies: Set<String>? = null,
+    @RequestParam(required = false) medicalDietaryRequirements: Set<String>? = null,
+    @RequestParam(required = false) personalisedDietaryRequirements: Set<String>? = null,
+    @RequestParam(required = false) topLocationLevel: Set<String>? = null,
+    @RequestParam(required = false) recentArrival: Boolean? = null,
+  ) = if (foodAllergies != null || medicalDietaryRequirements != null || personalisedDietaryRequirements != null || topLocationLevel != null || recentArrival != null) {
+    prisonerHealthService.getHealthFilterCountsForPrison(
+      prisonId,
+      HealthAndMedicationRequestFilters(
+        foodAllergies = foodAllergies ?: emptySet(),
+        medicalDietaryRequirements = medicalDietaryRequirements ?: emptySet(),
+        personalisedDietaryRequirements = personalisedDietaryRequirements ?: emptySet(),
+        topLocationLevel = topLocationLevel ?: emptySet(),
+        recentArrival = recentArrival,
       ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Missing required role. Requires ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RO",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "404",
-        description = "Data not found",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-    ],
-  )
-  fun getFilteredCounts(
-    @PathVariable prisonId: String,
-    @RequestParam(required = false) foodAllergies: Set<String>?,
-    @RequestParam(required = false) medicalDietaryRequirements: Set<String>?,
-    @RequestParam(required = false) personalisedDietaryRequirements: Set<String>?,
-    @RequestParam(required = false) topLocationLevel: Set<String>?,
-    @RequestParam(required = false) recentArrival: Boolean?,
-  ) = prisonerHealthService.getFilteredHealthCountsForPrison(
-    prisonId,
-    HealthAndMedicationRequestFilters(
-      foodAllergies = foodAllergies ?: emptySet(),
-      medicalDietaryRequirements = medicalDietaryRequirements ?: emptySet(),
-      personalisedDietaryRequirements = personalisedDietaryRequirements ?: emptySet(),
-      topLocationLevel = topLocationLevel ?: emptySet(),
-      recentArrival = recentArrival,
-    ),
-  )
+    )
+  } else {
+    prisonerHealthService.getHealthFiltersForPrison(prisonId)
+  }
 }

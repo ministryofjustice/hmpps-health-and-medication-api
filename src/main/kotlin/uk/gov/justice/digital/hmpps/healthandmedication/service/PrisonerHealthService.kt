@@ -124,7 +124,7 @@ class PrisonerHealthService(
     return buildFiltersResponse(healthData)
   }
 
-  fun getFilteredHealthCountsForPrison(prisonId: String, filters: HealthAndMedicationRequestFilters): HealthAndMedicationFiltersResponse {
+  fun getHealthFilterCountsForPrison(prisonId: String, filters: HealthAndMedicationRequestFilters): HealthAndMedicationFiltersResponse {
     val prisoners = prisonerSearchClient.getPrisonersForPrison(prisonId)
     if (prisoners.isNullOrEmpty()) return HealthAndMedicationFiltersResponse()
 

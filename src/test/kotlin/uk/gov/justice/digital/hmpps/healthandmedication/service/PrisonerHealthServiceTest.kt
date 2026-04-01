@@ -979,7 +979,7 @@ class PrisonerHealthServiceTest {
       whenever(prisonerSearchClient.getPrisonersForPrison("EMPTY"))
         .thenReturn(null)
 
-      val result = underTest.getFilteredHealthCountsForPrison(
+      val result = underTest.getHealthFilterCountsForPrison(
         "EMPTY",
         HealthAndMedicationRequestFilters(foodAllergies = setOf("PEANUTS")),
       )
@@ -989,7 +989,7 @@ class PrisonerHealthServiceTest {
 
     @Test
     fun `returns empty counts when filters match no prisoners`() {
-      val result = underTest.getFilteredHealthCountsForPrison(
+      val result = underTest.getHealthFilterCountsForPrison(
         PRISON_ID,
         HealthAndMedicationRequestFilters(topLocationLevel = setOf("NONEXISTENT")),
       )
@@ -1003,7 +1003,7 @@ class PrisonerHealthServiceTest {
 
     @Test
     fun `returns all counts with no filters applied`() {
-      val result = underTest.getFilteredHealthCountsForPrison(
+      val result = underTest.getHealthFilterCountsForPrison(
         PRISON_ID,
         HealthAndMedicationRequestFilters(),
       )
@@ -1073,7 +1073,7 @@ class PrisonerHealthServiceTest {
         prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(mutableListOf(PRISONER_NUMBER)),
       ).thenReturn(listOf(coeliacInA, coeliacInC, coeliacInB))
 
-      val result = underTest.getFilteredHealthCountsForPrison(
+      val result = underTest.getHealthFilterCountsForPrison(
         PRISON_ID,
         HealthAndMedicationRequestFilters(
           topLocationLevel = setOf("A", "C"),
@@ -1120,7 +1120,7 @@ class PrisonerHealthServiceTest {
         prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(mutableListOf(PRISONER_NUMBER)),
       ).thenReturn(listOf(recentPrisonerInA, recentPrisonerInB))
 
-      val result = underTest.getFilteredHealthCountsForPrison(
+      val result = underTest.getHealthFilterCountsForPrison(
         PRISON_ID,
         HealthAndMedicationRequestFilters(
           topLocationLevel = setOf("A"),
@@ -1154,7 +1154,7 @@ class PrisonerHealthServiceTest {
         prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(mutableListOf(PRISONER_NUMBER)),
       ).thenReturn(listOf(PRISONER_HEALTH, secondPrisonerHealth))
 
-      val result = underTest.getFilteredHealthCountsForPrison(
+      val result = underTest.getHealthFilterCountsForPrison(
         PRISON_ID,
         HealthAndMedicationRequestFilters(foodAllergies = setOf("PEANUTS", "OTHER")),
       )
@@ -1193,7 +1193,7 @@ class PrisonerHealthServiceTest {
         prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(mutableListOf(PRISONER_NUMBER)),
       ).thenReturn(listOf(coeliacPrisoner, veganPrisoner))
 
-      val result = underTest.getFilteredHealthCountsForPrison(
+      val result = underTest.getHealthFilterCountsForPrison(
         PRISON_ID,
         HealthAndMedicationRequestFilters(
           medicalDietaryRequirements = setOf("COELIAC"),
@@ -1240,7 +1240,7 @@ class PrisonerHealthServiceTest {
         prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(mutableListOf(PRISONER_NUMBER)),
       ).thenReturn(listOf(coeliacInA, coeliacInB))
 
-      val result = underTest.getFilteredHealthCountsForPrison(
+      val result = underTest.getHealthFilterCountsForPrison(
         PRISON_ID,
         HealthAndMedicationRequestFilters(
           medicalDietaryRequirements = setOf("COELIAC"),
