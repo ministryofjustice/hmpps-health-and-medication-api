@@ -1,5 +1,5 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "10.1.1"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "10.1.2"
   kotlin("plugin.spring") version "2.3.20"
   kotlin("plugin.jpa") version "2.3.20"
   jacoco
@@ -13,8 +13,8 @@ configurations {
 dependencies {
 
   // Spring Boot
-  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-autoconfigure:2.1.0")
-  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:2.1.0")
+  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-autoconfigure:2.1.3")
+  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:2.1.3")
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
   implementation("org.springframework.boot:spring-boot-starter-flyway")
   implementation("org.springframework.boot:spring-boot-starter-jackson")
@@ -36,8 +36,8 @@ dependencies {
   runtimeOnly("org.postgresql:postgresql")
 
   // Test
-  testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:2.1.0")
-  testImplementation("uk.gov.justice.service.hmpps:hmpps-subject-access-request-test-support:2.1.0")
+  testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:2.1.3")
+  testImplementation("uk.gov.justice.service.hmpps:hmpps-subject-access-request-test-support:2.1.3")
   testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
   testImplementation("org.springframework.boot:spring-boot-starter-jackson-test")
   testImplementation("org.springframework.boot:spring-boot-starter-webclient-test")
@@ -47,11 +47,11 @@ dependencies {
   testImplementation("org.testcontainers:localstack:1.21.4")
   testImplementation("io.mockk:mockk:1.14.9")
   testImplementation("org.wiremock:wiremock-standalone:3.13.2")
-  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.37") {
+  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.39") {
     exclude(group = "io.swagger.core.v3")
   }
   testImplementation("org.awaitility:awaitility-kotlin:4.3.0")
-  testImplementation("org.mockito.kotlin:mockito-kotlin:6.2.3")
+  testImplementation("org.mockito.kotlin:mockito-kotlin:6.3.0")
 }
 
 java {
