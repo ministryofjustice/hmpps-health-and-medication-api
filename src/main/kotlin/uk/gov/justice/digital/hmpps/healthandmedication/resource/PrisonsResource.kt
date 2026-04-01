@@ -14,10 +14,12 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.healthandmedication.config.HealthAndMedicationDataNotFoundException
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.HealthAndMedicationForPrisonRequest
+import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.request.HealthAndMedicationRequestFilters
 import uk.gov.justice.digital.hmpps.healthandmedication.service.PrisonerHealthService
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
@@ -53,7 +55,6 @@ class PrisonsResource(private val prisonerHealthService: PrisonerHealthService) 
     ],
   )
   fun postHealthAndMedicationData(
-    @Schema(description = "The prison id", example = "KMI", required = true)
     @PathVariable prisonId: String,
     @Valid @RequestBody request: HealthAndMedicationForPrisonRequest,
   ) = prisonerHealthService.getHealthForPrison(prisonId, request)
@@ -79,10 +80,32 @@ class PrisonsResource(private val prisonerHealthService: PrisonerHealthService) 
         description = "Missing required role. Requires ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RO",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Data not found",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
     ],
   )
   fun getFilterOptions(
-    @Schema(description = "The prison id", example = "KMI", required = true)
     @PathVariable prisonId: String,
-  ) = prisonerHealthService.getHealthFiltersForPrison(prisonId)
+    @RequestParam(required = false) foodAllergies: Set<String>? = null,
+    @RequestParam(required = false) medicalDietaryRequirements: Set<String>? = null,
+    @RequestParam(required = false) personalisedDietaryRequirements: Set<String>? = null,
+    @RequestParam(required = false) topLocationLevel: Set<String>? = null,
+    @RequestParam(required = false) recentArrival: Boolean? = null,
+  ) = if (foodAllergies != null || medicalDietaryRequirements != null || personalisedDietaryRequirements != null || topLocationLevel != null || recentArrival != null) {
+    prisonerHealthService.getHealthFilterCountsForPrison(
+      prisonId,
+      HealthAndMedicationRequestFilters(
+        foodAllergies = foodAllergies ?: emptySet(),
+        medicalDietaryRequirements = medicalDietaryRequirements ?: emptySet(),
+        personalisedDietaryRequirements = personalisedDietaryRequirements ?: emptySet(),
+        topLocationLevel = topLocationLevel ?: emptySet(),
+        recentArrival = recentArrival,
+      ),
+    )
+  } else {
+    prisonerHealthService.getHealthFiltersForPrison(prisonId)
+  }
 }
