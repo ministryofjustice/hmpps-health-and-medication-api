@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.PrisonA
 import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.request.PrisonApiSmokerStatus
 import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.request.PrisonApiSmokerStatusUpdate
 import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.PrisonerSearchClient
+import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.CateringInstructions
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.FoodAllergy
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.MedicalDietaryRequirement
@@ -29,7 +30,6 @@ import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.He
 import uk.gov.justice.digital.hmpps.healthandmedication.service.PrisonerHealthService.ReferenceDataCategory.FOOD_ALLERGY
 import uk.gov.justice.digital.hmpps.healthandmedication.service.PrisonerHealthService.ReferenceDataCategory.MEDICAL_DIET
 import uk.gov.justice.digital.hmpps.healthandmedication.service.PrisonerHealthService.ReferenceDataCategory.PERSONALISED_DIET
-import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField
 import uk.gov.justice.digital.hmpps.healthandmedication.service.event.DomainEventService
 import uk.gov.justice.digital.hmpps.healthandmedication.service.event.DomainEventsPublisher.Companion.PRISONER_DIETARY_INFORMATION_UPDATED
 import uk.gov.justice.digital.hmpps.healthandmedication.service.event.PrisonerHealthUpdatedEvent
