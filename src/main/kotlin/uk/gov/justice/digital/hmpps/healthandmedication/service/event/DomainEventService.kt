@@ -21,7 +21,7 @@ class DomainEventService(
         eventType = event.eventType,
         detailUrl = "${eventProperties.baseUrl}/prisoners/${event.prisonerNumber}",
         occurredAt = event.occurredAt,
-        description = "A prisoner had their health and medical information created or updated.",
+        description = "A prisoner had their dietary information created or updated.",
         additionalInformation = HmppsAdditionalInformation(mutableMapOf("nomsNumber" to event.prisonerNumber)),
         personReference = PersonReference.withPrisonNumber(event.prisonerNumber),
       ),

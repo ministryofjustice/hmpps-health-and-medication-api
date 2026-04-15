@@ -28,7 +28,7 @@ class DomainEventServiceTest {
         eventType = EVENT.eventType,
         detailUrl = "$baseUrl/prisoners/$PRISONER_NUMBER",
         occurredAt = EVENT.occurredAt,
-        description = "A prisoner had their health and medical information created or updated.",
+        description = "A prisoner had their dietary information created or updated.",
         additionalInformation = HmppsAdditionalInformation(mutableMapOf("nomsNumber" to PRISONER_NUMBER)),
         personReference = PersonReference.withPrisonNumber(PRISONER_NUMBER),
       ),
