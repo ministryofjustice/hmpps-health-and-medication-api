@@ -29,6 +29,10 @@ import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.He
 import uk.gov.justice.digital.hmpps.healthandmedication.service.PrisonerHealthService.ReferenceDataCategory.FOOD_ALLERGY
 import uk.gov.justice.digital.hmpps.healthandmedication.service.PrisonerHealthService.ReferenceDataCategory.MEDICAL_DIET
 import uk.gov.justice.digital.hmpps.healthandmedication.service.PrisonerHealthService.ReferenceDataCategory.PERSONALISED_DIET
+import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField
+import uk.gov.justice.digital.hmpps.healthandmedication.service.event.DomainEventService
+import uk.gov.justice.digital.hmpps.healthandmedication.service.event.DomainEventsPublisher.Companion.PRISONER_DIETARY_INFORMATION_UPDATED
+import uk.gov.justice.digital.hmpps.healthandmedication.service.event.PrisonerHealthUpdatedEvent
 import uk.gov.justice.digital.hmpps.healthandmedication.utils.AuthenticationFacade
 import uk.gov.justice.digital.hmpps.healthandmedication.utils.Pagination
 import uk.gov.justice.digital.hmpps.healthandmedication.utils.toReferenceDataCode
@@ -44,6 +48,7 @@ class PrisonerHealthService(
   private val prisonerSearchClient: PrisonerSearchClient,
   private val prisonApiClient: PrisonApiClient,
   private val prisonerLocationService: PrisonerLocationService,
+  private val domainEventService: DomainEventService,
   private val prisonerHealthRepository: PrisonerHealthRepository,
   private val referenceDataCodeRepository: ReferenceDataCodeRepository,
   private val authenticationFacade: AuthenticationFacade,
@@ -163,6 +168,8 @@ class PrisonerHealthService(
   ): DietAndAllergyResponse {
     val now = ZonedDateTime.now(clock)
     val currentLocation = prisonerLocationService.getLatestLocationData(prisonerNumber, usePrisonerSearchOnly = true)
+    var changedFields: Collection<HealthAndMedicationField> = emptyList()
+
     val health = prisonerHealthRepository.findById(prisonerNumber).orElseGet {
       newHealthFor(prisonerNumber)
     }.apply {
@@ -202,10 +209,16 @@ class PrisonerHealthService(
       location = currentLocation
     }.also {
       val currentPrisonCode = it.location?.prisonId
-      it.updateFieldHistory(now, authenticationFacade.getUserOrSystemInContext(), currentPrisonCode!!)
+      changedFields = it.updateFieldHistory(now, authenticationFacade.getUserOrSystemInContext(), currentPrisonCode!!)
     }
 
-    return prisonerHealthRepository.save(health).toDietAndAllergyDto()
+    val savedHealth = prisonerHealthRepository.save(health)
+
+    if (changedFields.isNotEmpty()) {
+      domainEventService.publish(PrisonerHealthUpdatedEvent(PRISONER_DIETARY_INFORMATION_UPDATED, prisonerNumber, now))
+    }
+
+    return savedHealth.toDietAndAllergyDto()
   }
 
   fun UpdateSmokerStatusRequest.convertToPrisonApiRequest(): PrisonApiSmokerStatusUpdate = PrisonApiSmokerStatusUpdate(

@@ -58,6 +58,9 @@ abstract class IntegrationTestBase : TestBase() {
     hmppsDomainEventsQueue.sqsClient.purgeQueue(
       PurgeQueueRequest.builder().queueUrl(hmppsDomainEventsQueue.queueUrl).build(),
     ).get()
+    hmppsEventTestQueue.sqsClient.purgeQueue(
+      PurgeQueueRequest.builder().queueUrl(hmppsEventTestQueue.queueUrl).build(),
+    ).get()
   }
 
   val domainEventsTopic by lazy {
@@ -68,6 +71,11 @@ abstract class IntegrationTestBase : TestBase() {
   internal val hmppsDomainEventsQueue by lazy {
     hmppsQueueService.findByQueueId("hmppsdomaineventsqueue")
       ?: throw MissingQueueException("hmppsdomaineventsqueue queue not found")
+  }
+
+  internal val hmppsEventTestQueue by lazy {
+    hmppsQueueService.findByQueueId("hmppseventtestqueue")
+      ?: throw MissingQueueException("hmppseventtestqueue queue not found")
   }
 
   internal fun sendDomainEvent(event: HmppsDomainEvent) {

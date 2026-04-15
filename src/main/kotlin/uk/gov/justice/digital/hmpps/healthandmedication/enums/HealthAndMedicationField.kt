@@ -73,7 +73,7 @@ enum class HealthAndMedicationField(
         values.valueString = value?.instructions
       }
     },
-    hasChangedString,
+    { old, new -> (new as CateringInstructions?)?.instructions != old.valueString },
     "CATERING_INSTRUCTIONS",
   ),
 }
