@@ -58,9 +58,23 @@ hmpps:
               "prison-offender-events.prisoner.cell.move"
             ]
           }
+      hmppseventtestqueue:
+        queueName: ${random.uuid}
+        dlqName: ${random.uuid}
+        subscribeTopicId: hmppseventtopic
+        subscribeFilter: >
+          {
+            "eventType": [
+              "prison-offender-events.prisoner.dietary.information.updated"
+            ]
+          }
     topics:
       hmppseventtopic:
         arn: arn:aws:sns:eu-west-2:000000000000:${random.uuid}
+
+events:
+  publish: true
+  base-url: "http://localhost:8080"
 
 migration:
   endpoint:

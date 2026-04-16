@@ -16,8 +16,10 @@ import org.mockito.Mock
 import org.mockito.Spy
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.junit.jupiter.MockitoSettings
+import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.verify
+import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
 import org.mockito.quality.Strictness.LENIENT
 import org.springframework.http.ResponseEntity
@@ -62,6 +64,7 @@ import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.He
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.HealthAndMedicationResponse
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.ReferenceDataSelection
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.ValueWithMetadata
+import uk.gov.justice.digital.hmpps.healthandmedication.service.event.DomainEventService
 import uk.gov.justice.digital.hmpps.healthandmedication.utils.AuthenticationFacade
 import java.time.Clock
 import java.time.LocalDate
@@ -89,6 +92,9 @@ class PrisonerHealthServiceTest {
 
   @Mock
   lateinit var authenticationFacade: AuthenticationFacade
+
+  @Mock
+  lateinit var domainEventService: DomainEventService
 
   @Spy
   val clock: Clock? = Clock.fixed(NOW.toInstant(), NOW.zone)
@@ -317,6 +323,8 @@ class PrisonerHealthServiceTest {
           ),
         )
       }
+
+      verify(domainEventService).publish(any())
     }
 
     @Test
@@ -424,6 +432,34 @@ class PrisonerHealthServiceTest {
           ),
         )
       }
+
+      verify(domainEventService).publish(any())
+    }
+
+    @Test
+    fun `no events are published when diet and allergy data is unchanged`() {
+      whenever(prisonerHealthRepository.findById(PRISONER_NUMBER)).thenReturn(
+        Optional.of(
+          PrisonerHealth(
+            prisonerNumber = PRISONER_NUMBER,
+            foodAllergies = mutableSetOf(FOOD_ALLERGY_PEANUTS),
+            medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_COELIAC),
+            personalisedDietaryRequirements = mutableSetOf(PERSONALISED_DIET_VEGAN),
+            cateringInstructions = CateringInstructions(PRISONER_NUMBER, "Some catering instructions."),
+            location = null,
+          ).also {
+            it.updateFieldHistory(
+              lastModifiedAt = NOW.minusDays(1),
+              lastModifiedBy = USER2,
+              lastModifiedPrisonId = "KMI",
+            )
+          },
+        ),
+      )
+
+      underTest.updateDietAndAllergyData(PRISONER_NUMBER, DIET_AND_ALLERGY_UPDATE_REQUEST)
+
+      verifyNoInteractions(domainEventService)
     }
   }
 
