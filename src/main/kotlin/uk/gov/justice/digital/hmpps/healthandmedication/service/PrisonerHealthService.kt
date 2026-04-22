@@ -291,14 +291,14 @@ class PrisonerHealthService(
     .map { HealthAndMedicationFilter(it.key, it.key, it.value) }
     .sortedBy { it.value }
 
-  private fun calculateRecentArrivalFilter(data: List<PrisonerHealth>, recentArrivalCutoff: LocalDate): HealthAndMedicationFilter? {
+  private fun calculateRecentArrivalFilter(data: List<PrisonerHealth>, recentArrivalCutoff: LocalDate): List<HealthAndMedicationFilter> {
     val recentArrivalCount = data.count { health ->
       health.location?.lastAdmissionDate?.let { !it.isBefore(recentArrivalCutoff) } ?: false
     }
     return if (recentArrivalCount > 0) {
-      HealthAndMedicationFilter("Arrived in the last 3 days", "ARRIVED_LAST_3_DAYS", recentArrivalCount)
+      listOf(HealthAndMedicationFilter("Arrived in the last 3 days", "ARRIVED_LAST_3_DAYS", recentArrivalCount))
     } else {
-      null
+      emptyList()
     }
   }
 

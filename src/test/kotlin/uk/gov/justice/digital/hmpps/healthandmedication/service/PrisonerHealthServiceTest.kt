@@ -923,7 +923,7 @@ class PrisonerHealthServiceTest {
             HealthAndMedicationFilter("A", "A", 1),
             HealthAndMedicationFilter("RECP", "RECP", 1),
           ),
-          recentArrival = HealthAndMedicationFilter("Arrived in the last 3 days", "ARRIVED_LAST_3_DAYS", 1),
+          recentArrival = listOf(HealthAndMedicationFilter("Arrived in the last 3 days", "ARRIVED_LAST_3_DAYS", 1)),
         ),
       )
     }
@@ -946,7 +946,7 @@ class PrisonerHealthServiceTest {
           personalisedDietaryRequirements = emptyList(),
           medicalDietaryRequirements = emptyList(),
           topLocationLevel = emptyList(),
-          recentArrival = null,
+          recentArrival = emptyList(),
         ),
       )
     }
@@ -964,7 +964,7 @@ class PrisonerHealthServiceTest {
           personalisedDietaryRequirements = emptyList(),
           medicalDietaryRequirements = emptyList(),
           topLocationLevel = emptyList(),
-          recentArrival = null,
+          recentArrival = emptyList(),
         ),
       )
     }
@@ -1062,7 +1062,7 @@ class PrisonerHealthServiceTest {
             HealthAndMedicationFilter("A", "A", 1),
             HealthAndMedicationFilter("RECP", "RECP", 1),
           ),
-          recentArrival = HealthAndMedicationFilter("Arrived in the last 3 days", "ARRIVED_LAST_3_DAYS", 1),
+          recentArrival = listOf(HealthAndMedicationFilter("Arrived in the last 3 days", "ARRIVED_LAST_3_DAYS", 1)),
         ),
       )
     }
