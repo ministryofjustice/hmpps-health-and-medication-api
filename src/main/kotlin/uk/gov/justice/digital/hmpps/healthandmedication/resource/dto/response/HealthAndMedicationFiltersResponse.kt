@@ -17,7 +17,7 @@ data class HealthAndMedicationFiltersResponse(
   val topLocationLevel: List<HealthAndMedicationFilter> = emptyList(),
 
   @Schema(description = "Recent arrival filter")
-  val recentArrival: HealthAndMedicationFilter? = null,
+  val recentArrival: List<HealthAndMedicationFilter> = emptyList(),
 )
 
 @Schema(description = "Health and medication filter based on reference data")
