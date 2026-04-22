@@ -1034,7 +1034,7 @@ class PrisonerHealthServiceTest {
       assertThat(result.medicalDietaryRequirements).isEmpty()
       assertThat(result.personalisedDietaryRequirements).isEmpty()
       assertThat(result.topLocationLevel).isEmpty()
-      assertThat(result.recentArrival).isNull()
+      assertThat(result.recentArrival).isEmpty()
     }
 
     @Test
