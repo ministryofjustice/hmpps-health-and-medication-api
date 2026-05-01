@@ -33,6 +33,7 @@ generic-service:
     hmpps-health-and-medication-api:
       CLIENT_ID: "CLIENT_ID"
       CLIENT_SECRET: "CLIENT_SECRET"
+      SENTRY_DSN: "SENTRY_DSN"
 
     hmpps-domain-events-topic:
       HMPPS_SQS_TOPICS_HMPPSEVENTTOPIC_ARN: "topic_arn"
