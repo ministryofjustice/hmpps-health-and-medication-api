@@ -4,8 +4,8 @@ import jakarta.servlet.ServletException
 import jakarta.validation.ValidationException
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
-import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatus.BAD_REQUEST
+import org.springframework.http.HttpStatus.FORBIDDEN
 import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
 import org.springframework.http.HttpStatus.LOCKED
 import org.springframework.http.HttpStatus.METHOD_NOT_ALLOWED
@@ -31,10 +31,10 @@ class HealthAndMedicationExceptionHandler {
 
   @ExceptionHandler(AccessDeniedException::class)
   fun handleAccessDeniedException(e: AccessDeniedException): ResponseEntity<ErrorResponse> = ResponseEntity
-    .status(HttpStatus.FORBIDDEN)
+    .status(FORBIDDEN)
     .body(
       ErrorResponse(
-        status = HttpStatus.FORBIDDEN.value(),
+        status = FORBIDDEN.value(),
         userMessage = "Authentication problem. Check token and roles - ${e.message}",
         developerMessage = e.message,
       ),
@@ -165,28 +165,6 @@ class HealthAndMedicationExceptionHandler {
       ),
     ).also { log.info("Reference data code not found exception: {}", e.message) }
 
-  @ExceptionHandler(IllegalFieldHistoryException::class)
-  fun handleIllegalFieldHistoryException(e: IllegalFieldHistoryException): ResponseEntity<ErrorResponse> = ResponseEntity
-    .status(INTERNAL_SERVER_ERROR)
-    .body(
-      ErrorResponse(
-        status = INTERNAL_SERVER_ERROR,
-        userMessage = "Illegal field history: ${e.message}",
-        developerMessage = e.message,
-      ),
-    ).also { log.error("Illegal field history exception: {}", e.message) }
-
-  @ExceptionHandler(GenericNotFoundException::class)
-  fun handleGenericNotFoundException(e: GenericNotFoundException): ResponseEntity<ErrorResponse> = ResponseEntity
-    .status(NOT_FOUND)
-    .body(
-      ErrorResponse(
-        status = NOT_FOUND,
-        userMessage = e.message,
-        developerMessage = e.message,
-      ),
-    )
-
   @ExceptionHandler(NoResourceFoundException::class)
   fun handleNoResourceFoundException(e: NoResourceFoundException): ResponseEntity<ErrorResponse> = ResponseEntity
     .status(NOT_FOUND)
@@ -275,8 +253,5 @@ class HealthAndMedicationExceptionHandler {
 class HealthAndMedicationDataNotFoundException(prisonerNumber: String) : Exception("No data for '$prisonerNumber'")
 class ReferenceDataDomainNotFoundException(code: String) : Exception("No data for domain '$code'")
 class ReferenceDataCodeNotFoundException(code: String, domain: String) : Exception("No data for code '$code' in domain '$domain'")
-
-class GenericNotFoundException(message: String) : Exception(message)
-class IllegalFieldHistoryException(prisonerNumber: String) : Exception("Cannot update field history for prisoner: '$prisonerNumber'")
 
 class DownstreamServiceException(message: String, cause: Throwable) : Exception(message, cause)
