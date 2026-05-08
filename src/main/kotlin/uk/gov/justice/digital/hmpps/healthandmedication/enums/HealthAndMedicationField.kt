@@ -23,6 +23,8 @@ private val hasChangedInt: (old: FieldValues, new: Any?) -> Boolean = { old, new
 private val hasChangedString: (old: FieldValues, new: Any?) -> Boolean = { old, new -> new != old.valueString }
 private val hasChangedRef: (old: FieldValues, new: Any?) -> Boolean = { old, new -> new != old.valueRef }
 
+private inline fun <reified E> Any?.toMutableSetOf(): MutableSet<E> = (this as Collection<*>).filterIsInstanceTo(mutableSetOf())
+
 enum class HealthAndMedicationField(
   val get: (FieldValues) -> Any?,
   val set: (FieldValues, Any?) -> Unit,
@@ -32,36 +34,31 @@ enum class HealthAndMedicationField(
   FOOD_ALLERGY(
     getJson,
     { values, value ->
-      run {
-        value as MutableSet<FoodAllergy>
-        values.valueJson = JsonObject(FOOD_ALLERGY, FoodAllergyHistory(value))
-      }
+      values.valueJson = JsonObject(FOOD_ALLERGY, FoodAllergyHistory(value.toMutableSetOf<FoodAllergy>()))
     },
-    { old, new -> old.valueJson?.value != FoodAllergyHistory(new as MutableSet<FoodAllergy>) },
+    { old, new -> old.valueJson?.value != FoodAllergyHistory(new.toMutableSetOf<FoodAllergy>()) },
     "FOOD_ALLERGY",
   ),
 
   MEDICAL_DIET(
     getJson,
     { values, value ->
-      run {
-        value as MutableSet<MedicalDietaryRequirement>
-        values.valueJson = JsonObject(MEDICAL_DIET, MedicalDietaryRequirementHistory(value))
-      }
+      values.valueJson =
+        JsonObject(MEDICAL_DIET, MedicalDietaryRequirementHistory(value.toMutableSetOf<MedicalDietaryRequirement>()))
     },
-    { old, new -> old.valueJson?.value != MedicalDietaryRequirementHistory(new as MutableSet<MedicalDietaryRequirement>) },
+    { old, new -> old.valueJson?.value != MedicalDietaryRequirementHistory(new.toMutableSetOf<MedicalDietaryRequirement>()) },
     "MEDICAL_DIET",
   ),
 
   PERSONALISED_DIET(
     getJson,
     { values, value ->
-      run {
-        value as MutableSet<PersonalisedDietaryRequirement>
-        values.valueJson = JsonObject(PERSONALISED_DIET, PersonalisedDietaryRequirementHistory(value))
-      }
+      values.valueJson = JsonObject(
+        PERSONALISED_DIET,
+        PersonalisedDietaryRequirementHistory(value.toMutableSetOf<PersonalisedDietaryRequirement>()),
+      )
     },
-    { old, new -> old.valueJson?.value != PersonalisedDietaryRequirementHistory(new as MutableSet<PersonalisedDietaryRequirement>) },
+    { old, new -> old.valueJson?.value != PersonalisedDietaryRequirementHistory(new.toMutableSetOf<PersonalisedDietaryRequirement>()) },
     "PERSONALISED_DIET",
   ),
 
