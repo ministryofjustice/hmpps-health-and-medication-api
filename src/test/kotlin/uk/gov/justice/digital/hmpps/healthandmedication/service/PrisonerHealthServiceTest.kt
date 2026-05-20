@@ -1316,7 +1316,7 @@ class PrisonerHealthServiceTest {
     const val USER2 = "USER2"
 
     val NOW = ZonedDateTime.now()
-    val RECENT_ADMISSION = LocalDate.now(Clock.fixed(NOW.toInstant(), NOW.zone)).minusDays(3)
+    val RECENT_ADMISSION = LocalDate.now(Clock.fixed(NOW.toInstant(), NOW.zone)).minusDays(2)
     val OLDER_ADMISSION = LocalDate.now(Clock.fixed(NOW.toInstant(), NOW.zone)).minusDays(10)
 
     private fun referenceDataDomain(code: String, description: String) = ReferenceDataDomain(
