@@ -77,7 +77,7 @@ class PrisonerHealthService(
 
     if (!prisoners.isNullOrEmpty()) {
       val prisonerNumbers = prisoners.map { it.prisonerNumber }.toMutableList()
-      val recentArrivalCutoff = LocalDate.now(clock).minusDays(3)
+      val recentArrivalCutoff = LocalDate.now(clock).minusDays(2)
 
       // Fetch all non-empty health data for the given prisoner numbers and apply filtering
       val healthData = prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(prisonerNumbers)
@@ -135,13 +135,13 @@ class PrisonerHealthService(
 
     val prisonerNumbers = prisoners.map { it.prisonerNumber }.toMutableList()
     val healthData = prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(prisonerNumbers)
-    val recentArrivalCutoff = LocalDate.now(clock).minusDays(3)
+    val recentArrivalCutoff = LocalDate.now(clock).minusDays(2)
     val filteredHealthData = healthData.filter { matchesFilters(it, filters, recentArrivalCutoff) }
     return buildFiltersResponse(filteredHealthData)
   }
 
   private fun buildFiltersResponse(healthData: List<PrisonerHealth>): HealthAndMedicationFiltersResponse {
-    val recentArrivalCutoff = LocalDate.now(clock).minusDays(3)
+    val recentArrivalCutoff = LocalDate.now(clock).minusDays(2)
     return HealthAndMedicationFiltersResponse(
       foodAllergies = calculateHealthFiltersFromReferenceData(healthData, { it.foodAllergies }, { it.allergy }, FOOD_ALLERGY),
       personalisedDietaryRequirements = calculateHealthFiltersFromReferenceData(
