@@ -31,7 +31,7 @@ services:
       - APPLICATION_AUTHENTICATION_UI_ALLOWLIST=0.0.0.0/0
 
   health-and-medication-data-db:
-    image: postgres:17
+    image: postgres:18
     networks:
       - hmpps
     container_name: health-and-medication-data-db
@@ -45,7 +45,7 @@ services:
       - TZ="Europe/London"
 
   localstack:
-    image: localstack/localstack:4
+    image: localstack/localstack:2026.5.2
     networks:
       - hmpps
     container_name: localstack
