@@ -45,7 +45,7 @@ services:
       - TZ="Europe/London"
 
   localstack:
-    image: localstack/localstack:4
+    image: localstack/localstack:2026.5.3
     networks:
       - hmpps
     container_name: localstack
