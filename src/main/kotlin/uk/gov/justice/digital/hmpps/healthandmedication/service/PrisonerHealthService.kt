@@ -53,9 +53,7 @@ class PrisonerHealthService(
   private val authenticationFacade: AuthenticationFacade,
   private val clock: Clock,
 ) {
-  fun getHealth(prisonerNumber: String): HealthAndMedicationResponse? = prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(prisonerNumber)
-    ?.takeIf { it.deletedAt == null }
-    ?.toHealthDto()
+  fun getHealth(prisonerNumber: String): HealthAndMedicationResponse? = prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(prisonerNumber)?.toHealthDto()
 
   fun getHealthForPrison(
     prisonId: String,
@@ -82,7 +80,6 @@ class PrisonerHealthService(
 
       // Fetch all non-empty health data for the given prisoner numbers and apply filtering
       val healthData = prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(prisonerNumbers)
-        .filter { it.deletedAt == null }
         .filter { request.filters == null || matchesFilters(it, request.filters, recentArrivalCutoff) }
 
       // This maintains the order from the prisoner search API so that we're able to have sorting
@@ -128,7 +125,6 @@ class PrisonerHealthService(
 
     val prisonerNumbers = prisoners.map { it.prisonerNumber }.toMutableList()
     val healthData = prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(prisonerNumbers)
-      .filter { it.deletedAt == null }
     return buildFiltersResponse(healthData)
   }
 
@@ -138,7 +134,6 @@ class PrisonerHealthService(
 
     val prisonerNumbers = prisoners.map { it.prisonerNumber }.toMutableList()
     val healthData = prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(prisonerNumbers)
-      .filter { it.deletedAt == null }
     val recentArrivalCutoff = LocalDate.now(clock).minusDays(2)
     val filteredHealthData = healthData.filter { matchesFilters(it, filters, recentArrivalCutoff) }
     return buildFiltersResponse(filteredHealthData)
@@ -174,7 +169,7 @@ class PrisonerHealthService(
     val currentLocation = prisonerLocationService.getLatestLocationData(prisonerNumber, usePrisonerSearchOnly = true)
     var changedFields: Collection<HealthAndMedicationField> = emptyList()
 
-    val health = (prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(prisonerNumber)?.takeIf { it.deletedAt == null } ?: newHealthFor(prisonerNumber)).apply {
+    val health = (prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(prisonerNumber) ?: newHealthFor(prisonerNumber)).apply {
       foodAllergies.apply { clear() }.addAll(
         request.foodAllergies!!.map { allergy ->
           FoodAllergy(
