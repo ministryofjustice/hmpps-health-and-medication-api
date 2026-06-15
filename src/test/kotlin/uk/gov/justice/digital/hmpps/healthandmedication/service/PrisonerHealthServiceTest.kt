@@ -129,7 +129,7 @@ class PrisonerHealthServiceTest {
   inner class GetPrisonerHealth {
     @Test
     fun `health data not found`() {
-      whenever(prisonerHealthRepository.findById(PRISONER_NUMBER)).thenReturn(Optional.empty())
+      whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER)).thenReturn(null)
 
       val result = underTest.getHealth(PRISONER_NUMBER)
       assertThat(result).isNull()
@@ -137,36 +137,34 @@ class PrisonerHealthServiceTest {
 
     @Test
     fun `prison health data is found`() {
-      whenever(prisonerHealthRepository.findById(PRISONER_NUMBER)).thenReturn(
-        Optional.of(
-          PrisonerHealth(
-            prisonerNumber = PRISONER_NUMBER,
-            foodAllergies = mutableSetOf(FOOD_ALLERGY_PEANUTS),
-            medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_COELIAC),
-            personalisedDietaryRequirements = mutableSetOf(PERSONALISED_DIET_VEGAN),
+      whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER)).thenReturn(
+        PrisonerHealth(
+          prisonerNumber = PRISONER_NUMBER,
+          foodAllergies = mutableSetOf(FOOD_ALLERGY_PEANUTS),
+          medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_COELIAC),
+          personalisedDietaryRequirements = mutableSetOf(PERSONALISED_DIET_VEGAN),
 
-            fieldMetadata = mutableMapOf(
-              FOOD_ALLERGY to FieldMetadata(
-                prisonerNumber = PRISONER_NUMBER,
-                field = FOOD_ALLERGY,
-                lastModifiedAt = NOW,
-                lastModifiedBy = USER1,
-                lastModifiedPrisonId = "STI",
-              ),
-              MEDICAL_DIET to FieldMetadata(
-                prisonerNumber = PRISONER_NUMBER,
-                field = MEDICAL_DIET,
-                lastModifiedAt = NOW,
-                lastModifiedBy = USER1,
-                lastModifiedPrisonId = "STI",
-              ),
-              PERSONALISED_DIET to FieldMetadata(
-                prisonerNumber = PRISONER_NUMBER,
-                field = PERSONALISED_DIET,
-                lastModifiedAt = NOW,
-                lastModifiedBy = USER1,
-                lastModifiedPrisonId = "STI",
-              ),
+          fieldMetadata = mutableMapOf(
+            FOOD_ALLERGY to FieldMetadata(
+              prisonerNumber = PRISONER_NUMBER,
+              field = FOOD_ALLERGY,
+              lastModifiedAt = NOW,
+              lastModifiedBy = USER1,
+              lastModifiedPrisonId = "STI",
+            ),
+            MEDICAL_DIET to FieldMetadata(
+              prisonerNumber = PRISONER_NUMBER,
+              field = MEDICAL_DIET,
+              lastModifiedAt = NOW,
+              lastModifiedBy = USER1,
+              lastModifiedPrisonId = "STI",
+            ),
+            PERSONALISED_DIET to FieldMetadata(
+              prisonerNumber = PRISONER_NUMBER,
+              field = PERSONALISED_DIET,
+              lastModifiedAt = NOW,
+              lastModifiedBy = USER1,
+              lastModifiedPrisonId = "STI",
             ),
           ),
         ),
@@ -239,7 +237,7 @@ class PrisonerHealthServiceTest {
       whenever(prisonerSearchClient.getPrisoner(PRISONER_NUMBER))
         .thenReturn(PRISONER_SEARCH_RESPONSE)
 
-      whenever(prisonerHealthRepository.findById(PRISONER_NUMBER)).thenReturn(Optional.empty())
+      whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER)).thenReturn(null)
 
       assertThat(
         underTest.updateDietAndAllergyData(
@@ -332,23 +330,21 @@ class PrisonerHealthServiceTest {
       whenever(prisonerSearchClient.getPrisoner(PRISONER_NUMBER))
         .thenReturn(PRISONER_SEARCH_RESPONSE)
 
-      whenever(prisonerHealthRepository.findById(PRISONER_NUMBER)).thenReturn(
-        Optional.of(
-          PrisonerHealth(
-            prisonerNumber = PRISONER_NUMBER,
-            foodAllergies = mutableSetOf(FOOD_ALLERGY_PEANUTS),
-            medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_COELIAC),
-            personalisedDietaryRequirements = mutableSetOf(PERSONALISED_DIET_VEGAN),
-            cateringInstructions = CateringInstructions(PRISONER_NUMBER, "outdated instructions"),
-            location = null,
-          ).also {
-            it.updateFieldHistory(
-              lastModifiedAt = NOW.minusDays(1),
-              lastModifiedBy = USER2,
-              lastModifiedPrisonId = "KMI",
-            )
-          },
-        ),
+      whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER)).thenReturn(
+        PrisonerHealth(
+          prisonerNumber = PRISONER_NUMBER,
+          foodAllergies = mutableSetOf(FOOD_ALLERGY_PEANUTS),
+          medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_COELIAC),
+          personalisedDietaryRequirements = mutableSetOf(PERSONALISED_DIET_VEGAN),
+          cateringInstructions = CateringInstructions(PRISONER_NUMBER, "outdated instructions"),
+          location = null,
+        ).also {
+          it.updateFieldHistory(
+            lastModifiedAt = NOW.minusDays(1),
+            lastModifiedBy = USER2,
+            lastModifiedPrisonId = "KMI",
+          )
+        },
       )
 
       assertThat(underTest.updateDietAndAllergyData(PRISONER_NUMBER, EMPTY_DIET_AND_ALLERGY_UPDATE_REQUEST)).isEqualTo(
@@ -438,23 +434,21 @@ class PrisonerHealthServiceTest {
 
     @Test
     fun `no events are published when diet and allergy data is unchanged`() {
-      whenever(prisonerHealthRepository.findById(PRISONER_NUMBER)).thenReturn(
-        Optional.of(
-          PrisonerHealth(
-            prisonerNumber = PRISONER_NUMBER,
-            foodAllergies = mutableSetOf(FOOD_ALLERGY_PEANUTS),
-            medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_COELIAC),
-            personalisedDietaryRequirements = mutableSetOf(PERSONALISED_DIET_VEGAN),
-            cateringInstructions = CateringInstructions(PRISONER_NUMBER, "Some catering instructions."),
-            location = null,
-          ).also {
-            it.updateFieldHistory(
-              lastModifiedAt = NOW.minusDays(1),
-              lastModifiedBy = USER2,
-              lastModifiedPrisonId = "KMI",
-            )
-          },
-        ),
+      whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER)).thenReturn(
+        PrisonerHealth(
+          prisonerNumber = PRISONER_NUMBER,
+          foodAllergies = mutableSetOf(FOOD_ALLERGY_PEANUTS),
+          medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_COELIAC),
+          personalisedDietaryRequirements = mutableSetOf(PERSONALISED_DIET_VEGAN),
+          cateringInstructions = CateringInstructions(PRISONER_NUMBER, "Some catering instructions."),
+          location = null,
+        ).also {
+          it.updateFieldHistory(
+            lastModifiedAt = NOW.minusDays(1),
+            lastModifiedBy = USER2,
+            lastModifiedPrisonId = "KMI",
+          )
+        },
       )
 
       underTest.updateDietAndAllergyData(PRISONER_NUMBER, DIET_AND_ALLERGY_UPDATE_REQUEST)

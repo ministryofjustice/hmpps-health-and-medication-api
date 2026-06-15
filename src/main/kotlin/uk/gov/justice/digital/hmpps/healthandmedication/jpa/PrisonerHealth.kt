@@ -59,6 +59,15 @@ class PrisonerHealth(
   @OneToMany(mappedBy = "prisonerNumber", fetch = LAZY, cascade = [ALL], orphanRemoval = true)
   @MapKey(name = "field")
   override val fieldMetadata: MutableMap<HealthAndMedicationField, FieldMetadata> = mutableMapOf(),
+
+  @Column(name = "deleted_at")
+  var deletedAt: ZonedDateTime? = null,
+
+  @Column(name = "deleted_by")
+  var deletedBy: String? = null,
+
+  @Column(name = "deletion_reason")
+  var deletionReason: String? = null,
 ) : WithFieldHistory<PrisonerHealth>() {
 
   override fun fieldAccessors(): Map<HealthAndMedicationField, KMutableProperty0<*>> = mapOf(
@@ -151,6 +160,9 @@ class PrisonerHealth(
     if (personalisedDietaryRequirements != other.personalisedDietaryRequirements) return false
     if (cateringInstructions != other.cateringInstructions) return false
     if (location != other.location) return false
+    if (deletedAt != other.deletedAt) return false
+    if (deletedBy != other.deletedBy) return false
+    if (deletionReason != other.deletionReason) return false
 
     return true
   }
@@ -162,6 +174,9 @@ class PrisonerHealth(
     result = 31 * result + personalisedDietaryRequirements.hashCode()
     result = 31 * result + cateringInstructions.hashCode()
     result = 31 * result + location.hashCode()
+    result = 31 * result + deletedAt.hashCode()
+    result = 31 * result + deletedBy.hashCode()
+    result = 31 * result + deletionReason.hashCode()
     return result
   }
 
