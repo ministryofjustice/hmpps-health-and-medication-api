@@ -136,6 +136,15 @@ class PrisonerHealthServiceTest {
     }
 
     @Test
+    fun `soft deleted health data is not returned`() {
+      whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER)).thenReturn(null)
+
+      val result = underTest.getHealth(PRISONER_NUMBER)
+
+      assertThat(result).isNull()
+    }
+
+    @Test
     fun `prison health data is found`() {
       whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER)).thenReturn(
         PrisonerHealth(
@@ -593,6 +602,17 @@ class PrisonerHealthServiceTest {
             ),
           ),
         )
+      }
+
+      @Test
+      fun `soft deleted records are excluded from the prison health list`() {
+        whenever(prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(mutableListOf(PRISONER_NUMBER, secondPrisonerNumber)))
+          .thenReturn(listOf(secondPrisonerHealth))
+
+        val result = underTest.getHealthForPrison(PRISON_ID, HealthAndMedicationForPrisonRequest(1, 10))
+
+        assertThat(result!!.content).hasSize(1)
+        assertThat(result.content[0].prisonerNumber).isEqualTo(secondPrisonerNumber)
       }
 
       @Test
