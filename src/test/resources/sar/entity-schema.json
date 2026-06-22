@@ -52,6 +52,8 @@
     "foodAllergies": "Set",
     "location": "PrisonerLocation",
     "medicalDietaryRequirements": "Set",
+    "pendingMergeToPrisonerNumber": "String",
+    "pendingMerges": "Set",
     "personalisedDietaryRequirements": "Set",
     "prisonerNumber": "String"
   },

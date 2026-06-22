@@ -8,6 +8,7 @@ data class HealthAndMedicationForPrisonDto(
   val lastName: String?,
   val location: String?,
   val health: HealthAndMedicationResponse,
+  val pendingMerges: List<HealthAndMedicationForPrisonDto> = emptyList(),
 )
 
 data class HealthAndMedicationForPrisonResponse(
