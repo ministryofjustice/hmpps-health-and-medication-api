@@ -252,6 +252,51 @@ class PrisonerHealthRepositoryTest : RepositoryTest() {
     assertThat(response.map { it.prisonerNumber }).containsExactlyInAnyOrder("M1111AA", "M2222AA", "M3333AA", "M4444AA")
   }
 
+  @Test
+  fun `soft deleted records are ignored by findAllPrisonersWithDietaryNeeds`() {
+    val health = PrisonerHealth(
+      prisonerNumber = PRISONER_NUMBER,
+      foodAllergies = mutableSetOf(generateAllergy("FOOD_ALLERGY_EGG")),
+    )
+    save(health)
+
+    assertThat(repository.findAllPrisonersWithDietaryNeeds(mutableSetOf(PRISONER_NUMBER))).hasSize(1)
+
+    health.deletedAt = java.time.ZonedDateTime.now()
+    save(health)
+
+    assertThat(repository.findAllPrisonersWithDietaryNeeds(mutableSetOf(PRISONER_NUMBER))).isEmpty()
+  }
+
+  @Test
+  fun `soft deleted records are ignored by findAllPrisonersWithoutLocationData`() {
+    val health = PrisonerHealth(
+      prisonerNumber = PRISONER_NUMBER,
+      foodAllergies = mutableSetOf(generateAllergy("FOOD_ALLERGY_EGG")),
+    )
+    save(health)
+
+    assertThat(repository.findAllPrisonersWithoutLocationData()).extracting("prisonerNumber").contains(PRISONER_NUMBER)
+
+    health.deletedAt = java.time.ZonedDateTime.now()
+    save(health)
+
+    assertThat(repository.findAllPrisonersWithoutLocationData()).extracting("prisonerNumber").doesNotContain(PRISONER_NUMBER)
+  }
+
+  @Test
+  fun `findByPrisonerNumberAndDeletedAtIsNull returns empty for soft deleted record`() {
+    val health = PrisonerHealth(PRISONER_NUMBER)
+    save(health)
+
+    assertThat(repository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER)).isNotNull
+
+    health.deletedAt = java.time.ZonedDateTime.now()
+    save(health)
+
+    assertThat(repository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER)).isNull()
+  }
+
   private fun generateAllergy(id: String, prisonerNumber: String = PRISONER_NUMBER) = FoodAllergy(
     prisonerNumber = prisonerNumber,
     allergy = toReferenceDataCode(referenceDataCodeRepository, id)!!,

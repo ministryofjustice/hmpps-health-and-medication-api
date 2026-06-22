@@ -11,6 +11,7 @@ interface PrisonerHealthRepository : JpaRepository<PrisonerHealth, String> {
     """
     SELECT h FROM PrisonerHealth h
     WHERE h.prisonerNumber IN :prisonerNumbers
+    AND h.deletedAt IS NULL
     AND (
         EXISTS (
             SELECT 1 from FoodAllergy fa WHERE fa.prisonerNumber = h.prisonerNumber
@@ -35,6 +36,7 @@ interface PrisonerHealthRepository : JpaRepository<PrisonerHealth, String> {
     """
     SELECT h FROM PrisonerHealth h
     WHERE h.location IS NULL
+    AND h.deletedAt IS NULL
     AND (
         EXISTS (
             SELECT 1 from FoodAllergy fa WHERE fa.prisonerNumber = h.prisonerNumber
@@ -52,4 +54,13 @@ interface PrisonerHealthRepository : JpaRepository<PrisonerHealth, String> {
     """,
   )
   fun findAllPrisonersWithoutLocationData(): List<PrisonerHealth>
+
+  @Query(
+    """
+    SELECT h FROM PrisonerHealth h
+    WHERE h.prisonerNumber = :prisonerNumber
+    AND h.deletedAt IS NULL
+    """,
+  )
+  fun findByPrisonerNumberAndDeletedAtIsNull(prisonerNumber: String): PrisonerHealth?
 }
