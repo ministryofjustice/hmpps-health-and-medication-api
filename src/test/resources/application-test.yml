@@ -33,7 +33,7 @@ hmpps:
   sar:
     tests:
       attachments-expected: false
-      expected-flyway-schema-version: 20
+      expected-flyway-schema-version: 21
       expected-jpa-entity-schema:
         path: /sar/entity-schema.json
       expected-api-response:

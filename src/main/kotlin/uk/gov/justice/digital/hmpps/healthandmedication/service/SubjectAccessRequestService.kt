@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PersonalisedDietaryR
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PersonalisedDietaryRequirementItem
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.ReferenceDataCode
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.FieldHistoryRepository
+import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.PrisonerHealthRepository
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.ReferenceDataCodeRepository
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.SubjectAccessRequestFieldHistoryType
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.SubjectAccessRequestResponseDto
@@ -47,9 +48,13 @@ import java.util.SortedSet
 class SubjectAccessRequestService(
   private val fieldHistoryRepository: FieldHistoryRepository,
   private val referenceDataCodeRepository: ReferenceDataCodeRepository,
+  private val prisonerHealthRepository: PrisonerHealthRepository,
 ) : HmppsPrisonSubjectAccessRequestService {
 
   override fun getPrisonContentFor(prn: String, fromDate: LocalDate?, toDate: LocalDate?): HmppsSubjectAccessRequestContent? {
+    if (prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(prn) == null) {
+      return null
+    }
     try {
       // Check Dates
       //  - Date format in query parameters should be dd/mm/yyyy

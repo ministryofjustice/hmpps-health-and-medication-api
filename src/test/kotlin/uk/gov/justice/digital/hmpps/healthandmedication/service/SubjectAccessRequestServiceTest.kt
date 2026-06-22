@@ -23,9 +23,11 @@ import uk.gov.justice.digital.hmpps.healthandmedication.jpa.MedicalDietaryRequir
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.MedicalDietaryRequirementItem
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PersonalisedDietaryRequirementHistory
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PersonalisedDietaryRequirementItem
+import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PrisonerHealth
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.ReferenceDataCode
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.ReferenceDataDomain
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.FieldHistoryRepository
+import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.PrisonerHealthRepository
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.ReferenceDataCodeRepository
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.SubjectAccessRequestFieldHistoryType
 import uk.gov.justice.digital.hmpps.healthandmedication.resource.dto.response.SubjectAccessRequestResponseDto
@@ -46,11 +48,15 @@ class SubjectAccessRequestServiceTest {
   @Mock
   lateinit var fieldHistoryRepository: FieldHistoryRepository
 
+  @Mock
+  lateinit var prisonerHealthRepository: PrisonerHealthRepository
+
   @InjectMocks
   private lateinit var subjectaccessRequestService: SubjectAccessRequestService
 
   @Test
   fun `can retrieve ordered SAR data for a prisoner when data is between two dates`() {
+    whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER)).thenReturn(PrisonerHealth(PRISONER_NUMBER))
     val queryFrom = ZonedDateTime.of(2025, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault())
     val queryTo = ZonedDateTime.of(2025, 1, 4, 23, 59, 59, 999999999, ZoneId.systemDefault())
 
@@ -177,6 +183,7 @@ class SubjectAccessRequestServiceTest {
 
   @Test
   fun `can retrieve ordered SAR data for a prisoner when data is partially before two dates`() {
+    whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER)).thenReturn(PrisonerHealth(PRISONER_NUMBER))
     val queryFrom = ZonedDateTime.of(2025, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault())
     val queryTo = ZonedDateTime.of(2025, 1, 4, 23, 59, 59, 999999999, ZoneId.systemDefault())
 
@@ -324,6 +331,7 @@ class SubjectAccessRequestServiceTest {
 
   @Test
   fun `can retrieve ordered SAR data for a prisoner when data is completely before two dates`() {
+    whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER)).thenReturn(PrisonerHealth(PRISONER_NUMBER))
     val queryFrom = ZonedDateTime.of(2025, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault())
     val queryTo = ZonedDateTime.of(2025, 1, 4, 23, 59, 59, 999999999, ZoneId.systemDefault())
 
@@ -450,6 +458,7 @@ class SubjectAccessRequestServiceTest {
 
   @Test
   fun `no data for a prisoner between two dates`() {
+    whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER)).thenReturn(PrisonerHealth(PRISONER_NUMBER))
     val queryFrom = ZonedDateTime.of(2025, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault())
     val queryTo = ZonedDateTime.of(2025, 1, 4, 23, 59, 59, 999999999, ZoneId.systemDefault())
 
@@ -467,10 +476,7 @@ class SubjectAccessRequestServiceTest {
 
   @Test
   fun `prisoner not found`() {
-    val queryFrom = ZonedDateTime.of(2025, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault())
-    val queryTo = ZonedDateTime.of(2025, 1, 4, 23, 59, 59, 999999999, ZoneId.systemDefault())
-
-    whenever(fieldHistoryRepository.findAllByPrisonerNumberAndCreatedAtBetweenOrderByFieldHistoryIdDesc(PRISONER_NUMBER, queryFrom, queryTo)).thenReturn(null)
+    whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(UNKNOWN_PRISONER_NUMBER)).thenReturn(null)
 
     val fromDate: LocalDate = LocalDate.parse("2025-01-01")
     val toDate: LocalDate = LocalDate.parse("2025-01-04")
@@ -478,12 +484,24 @@ class SubjectAccessRequestServiceTest {
     val result: HmppsSubjectAccessRequestContent? = subjectaccessRequestService.getPrisonContentFor(UNKNOWN_PRISONER_NUMBER, fromDate, toDate)
 
     assertThat(result).isNull()
+  }
 
-    verify(fieldHistoryRepository).findAllByPrisonerNumberAndCreatedAtBetweenOrderByFieldHistoryIdDesc(UNKNOWN_PRISONER_NUMBER, queryFrom, queryTo)
+  @Test
+  fun `soft deleted prisoner returns null`() {
+    val deletedPrisoner = PrisonerHealth(PRISONER_NUMBER).apply { deletedAt = NOW }
+    whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER)).thenReturn(null)
+
+    val fromDate: LocalDate = LocalDate.parse("2025-01-01")
+    val toDate: LocalDate = LocalDate.parse("2025-01-04")
+
+    val result: HmppsSubjectAccessRequestContent? = subjectaccessRequestService.getPrisonContentFor(PRISONER_NUMBER, fromDate, toDate)
+
+    assertThat(result).isNull()
   }
 
   @Test
   fun `null start date and null end date converted into 1970-01-01 00h 00m 00s and 3000-01-01 23h 59m 59s when querying data`() {
+    whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER)).thenReturn(PrisonerHealth(PRISONER_NUMBER))
     val queryFrom = ZonedDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault())
     val queryTo = ZonedDateTime.of(3000, 1, 1, 23, 59, 59, 999999999, ZoneId.systemDefault())
 
@@ -501,6 +519,7 @@ class SubjectAccessRequestServiceTest {
 
   @Test
   fun `can tolerate misformed SAR data for a prisoner between two dates`() {
+    whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER)).thenReturn(PrisonerHealth(PRISONER_NUMBER))
     val queryFrom = ZonedDateTime.of(2025, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault())
     val queryTo = ZonedDateTime.of(2025, 1, 4, 23, 59, 59, 999999999, ZoneId.systemDefault())
 

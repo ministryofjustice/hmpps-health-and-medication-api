@@ -44,6 +44,9 @@
   },
   "PrisonerHealth": {
     "cateringInstructions": "CateringInstructions",
+    "deletedAt": "ZonedDateTime",
+    "deletedBy": "String",
+    "deletionReason": "String",
     "fieldHistory": "SortedSet",
     "fieldMetadata": "Map",
     "foodAllergies": "Set",
