@@ -237,6 +237,78 @@ class PrisonerHealthServiceTest {
         ),
       )
     }
+
+    @Test
+    fun `filters out pending merges with no data`() {
+      val mainRecord = PrisonerHealth(PRISONER_NUMBER)
+      val pendingRecord = PrisonerHealth(PENDING_PRISONER_NUMBER)
+      pendingRecord.pendingMergeToPrisonerNumber = PRISONER_NUMBER
+      mainRecord.pendingMerges = mutableSetOf(pendingRecord)
+
+      whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER)).thenReturn(mainRecord)
+
+      val result = underTest.getHealth(PRISONER_NUMBER)
+
+      assertThat(result).isNotNull
+      assertThat(result!!.pendingMerges).isEmpty()
+    }
+
+    @Test
+    fun `it fetches pending merges`() {
+      val mainPrisonerHealthRecord = PrisonerHealth(
+        prisonerNumber = PRISONER_NUMBER,
+        foodAllergies = mutableSetOf(FOOD_ALLERGY_OTHER),
+        pendingMerges = mutableSetOf(PENDING_PRISONER_HEALTH),
+      ).apply {
+        fieldMetadata[FOOD_ALLERGY] = FieldMetadata(PRISONER_NUMBER, FOOD_ALLERGY, NOW, USER1, PRISON_ID)
+      }
+
+      whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER)).thenReturn(mainPrisonerHealthRecord)
+
+      val result = underTest.getHealth(PRISONER_NUMBER)
+
+      assertThat(result?.dietAndAllergy?.foodAllergies?.value).containsExactly(
+        ReferenceDataSelection(FOOD_ALLERGY_OTHER_CODE.toSimpleDto()),
+      )
+      assertThat(result?.pendingMerges).isEqualTo(
+        listOf(
+          HealthAndMedicationResponse(
+            dietAndAllergy = DietAndAllergyResponse(
+              foodAllergies = ValueWithMetadata(
+                listOf(ReferenceDataSelection(FOOD_ALLERGY_PEANUTS_CODE.toSimpleDto())),
+                NOW,
+                USER1,
+                PRISON_ID,
+              ),
+            ),
+          ),
+        ),
+      )
+      // Verify no recursion
+      assertThat(result?.pendingMerges?.first()?.pendingMerges).isEmpty()
+    }
+
+    @Test
+    fun `it handles identical data in main and pending records independently`() {
+      val mainPrisonerHealthRecord = PrisonerHealth(
+        prisonerNumber = PRISONER_NUMBER,
+        foodAllergies = mutableSetOf(FOOD_ALLERGY_PEANUTS),
+        pendingMerges = mutableSetOf(PENDING_PRISONER_HEALTH),
+      ).apply {
+        fieldMetadata[FOOD_ALLERGY] = FieldMetadata(PRISONER_NUMBER, FOOD_ALLERGY, NOW, USER1, PRISON_ID)
+      }
+
+      whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER)).thenReturn(mainPrisonerHealthRecord)
+
+      val result = underTest.getHealth(PRISONER_NUMBER)
+
+      assertThat(result?.dietAndAllergy?.foodAllergies?.value).containsExactly(
+        ReferenceDataSelection(FOOD_ALLERGY_PEANUTS_CODE.toSimpleDto()),
+      )
+      assertThat(result?.pendingMerges?.first()?.dietAndAllergy?.foodAllergies?.value).containsExactly(
+        ReferenceDataSelection(FOOD_ALLERGY_PEANUTS_CODE.toSimpleDto()),
+      )
+    }
   }
 
   @Nested
@@ -671,6 +743,56 @@ class PrisonerHealthServiceTest {
             ),
           ),
         )
+      }
+
+      @Test
+      fun `Returns pending merges at the top level and avoids redundancy`() {
+        val pendingPrisoner = PRISONER_SEARCH_RESPONSE.copy(prisonerNumber = PENDING_PRISONER_NUMBER, lastName = "Pending")
+
+        val mainHealth = PrisonerHealth(
+          prisonerNumber = PRISONER_NUMBER,
+          foodAllergies = mutableSetOf(FOOD_ALLERGY_OTHER),
+          pendingMerges = mutableSetOf(PENDING_PRISONER_HEALTH),
+        ).apply {
+          fieldMetadata[FOOD_ALLERGY] = FieldMetadata(PRISONER_NUMBER, FOOD_ALLERGY, NOW, USER1, PRISON_ID)
+        }
+
+        whenever(prisonerSearchClient.getPrisonersForPrison(PRISON_ID)).thenReturn(listOf(PRISONER_SEARCH_RESPONSE, pendingPrisoner))
+        whenever(prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(any())).thenReturn(listOf(mainHealth))
+
+        val result = underTest.getHealthForPrison(PRISON_ID, HealthAndMedicationForPrisonRequest(1, 10))
+
+        assertThat(result?.content).hasSize(1)
+        val dto = result?.content?.first()!!
+        assertThat(dto.prisonerNumber).isEqualTo(PRISONER_NUMBER)
+        // Redundancy check: nested health should NOT have pendingMerges
+        assertThat(dto.health.pendingMerges).isEmpty()
+        // Top level pendingMerges should be present
+        assertThat(dto.pendingMerges).hasSize(1)
+        assertThat(dto.pendingMerges.first().prisonerNumber).isEqualTo(PENDING_PRISONER_NUMBER)
+        // Nested ones should also NOT have pendingMerges in their health object
+        assertThat(dto.pendingMerges.first().health.pendingMerges).isEmpty()
+      }
+
+      @Test
+      fun `it returns top-level blank records if they have data-populated pending merges`() {
+        val pendingPrisoner = PRISONER_SEARCH_RESPONSE.copy(prisonerNumber = PENDING_PRISONER_NUMBER, lastName = "Pending")
+
+        val mainHealth = PrisonerHealth(
+          prisonerNumber = PRISONER_NUMBER,
+          pendingMerges = mutableSetOf(PENDING_PRISONER_HEALTH),
+        )
+
+        whenever(prisonerSearchClient.getPrisonersForPrison(PRISON_ID)).thenReturn(listOf(PRISONER_SEARCH_RESPONSE, pendingPrisoner))
+        whenever(prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(any())).thenReturn(listOf(mainHealth))
+
+        val result = underTest.getHealthForPrison(PRISON_ID, HealthAndMedicationForPrisonRequest(1, 10))
+
+        assertThat(result?.content).hasSize(1)
+        val dto = result?.content?.first()!!
+        assertThat(dto.prisonerNumber).isEqualTo(PRISONER_NUMBER)
+        assertThat(dto.health.dietAndAllergy?.foodAllergies).isNull()
+        assertThat(dto.pendingMerges).hasSize(1)
       }
 
       @Nested
@@ -1336,6 +1458,7 @@ class PrisonerHealthServiceTest {
   private companion object {
     const val PRISON_ID = "STI"
     const val PRISONER_NUMBER = "A1234AA"
+    const val PENDING_PRISONER_NUMBER = "B1234BB"
     const val PRISONER_FIRST_NAME = "First"
     const val PRISONER_LAST_NAME = "Last"
     const val PRISONER_SEARCH_LOCATION = "Recp"
@@ -1465,30 +1588,21 @@ class PrisonerHealthServiceTest {
 
     val PRISONER_HEALTH = PrisonerHealth(
       prisonerNumber = PRISONER_NUMBER,
-      medicalDietaryRequirements = mutableSetOf(
-        MEDICAL_DIET_COELIAC,
-      ),
-      foodAllergies = mutableSetOf(
-        FOOD_ALLERGY_PEANUTS,
-      ),
-      fieldMetadata = mutableMapOf(
-        MEDICAL_DIET to FieldMetadata(
-          PRISONER_NUMBER,
-          MEDICAL_DIET,
-          NOW,
-          USER1,
-          PRISON_ID,
-        ),
-        FOOD_ALLERGY to FieldMetadata(
-          PRISONER_NUMBER,
-          MEDICAL_DIET,
-          NOW,
-          USER1,
-          PRISON_ID,
-        ),
-      ),
+      foodAllergies = mutableSetOf(FOOD_ALLERGY_PEANUTS),
+      medicalDietaryRequirements = mutableSetOf(MEDICAL_DIET_COELIAC),
       location = PRISONER_LOCATION,
-    )
+    ).apply {
+      fieldMetadata[FOOD_ALLERGY] = FieldMetadata(PRISONER_NUMBER, FOOD_ALLERGY, NOW, USER1, PRISON_ID)
+      fieldMetadata[MEDICAL_DIET] = FieldMetadata(PRISONER_NUMBER, MEDICAL_DIET, NOW, USER1, PRISON_ID)
+    }
+
+    val PENDING_PRISONER_HEALTH = PrisonerHealth(
+      prisonerNumber = PENDING_PRISONER_NUMBER,
+      foodAllergies = mutableSetOf(FoodAllergy(PENDING_PRISONER_NUMBER, FOOD_ALLERGY_PEANUTS_CODE)),
+    ).apply {
+      pendingMergeToPrisonerNumber = PRISONER_NUMBER
+      fieldMetadata[FOOD_ALLERGY] = FieldMetadata(PENDING_PRISONER_NUMBER, FOOD_ALLERGY, NOW, USER1, PRISON_ID)
+    }
 
     @JvmStatic
     fun singleHealthAndMedicationFilters(): Stream<Arguments> = Stream.of(

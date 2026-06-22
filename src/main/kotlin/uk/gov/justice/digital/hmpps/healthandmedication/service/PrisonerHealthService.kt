@@ -97,7 +97,24 @@ class PrisonerHealthService(
               lastName = prisoner.lastName,
               location = prisoner.cellLocation,
               prisonerNumber = prisonerNumber,
-              health = health.toHealthDto(),
+              health = health.toHealthDto(includePendingMerges = false),
+              pendingMerges = health.pendingMerges
+                .filter { pending ->
+                  pending.foodAllergies.isNotEmpty() ||
+                    pending.medicalDietaryRequirements.isNotEmpty() ||
+                    pending.personalisedDietaryRequirements.isNotEmpty() ||
+                    (pending.cateringInstructions?.instructions?.isNotBlank() == true)
+                }
+                .map { pending ->
+                  val pendingPrisoner = prisoners.find { it.prisonerNumber == pending.prisonerNumber }
+                  HealthAndMedicationForPrisonDto(
+                    firstName = pendingPrisoner?.firstName,
+                    lastName = pendingPrisoner?.lastName,
+                    location = pendingPrisoner?.cellLocation,
+                    prisonerNumber = pending.prisonerNumber,
+                    health = pending.toHealthDto(includePendingMerges = false),
+                  )
+                },
             )
           }
 

@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository
 
+import jakarta.persistence.EntityManager
 import org.assertj.core.api.Assertions.assertThat
+import org.hibernate.Session
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.transaction.TestTransaction
@@ -16,6 +18,9 @@ class PrisonerHealthRepositoryTest : RepositoryTest() {
 
   @Autowired
   lateinit var repository: PrisonerHealthRepository
+
+  @Autowired
+  lateinit var entityManager: EntityManager
 
   @Autowired
   lateinit var referenceDataCodeRepository: ReferenceDataCodeRepository
@@ -296,6 +301,136 @@ class PrisonerHealthRepositoryTest : RepositoryTest() {
 
     assertThat(repository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER)).isNull()
   }
+
+  @Test
+  fun `findAllPrisonersWithDietaryNeeds includes records with pending merges and filters top level only`() {
+    val pendingPrisonerNumber = "B1234PN"
+    val pendingRecord = createHealthWithAllergy(pendingPrisonerNumber, "FOOD_ALLERGY_PEANUTS")
+    pendingRecord.pendingMergeToPrisonerNumber = PRISONER_NUMBER
+
+    val mainRecord = PrisonerHealth(PRISONER_NUMBER)
+    save(mainRecord)
+    save(pendingRecord)
+
+    val result = repository.findAllPrisonersWithDietaryNeeds(mutableSetOf(PRISONER_NUMBER, pendingPrisonerNumber))
+    // Should return the main record because it has a pending merge with data
+    assertThat(result).hasSize(1)
+    assertThat(result[0].prisonerNumber).isEqualTo(PRISONER_NUMBER)
+    assertThat(result[0].pendingMerges).hasSize(1)
+  }
+
+  @Test
+  fun `findAllPrisonersWithDietaryNeeds excludes blank records with only blank pending merges`() {
+    val pendingPrisonerNumber = "B1234PN"
+    val pendingRecord = PrisonerHealth(pendingPrisonerNumber)
+    pendingRecord.pendingMergeToPrisonerNumber = PRISONER_NUMBER
+
+    val mainRecord = PrisonerHealth(PRISONER_NUMBER)
+    save(mainRecord)
+    save(pendingRecord)
+
+    val result = repository.findAllPrisonersWithDietaryNeeds(mutableSetOf(PRISONER_NUMBER, pendingPrisonerNumber))
+    // Both are blank, so main record should not be returned
+    assertThat(result).isEmpty()
+  }
+
+  @Test
+  fun `findAllPrisonersWithDietaryNeeds does not return soft deleted main record even with active pending merges`() {
+    val pendingPrisonerNumber = "B1234PN"
+    val pendingRecord = createHealthWithAllergy(pendingPrisonerNumber, "FOOD_ALLERGY_PEANUTS")
+    pendingRecord.pendingMergeToPrisonerNumber = PRISONER_NUMBER
+
+    val mainRecord = createHealthWithAllergy(PRISONER_NUMBER, "FOOD_ALLERGY_EGG")
+    mainRecord.deletedAt = java.time.ZonedDateTime.now()
+
+    save(mainRecord)
+    save(pendingRecord)
+
+    val result = repository.findAllPrisonersWithDietaryNeeds(mutableSetOf(PRISONER_NUMBER, pendingPrisonerNumber))
+    // Main record is soft-deleted, so it should not be returned at all
+    assertThat(result).isEmpty()
+  }
+
+  @Test
+  fun `findAllPrisonersWithDietaryNeeds ignores soft deleted pending merges`() {
+    val pendingPrisonerNumber = "B1234PN"
+    val pendingRecord = createHealthWithAllergy(pendingPrisonerNumber, "FOOD_ALLERGY_PEANUTS")
+    pendingRecord.pendingMergeToPrisonerNumber = PRISONER_NUMBER
+    pendingRecord.deletedAt = java.time.ZonedDateTime.now()
+
+    val mainRecord = PrisonerHealth(PRISONER_NUMBER)
+    save(mainRecord)
+    save(pendingRecord)
+
+    val result = repository.findAllPrisonersWithDietaryNeeds(mutableSetOf(PRISONER_NUMBER, pendingPrisonerNumber))
+    // Main record is blank and its only pending merge is soft-deleted
+    assertThat(result).isEmpty()
+  }
+
+  @Test
+  fun `pendingMerges collection filters out soft deleted records`() {
+    val pendingPrisonerNumber = "B1234PN"
+    val pendingRecord = PrisonerHealth(
+      prisonerNumber = pendingPrisonerNumber,
+      foodAllergies = mutableSetOf(generateAllergy("FOOD_ALLERGY_PEANUTS", pendingPrisonerNumber)),
+      pendingMergeToPrisonerNumber = PRISONER_NUMBER,
+      deletedAt = java.time.ZonedDateTime.now(),
+    )
+    val mainRecord = PrisonerHealth(
+      prisonerNumber = PRISONER_NUMBER,
+      foodAllergies = mutableSetOf(generateAllergy("FOOD_ALLERGY_EGG", PRISONER_NUMBER)),
+    )
+    save(mainRecord)
+    save(pendingRecord)
+
+    val result = repository.findAllPrisonersWithDietaryNeeds(mutableSetOf(PRISONER_NUMBER, pendingPrisonerNumber))
+    assertThat(result).hasSize(1)
+    assertThat(result[0].prisonerNumber).isEqualTo(PRISONER_NUMBER)
+    assertThat(result[0].pendingMerges).isEmpty()
+  }
+
+  @Test
+  fun `pendingMerges are loaded in batches`() {
+    // Create 30 prisoners. None of them have pending merges.
+    // 30 is > 25 (default batch size).
+    val mainPrisoners = (1..30).map { i ->
+      val prisonerNumber = "M%06d".format(i)
+      PrisonerHealth(prisonerNumber)
+    }
+    mainPrisoners.forEach { repository.save(it) }
+
+    TestTransaction.flagForCommit()
+    TestTransaction.end()
+    TestTransaction.start()
+    entityManager.clear()
+
+    val session = entityManager.unwrap(Session::class.java)
+    val statistics = session.sessionFactory.statistics
+    statistics.isStatisticsEnabled = true
+    statistics.clear()
+
+    // Load all main prisoners
+    val ids = (1..30).map { i -> "M%06d".format(i) }
+    val loadedMain = repository.findAllById(ids)
+    assertThat(loadedMain).hasSize(30)
+    val afterLoadCount = statistics.prepareStatementCount
+
+    // Access pendingMerges for each.
+    // Since there are no pending merges, this will only trigger the collection loads.
+    // With batching, this should be 2 queries (one for 25, one for 5).
+    loadedMain.forEach { it.pendingMerges.size }
+    val afterAccessCount = statistics.prepareStatementCount
+
+    val diff = afterAccessCount - afterLoadCount
+    // We expect 2 queries for pendingMerges if batching works.
+    // If not, we expect 30.
+    assertThat(diff).isEqualTo(2)
+  }
+
+  private fun createHealthWithAllergy(prisonerNumber: String, allergyId: String) = PrisonerHealth(
+    prisonerNumber = prisonerNumber,
+    foodAllergies = mutableSetOf(generateAllergy(allergyId, prisonerNumber)),
+  )
 
   private fun generateAllergy(id: String, prisonerNumber: String = PRISONER_NUMBER) = FoodAllergy(
     prisonerNumber = prisonerNumber,

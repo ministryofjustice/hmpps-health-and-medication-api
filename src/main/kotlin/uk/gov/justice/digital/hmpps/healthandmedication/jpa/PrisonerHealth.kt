@@ -11,6 +11,8 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import org.hibernate.Hibernate
+import org.hibernate.annotations.BatchSize
+import org.hibernate.annotations.SQLRestriction
 import org.hibernate.annotations.SortNatural
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField.CATERING_INSTRUCTIONS
@@ -68,6 +70,20 @@ class PrisonerHealth(
 
   @Column(name = "deletion_reason")
   var deletionReason: String? = null,
+
+  @Column(name = "pending_merge_to_prisoner_number")
+  var pendingMergeToPrisonerNumber: String? = null,
+
+  @OneToMany(fetch = LAZY)
+  @JoinColumn(
+    name = "pending_merge_to_prisoner_number",
+    referencedColumnName = "prisoner_number",
+    insertable = false,
+    updatable = false,
+  )
+  @SQLRestriction("deleted_at IS NULL")
+  @BatchSize(size = 25)
+  var pendingMerges: MutableSet<PrisonerHealth> = mutableSetOf(),
 ) : WithFieldHistory<PrisonerHealth>() {
 
   override fun fieldAccessors(): Map<HealthAndMedicationField, KMutableProperty0<*>> = mapOf(
@@ -77,7 +93,21 @@ class PrisonerHealth(
     CATERING_INSTRUCTIONS to ::cateringInstructions,
   )
 
-  fun toHealthDto(): HealthAndMedicationResponse = HealthAndMedicationResponse(toDietAndAllergyDto())
+  fun toHealthDto(includePendingMerges: Boolean = true): HealthAndMedicationResponse = HealthAndMedicationResponse(
+    dietAndAllergy = toDietAndAllergyDto(),
+    pendingMerges = if (includePendingMerges) {
+      pendingMerges
+        .filter { pending ->
+          pending.foodAllergies.isNotEmpty() ||
+            pending.medicalDietaryRequirements.isNotEmpty() ||
+            pending.personalisedDietaryRequirements.isNotEmpty() ||
+            (pending.cateringInstructions?.instructions?.isNotBlank() == true)
+        }
+        .map { it.toHealthDto(false) }
+    } else {
+      emptyList()
+    },
+  )
 
   fun toDietAndAllergyDto(): DietAndAllergyResponse = DietAndAllergyResponse(
     foodAllergies = getReferenceDataListValueWithMetadata(

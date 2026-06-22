@@ -6,4 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 data class HealthAndMedicationResponse(
   @Schema(description = "Diet and allergy")
   val dietAndAllergy: DietAndAllergyResponse? = null,
+
+  @Schema(description = "Pending merges")
+  val pendingMerges: List<HealthAndMedicationResponse> = emptyList(),
 )
