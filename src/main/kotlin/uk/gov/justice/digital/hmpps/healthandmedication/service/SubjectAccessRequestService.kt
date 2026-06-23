@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.healthandmedication.service
 
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.FieldHistory
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.FoodAllergyHistory
@@ -51,10 +52,28 @@ class SubjectAccessRequestService(
   private val prisonerHealthRepository: PrisonerHealthRepository,
 ) : HmppsPrisonSubjectAccessRequestService {
 
+  @Transactional(readOnly = true)
   override fun getPrisonContentFor(prn: String, fromDate: LocalDate?, toDate: LocalDate?): HmppsSubjectAccessRequestContent? {
-    if (prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(prn) == null) {
-      return null
+    var current = prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(prn) ?: return null
+
+    // Identify associated prisoner records
+    //  - Find the 'main' record by following any pending merge references
+    //  - Collect all prisoner numbers that are part of this merge group (breadth-first search approach)
+    while (current.pendingMergeToPrisonerNumber != null) {
+      val next = prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(current.pendingMergeToPrisonerNumber!!) ?: break
+      current = next
     }
+    val mainRecord = current
+
+    val allPrns = mutableSetOf<String>()
+    val toVisit = mutableListOf(mainRecord)
+    while (toVisit.isNotEmpty()) {
+      val health = toVisit.removeAt(0)
+      if (allPrns.add(health.prisonerNumber)) {
+        toVisit.addAll(health.pendingMerges)
+      }
+    }
+
     try {
       // Check Dates
       //  - Date format in query parameters should be dd/mm/yyyy
@@ -72,28 +91,18 @@ class SubjectAccessRequestService(
         else -> toDate.atStartOfDay(ZoneId.systemDefault()).withHour(23).withMinute(59).withSecond(59).withNano(999999999)
       }
 
-      val prisonerHealthHistoryWithinTimeframe: SortedSet<FieldHistory>? =
-        fieldHistoryRepository.findAllByPrisonerNumberAndCreatedAtBetweenOrderByFieldHistoryIdDesc(
-          prn,
-          queryFromDate,
-          queryToDate,
-        )
+      val combinedPrisonerHistory: SortedSet<FieldHistory> = sortedSetOf(compareByDescending { it.fieldHistoryId })
 
-      val fieldsAlreadyFound = prisonerHealthHistoryWithinTimeframe?.map { it.field } ?: emptyList()
-
-      val latestPrisonerHistoryBeforeFromDate: List<FieldHistory> = HealthAndMedicationField.entries
-        .filterNot { it in fieldsAlreadyFound }
-        .mapNotNull { missingField ->
-          fieldHistoryRepository.findFirstByPrisonerNumberAndFieldAndCreatedAtBeforeOrderByCreatedAtDesc(
-            prn,
-            missingField,
+      // Aggregate history across all associated PRNs
+      //  - Fetch history within the timeframe for each PRN
+      allPrns.forEach { associatedPrn ->
+        combinedPrisonerHistory.addAll(
+          fieldHistoryRepository.findAllByPrisonerNumberAndCreatedAtBetweenOrderByFieldHistoryIdDesc(
+            associatedPrn,
             queryFromDate,
-          )
-        }
-
-      val combinedPrisonerHistory: SortedSet<FieldHistory> = sortedSetOf(compareByDescending<FieldHistory> { it.fieldHistoryId }).apply {
-        prisonerHealthHistoryWithinTimeframe?.let { addAll(it) }
-        latestPrisonerHistoryBeforeFromDate.let { addAll(it) }
+            queryToDate,
+          ),
+        )
       }
 
       // Must return 204 if there is no data
@@ -115,21 +124,20 @@ class SubjectAccessRequestService(
       //    to the value.valueJson.value.allergies array rather than retaining the nested structure.
 
       val transformedSubjectAccessRequestData: List<SubjectAccessRequestResponseDto> =
-        combinedPrisonerHistory.mapIndexed { _: Int, value: FieldHistory ->
+        combinedPrisonerHistory.map { value: FieldHistory ->
           SubjectAccessRequestResponseDto(
             fieldHistoryId = value.fieldHistoryId,
             prisonerNumber = value.prisonerNumber,
             createdBy = value.createdBy,
             createdAt = value.createdAt,
-            fieldHistoryType = when (value.field.toString()) { // // HealthAndMedicationField
-              HealthAndMedicationField.FOOD_ALLERGY.toString() -> SubjectAccessRequestFieldHistoryType.FOOD_ALLERGY.description
-              HealthAndMedicationField.MEDICAL_DIET.toString() -> SubjectAccessRequestFieldHistoryType.MEDICAL_DIET.description
-              HealthAndMedicationField.PERSONALISED_DIET.toString() -> SubjectAccessRequestFieldHistoryType.PERSONALISED_DIET.description
-              HealthAndMedicationField.CATERING_INSTRUCTIONS.toString() -> SubjectAccessRequestFieldHistoryType.CATERING_INSTRUCTIONS.description
-              else -> "Unknown"
+            fieldHistoryType = when (value.field) { // HealthAndMedicationField
+              HealthAndMedicationField.FOOD_ALLERGY -> SubjectAccessRequestFieldHistoryType.FOOD_ALLERGY.description
+              HealthAndMedicationField.MEDICAL_DIET -> SubjectAccessRequestFieldHistoryType.MEDICAL_DIET.description
+              HealthAndMedicationField.PERSONALISED_DIET -> SubjectAccessRequestFieldHistoryType.PERSONALISED_DIET.description
+              HealthAndMedicationField.CATERING_INSTRUCTIONS -> SubjectAccessRequestFieldHistoryType.CATERING_INSTRUCTIONS.description
             },
-            fieldHistoryValue = when (value.field.toString()) {
-              "FOOD_ALLERGY" -> {
+            fieldHistoryValue = when (value.field) {
+              HealthAndMedicationField.FOOD_ALLERGY -> {
                 val fah: FoodAllergyHistory? = value.valueJson?.value as FoodAllergyHistory?
                 fah?.allergies?.map { allergy: FoodAllergyHistoryItem ->
                   val rd: ReferenceDataCode? = toReferenceDataCodeWrapped(allergy.value)
@@ -139,7 +147,7 @@ class SubjectAccessRequestService(
                   )
                 }
               }
-              "MEDICAL_DIET" -> {
+              HealthAndMedicationField.MEDICAL_DIET -> {
                 val mdr: MedicalDietaryRequirementHistory? = value.valueJson?.value as MedicalDietaryRequirementHistory?
                 mdr?.medicalDietaryRequirements?.map { medicalDietaryRequirements: MedicalDietaryRequirementItem ->
                   val rd: ReferenceDataCode? = toReferenceDataCodeWrapped(medicalDietaryRequirements.value)
@@ -149,7 +157,7 @@ class SubjectAccessRequestService(
                   )
                 }
               }
-              "PERSONALISED_DIET" -> {
+              HealthAndMedicationField.PERSONALISED_DIET -> {
                 val pdr: PersonalisedDietaryRequirementHistory? = value.valueJson?.value as PersonalisedDietaryRequirementHistory?
                 pdr?.personalisedDietaryRequirements?.map { personalisedDietaryRequirements: PersonalisedDietaryRequirementItem ->
                   val rd: ReferenceDataCode? = toReferenceDataCodeWrapped(personalisedDietaryRequirements.value)
@@ -159,8 +167,7 @@ class SubjectAccessRequestService(
                   )
                 }
               }
-              "CATERING_INSTRUCTIONS" -> value.valueString
-              else -> ""
+              HealthAndMedicationField.CATERING_INSTRUCTIONS -> value.valueString
             },
             mergedAt = value.mergedAt,
             mergedFrom = value.mergedFrom,
