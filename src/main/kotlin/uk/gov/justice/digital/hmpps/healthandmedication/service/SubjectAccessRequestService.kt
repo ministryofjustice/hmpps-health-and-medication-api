@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.healthandmedication.service
 
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.FieldHistory
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.FoodAllergyHistory
@@ -9,6 +10,7 @@ import uk.gov.justice.digital.hmpps.healthandmedication.jpa.MedicalDietaryRequir
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.MedicalDietaryRequirementItem
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PersonalisedDietaryRequirementHistory
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PersonalisedDietaryRequirementItem
+import uk.gov.justice.digital.hmpps.healthandmedication.jpa.PrisonerHealth
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.ReferenceDataCode
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.FieldHistoryRepository
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.repository.PrisonerHealthRepository
@@ -51,10 +53,29 @@ class SubjectAccessRequestService(
   private val prisonerHealthRepository: PrisonerHealthRepository,
 ) : HmppsPrisonSubjectAccessRequestService {
 
+  @Transactional(readOnly = true)
   override fun getPrisonContentFor(prn: String, fromDate: LocalDate?, toDate: LocalDate?): HmppsSubjectAccessRequestContent? {
-    if (prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(prn) == null) {
-      return null
+    val initialPrisonerHealth = prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(prn) ?: return null
+
+    // Identify associated prisoner records
+    //  - Find the 'main' record by following any pending merge references
+    //  - Collect all prisoner numbers that are part of this merge group (breadth-first search approach)
+    var current = initialPrisonerHealth
+    while (current.pendingMergeToPrisonerNumber != null) {
+      val next = prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(current.pendingMergeToPrisonerNumber!!) ?: break
+      current = next
     }
+    val mainRecord = current
+
+    val allPrns = mutableSetOf<String>()
+    val toVisit = mutableListOf(mainRecord)
+    while (toVisit.isNotEmpty()) {
+      val health = toVisit.removeAt(0)
+      if (allPrns.add(health.prisonerNumber)) {
+        toVisit.addAll(health.pendingMerges)
+      }
+    }
+
     try {
       // Check Dates
       //  - Date format in query parameters should be dd/mm/yyyy
@@ -72,28 +93,27 @@ class SubjectAccessRequestService(
         else -> toDate.atStartOfDay(ZoneId.systemDefault()).withHour(23).withMinute(59).withSecond(59).withNano(999999999)
       }
 
-      val prisonerHealthHistoryWithinTimeframe: SortedSet<FieldHistory>? =
-        fieldHistoryRepository.findAllByPrisonerNumberAndCreatedAtBetweenOrderByFieldHistoryIdDesc(
-          prn,
-          queryFromDate,
-          queryToDate,
+      val combinedPrisonerHistory: SortedSet<FieldHistory> = sortedSetOf(compareByDescending { it.fieldHistoryId })
+
+      // Aggregate history across all associated PRNs
+      //  - Fetch history within the timeframe for each PRN
+      //  - Also fetch the latest record for each field before the queryFromDate to ensure that we have the starting state
+      allPrns.forEach { associatedPrn ->
+        combinedPrisonerHistory.addAll(
+          fieldHistoryRepository.findAllByPrisonerNumberAndCreatedAtBetweenOrderByFieldHistoryIdDesc(
+            associatedPrn,
+            queryFromDate,
+            queryToDate,
+          ),
         )
 
-      val fieldsAlreadyFound = prisonerHealthHistoryWithinTimeframe?.map { it.field } ?: emptyList()
-
-      val latestPrisonerHistoryBeforeFromDate: List<FieldHistory> = HealthAndMedicationField.entries
-        .filterNot { it in fieldsAlreadyFound }
-        .mapNotNull { missingField ->
+        PrisonerHealth.allFields.forEach { field ->
           fieldHistoryRepository.findFirstByPrisonerNumberAndFieldAndCreatedAtBeforeOrderByCreatedAtDesc(
-            prn,
-            missingField,
+            associatedPrn,
+            field,
             queryFromDate,
-          )
+          )?.let { combinedPrisonerHistory.add(it) }
         }
-
-      val combinedPrisonerHistory: SortedSet<FieldHistory> = sortedSetOf(compareByDescending<FieldHistory> { it.fieldHistoryId }).apply {
-        prisonerHealthHistoryWithinTimeframe?.let { addAll(it) }
-        latestPrisonerHistoryBeforeFromDate.let { addAll(it) }
       }
 
       // Must return 204 if there is no data
@@ -121,7 +141,7 @@ class SubjectAccessRequestService(
             prisonerNumber = value.prisonerNumber,
             createdBy = value.createdBy,
             createdAt = value.createdAt,
-            fieldHistoryType = when (value.field.toString()) { // // HealthAndMedicationField
+            fieldHistoryType = when (value.field.toString()) { // HealthAndMedicationField
               HealthAndMedicationField.FOOD_ALLERGY.toString() -> SubjectAccessRequestFieldHistoryType.FOOD_ALLERGY.description
               HealthAndMedicationField.MEDICAL_DIET.toString() -> SubjectAccessRequestFieldHistoryType.MEDICAL_DIET.description
               HealthAndMedicationField.PERSONALISED_DIET.toString() -> SubjectAccessRequestFieldHistoryType.PERSONALISED_DIET.description
