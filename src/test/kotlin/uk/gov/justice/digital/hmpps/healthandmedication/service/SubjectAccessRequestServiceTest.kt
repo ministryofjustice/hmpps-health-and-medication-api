@@ -505,17 +505,17 @@ class SubjectAccessRequestServiceTest {
   fun `SAR API should return data from both a main record and a pending merge record`() {
     // B -> A
     val mainHealth = PrisonerHealth(PRISONER_NUMBER)
-    val pendingHealth = PrisonerHealth(PRISONER_NUMBER_B).apply { pendingMergeToPrisonerNumber = PRISONER_NUMBER }
+    val pendingHealth = PrisonerHealth(PENDING_PRISONER_NUMBER).apply { pendingMergeToPrisonerNumber = PRISONER_NUMBER }
     mainHealth.pendingMerges.add(pendingHealth)
 
-    whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER_B)).thenReturn(pendingHealth)
+    whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PENDING_PRISONER_NUMBER)).thenReturn(pendingHealth)
     whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER)).thenReturn(mainHealth)
 
-    whenever(fieldHistoryRepository.findAllByPrisonerNumberAndCreatedAtBetweenOrderByFieldHistoryIdDesc(eq(PRISONER_NUMBER_B), any(), any())).thenReturn(
+    whenever(fieldHistoryRepository.findAllByPrisonerNumberAndCreatedAtBetweenOrderByFieldHistoryIdDesc(eq(PENDING_PRISONER_NUMBER), any(), any())).thenReturn(
       sortedSetOf(
         FieldHistory(
           fieldHistoryId = 1,
-          prisonerNumber = PRISONER_NUMBER_B,
+          prisonerNumber = PENDING_PRISONER_NUMBER,
           field = CATERING_INSTRUCTIONS,
           valueString = "Pending instructions",
           prisonId = PRISON_ID,
@@ -525,14 +525,14 @@ class SubjectAccessRequestServiceTest {
       ),
     )
 
-    val result = subjectaccessRequestService.getPrisonContentFor(PRISONER_NUMBER_B, null, null)
+    val result = subjectaccessRequestService.getPrisonContentFor(PENDING_PRISONER_NUMBER, null, null)
 
     assertThat(result).isEqualTo(
       HmppsSubjectAccessRequestContent(
         listOf(
           SubjectAccessRequestResponseDto(
             fieldHistoryId = 1,
-            prisonerNumber = PRISONER_NUMBER_B,
+            prisonerNumber = PENDING_PRISONER_NUMBER,
             fieldHistoryType = SubjectAccessRequestFieldHistoryType.CATERING_INSTRUCTIONS.description,
             fieldHistoryValue = "Pending instructions",
             createdAt = NOW,
@@ -813,57 +813,67 @@ class SubjectAccessRequestServiceTest {
   }
 
   @Test
-  fun `SAR API should return data from multi-level merge chains and include records before fromDate`() {
-    // e.g. C -> B -> A
-    val healthMain = PrisonerHealth(PRISONER_NUMBER)
-    val healthB = PrisonerHealth(PRISONER_NUMBER_B).apply { pendingMergeToPrisonerNumber = PRISONER_NUMBER }
-    val healthC = PrisonerHealth(PRISONER_NUMBER_C).apply { pendingMergeToPrisonerNumber = PRISONER_NUMBER_B }
-    healthMain.pendingMerges.add(healthB)
-    healthB.pendingMerges.add(healthC)
+  fun `SAR API should strictly filter by date range across all merged prisoner records`() {
+    // B -> A
+    val healthA = PrisonerHealth(PRISONER_NUMBER)
+    val healthB = PrisonerHealth(PENDING_PRISONER_NUMBER).apply { pendingMergeToPrisonerNumber = PRISONER_NUMBER }
+    healthA.pendingMerges.add(healthB)
 
-    whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER_C)).thenReturn(healthC)
-    whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER_B)).thenReturn(healthB)
-    whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER)).thenReturn(healthMain)
+    whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PENDING_PRISONER_NUMBER)).thenReturn(healthB)
+    whenever(prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(PRISONER_NUMBER)).thenReturn(healthA)
 
-    val fromDate = LocalDate.of(2025, 1, 1)
+    val fromDate = LocalDate.of(2024, 1, 1)
+    val toDate = LocalDate.of(2024, 12, 31)
     val queryFrom = fromDate.atStartOfDay(ZoneId.systemDefault())
+    val queryTo = toDate.atStartOfDay(ZoneId.systemDefault()).withHour(23).withMinute(59).withSecond(59).withNano(999999999)
 
-    // Mock history before the requested timeframe for the main PRN
-    val historyMain = FieldHistory(
+    whenever(referenceDataCodeRepository.findById(FOOD_ALLERGY_CODE.id)).thenReturn(Optional.of(FOOD_ALLERGY_CODE))
+    whenever(referenceDataCodeRepository.findById(MEDICAL_DIET_CODE.id)).thenReturn(Optional.of(MEDICAL_DIET_CODE))
+
+    // B has medical diet within requested timeframe
+    val historyB = FieldHistory(
+      fieldHistoryId = 2,
+      prisonerNumber = PENDING_PRISONER_NUMBER,
+      field = MEDICAL_DIET,
+      valueJson = JsonObject(MEDICAL_DIET, MedicalDietaryRequirementHistory(listOf(MedicalDietaryRequirementItem(MEDICAL_DIET_CODE.id)))),
+      createdAt = queryFrom.plusMonths(6),
+      createdBy = USER1,
+      prisonId = PRISON_ID,
+    )
+
+    whenever(fieldHistoryRepository.findAllByPrisonerNumberAndCreatedAtBetweenOrderByFieldHistoryIdDesc(eq(PENDING_PRISONER_NUMBER), eq(queryFrom), eq(queryTo)))
+      .thenReturn(sortedSetOf(historyB))
+
+    // A has food allergy NOT within requested timeframe
+    val historyA = FieldHistory(
       fieldHistoryId = 1,
       prisonerNumber = PRISONER_NUMBER,
       field = FOOD_ALLERGY,
-      createdAt = queryFrom.minusDays(1),
-      createdBy = "USER1",
-      prisonId = "MDI",
+      valueJson = JsonObject(FOOD_ALLERGY, FoodAllergyHistory(listOf(FoodAllergyHistoryItem(FOOD_ALLERGY_CODE.id)))),
+      createdAt = queryFrom.minusYears(1),
+      createdBy = USER1,
+      prisonId = PRISON_ID,
     )
-    whenever(fieldHistoryRepository.findFirstByPrisonerNumberAndFieldAndCreatedAtBeforeOrderByCreatedAtDesc(eq(PRISONER_NUMBER), eq(FOOD_ALLERGY), any()))
-      .thenReturn(historyMain)
 
-    // Request for the last PRN in the chain
-    // This should verify that we travel up the chain to the main record and then back down again
-    val result = subjectaccessRequestService.getPrisonContentFor(PRISONER_NUMBER_C, fromDate, null)
+    whenever(fieldHistoryRepository.findAllByPrisonerNumberAndCreatedAtBetweenOrderByFieldHistoryIdDesc(eq(PRISONER_NUMBER), eq(queryFrom), eq(queryTo)))
+      .thenReturn(sortedSetOf())
 
-    assertThat(result?.content)
-    val item = (result?.content as List<SubjectAccessRequestResponseDto>)[0]
-    assertThat(item.prisonerNumber).isEqualTo(PRISONER_NUMBER)
-    assertThat(item.fieldHistoryId).isEqualTo(1)
+    val result = subjectaccessRequestService.getPrisonContentFor(PENDING_PRISONER_NUMBER, fromDate, toDate)
 
-    // Verify that all PRNs in the chain were searched
-    verify(fieldHistoryRepository).findAllByPrisonerNumberAndCreatedAtBetweenOrderByFieldHistoryIdDesc(eq(PRISONER_NUMBER_C), any(), any())
-    verify(fieldHistoryRepository).findAllByPrisonerNumberAndCreatedAtBetweenOrderByFieldHistoryIdDesc(eq(PRISONER_NUMBER_B), any(), any())
-    verify(fieldHistoryRepository).findAllByPrisonerNumberAndCreatedAtBetweenOrderByFieldHistoryIdDesc(eq(PRISONER_NUMBER), any(), any())
+    assertThat(result?.content as List<*>).hasSize(1)
+    val items = result?.content as List<SubjectAccessRequestResponseDto>
 
-    // Verify that the latest information before the timeframe was also searched for each PRN
-    verify(fieldHistoryRepository).findFirstByPrisonerNumberAndFieldAndCreatedAtBeforeOrderByCreatedAtDesc(eq(PRISONER_NUMBER_C), eq(FOOD_ALLERGY), any())
-    verify(fieldHistoryRepository).findFirstByPrisonerNumberAndFieldAndCreatedAtBeforeOrderByCreatedAtDesc(eq(PRISONER_NUMBER_B), eq(FOOD_ALLERGY), any())
-    verify(fieldHistoryRepository).findFirstByPrisonerNumberAndFieldAndCreatedAtBeforeOrderByCreatedAtDesc(eq(PRISONER_NUMBER), eq(FOOD_ALLERGY), any())
+    // Result should ONLY contain B's information
+    assertThat(items[0].prisonerNumber).isEqualTo(historyB.prisonerNumber)
+    assertThat(items[0].fieldHistoryId).isEqualTo(historyB.fieldHistoryId)
+    val medicalDietaryRequirementItems = items[0].fieldHistoryValue as List<MedicalDietaryRequirementItem>
+    assertThat(medicalDietaryRequirementItems[0].value).isEqualTo(MEDICAL_DIET_CODE.description)
+    assertThat(items).noneMatch { it.fieldHistoryId == historyA.fieldHistoryId }
   }
 
   private companion object {
     const val PRISONER_NUMBER = "A1234AA"
-    const val PRISONER_NUMBER_B = "B1234BB"
-    const val PRISONER_NUMBER_C = "C1234CC"
+    const val PENDING_PRISONER_NUMBER = "B1234BB"
     const val UNKNOWN_PRISONER_NUMBER = "UNKNOWN_PRN"
     const val USER1 = "USER1"
     const val PRISON_ID = "STI"
