@@ -179,4 +179,55 @@ class HealthAndMedicationResource(private val prisonerHealthService: PrisonerHea
   ) {
     prisonerHealthService.updateSmokerStatus(prisonerNumber, request)
   }
+
+  @PutMapping("/merge-completion")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @PreAuthorize("hasRole('ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RW')")
+  @Operation(
+    summary = "Indicates that a pending merge should be considered complete",
+    description = "Requires role `ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RW`",
+    responses = [
+      ApiResponse(
+        responseCode = "204",
+        description = "No content",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [
+          Content(
+            mediaType = "application/json",
+            schema = Schema(implementation = ErrorResponse::class),
+          ),
+        ],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Missing required role. Requires ROLE_HEALTH_AND_MEDICATION_API__HEALTH_AND_MEDICATION_DATA__RW",
+        content = [
+          Content(
+            mediaType = "application/json",
+            schema = Schema(implementation = ErrorResponse::class),
+          ),
+        ],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Data not found",
+        content = [
+          Content(
+            mediaType = "application/json",
+            schema = Schema(implementation = ErrorResponse::class),
+          ),
+        ],
+      ),
+    ],
+  )
+  fun completeMerge(
+    @Schema(description = "The prisoner number", example = "A1234AA", required = true)
+    @PathVariable
+    prisonerNumber: String,
+  ) {
+    prisonerHealthService.completeMerge(prisonerNumber)
+  }
 }

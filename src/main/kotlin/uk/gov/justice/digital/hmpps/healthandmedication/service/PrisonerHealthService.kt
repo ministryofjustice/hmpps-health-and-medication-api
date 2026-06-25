@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.PrisonA
 import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.request.PrisonApiSmokerStatus
 import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonapi.request.PrisonApiSmokerStatusUpdate
 import uk.gov.justice.digital.hmpps.healthandmedication.client.prisonersearch.PrisonerSearchClient
+import uk.gov.justice.digital.hmpps.healthandmedication.config.HealthAndMedicationDataNotFoundException
 import uk.gov.justice.digital.hmpps.healthandmedication.enums.HealthAndMedicationField
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.CateringInstructions
 import uk.gov.justice.digital.hmpps.healthandmedication.jpa.FoodAllergy
@@ -251,6 +252,28 @@ class PrisonerHealthService(
 
   fun updateSmokerStatus(prisonerNumber: String, request: UpdateSmokerStatusRequest) {
     prisonApiClient.updateSmokerStatus(prisonerNumber, request.convertToPrisonApiRequest())
+  }
+
+  @Transactional
+  fun completeMerge(prisonerNumber: String) {
+    val now = ZonedDateTime.now(clock)
+    val user = authenticationFacade.getUserOrSystemInContext()
+    val parent = prisonerHealthRepository.findByPrisonerNumberAndDeletedAtIsNull(prisonerNumber)
+      ?: throw HealthAndMedicationDataNotFoundException(prisonerNumber)
+
+    parent.pendingMerges.forEach { child ->
+      child.fieldHistory.forEach { history ->
+        history.prisonerNumber = parent.prisonerNumber
+        history.mergedAt = now
+        history.mergedFrom = child.prisonerNumber
+      }
+      child.pendingMergeToPrisonerNumber = null
+      child.deletedAt = now
+      child.deletedBy = user
+      child.deletionReason = "Merged into ${parent.prisonerNumber}"
+
+      prisonerHealthRepository.save(child)
+    }
   }
 
   private fun matchesFilters(
