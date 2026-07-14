@@ -39,6 +39,9 @@ data class HealthAndMedicationForPrisonRequest(
       "filter, but do not need to match all filters (i.e. filters are applied using OR logic)",
   )
   val filters: HealthAndMedicationRequestFilters? = null,
+
+  @Parameter(description = "Whether to push records with pending merges to the top of the results", example = "true")
+  val surfaceRecordsPendingMerge: Boolean = false,
 ) : PagedRequest
 
 data class HealthAndMedicationRequestFilters(

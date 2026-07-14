@@ -119,7 +119,19 @@ class PrisonerHealthService(
             )
           }
 
-      val (content, metadata) = Pagination.paginateCollection(request.page, request.size, healthForPrison)
+      // If any pending merges exist, we set a flag regardless of how we then sort results
+      val containsRecordsPendingMerge = healthForPrison.any { it.pendingMerges.isNotEmpty() }
+
+      // Push any pending merges to the top of the list (in page view only), preserving original ordering
+      val resultsToPaginate = if (request.surfaceRecordsPendingMerge) {
+        val (pending, others) = healthForPrison.partition { it.pendingMerges.isNotEmpty() }
+        pending + others
+      } else {
+        healthForPrison
+      }
+
+      // Paginate results
+      val (content, metadata) = Pagination.paginateCollection(request.page, request.size, resultsToPaginate)
 
       return HealthAndMedicationForPrisonResponse(
         content = content,
@@ -134,6 +146,7 @@ class PrisonerHealthService(
           totalElements = metadata.totalElements,
           totalPages = metadata.totalPages,
         ),
+        containsRecordsPendingMerge = containsRecordsPendingMerge,
       )
     }
 

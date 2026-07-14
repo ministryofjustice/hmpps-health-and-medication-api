@@ -1015,6 +1015,46 @@ class PrisonerHealthServiceTest {
         }
       }
     }
+
+    @Nested
+    inner class PendingMergeSurfacing {
+      @Test
+      fun `it pushes records with pending merges to the top and identifies presence of pending merges`() {
+        val prisonerA = PrisonerDto(PRISONER_NUMBER, PRISON_ID)
+        val prisonerC = PrisonerDto("C1234CC", PRISON_ID)
+        // arbitrary natural order: C then A
+        whenever(prisonerSearchClient.getPrisonersForPrison(PRISON_ID)).thenReturn(listOf(prisonerC, prisonerA))
+
+        // A has a pending record to it (B)
+        // C is a lone record
+        val healthA = PrisonerHealth(PRISONER_NUMBER).apply {
+          pendingMerges = mutableSetOf(
+            PrisonerHealth(PENDING_PRISONER_NUMBER).apply {
+              foodAllergies = mutableSetOf(FoodAllergy(PENDING_PRISONER_NUMBER, FOOD_ALLERGY_PEANUTS_CODE))
+            },
+          )
+        }
+        val healthC = PrisonerHealth("C1234CC")
+        whenever(prisonerHealthRepository.findAllPrisonersWithDietaryNeeds(mutableListOf("C1234CC", PRISONER_NUMBER)))
+          .thenReturn(listOf(healthC, healthA))
+
+        // surfacing enabled (page view) - A should be pushed to the top because it has a pending merge
+        val surfacedResponse = underTest.getHealthForPrison(PRISON_ID, HealthAndMedicationForPrisonRequest(1, 10, surfaceRecordsPendingMerge = true))
+        val firstRecord = surfacedResponse!!.content.first()
+        assertThat(firstRecord.prisonerNumber).isEqualTo(PRISONER_NUMBER)
+        assertThat(firstRecord.pendingMerges.first().prisonerNumber).isEqualTo(PENDING_PRISONER_NUMBER)
+        assertThat(surfacedResponse.content.last().prisonerNumber).isEqualTo("C1234CC")
+        assertThat(surfacedResponse.containsRecordsPendingMerge).isTrue()
+
+        // surfacing disabled (print view) - should maintain natural order (C then A)
+        val defaultResponse = underTest.getHealthForPrison(PRISON_ID, HealthAndMedicationForPrisonRequest(1, 10, surfaceRecordsPendingMerge = false))
+        assertThat(defaultResponse!!.content.first().prisonerNumber).isEqualTo("C1234CC")
+        val lastRecord = defaultResponse.content.last()
+        assertThat(lastRecord.prisonerNumber).isEqualTo(PRISONER_NUMBER)
+        assertThat(lastRecord.pendingMerges.first().prisonerNumber).isEqualTo(PENDING_PRISONER_NUMBER)
+        assertThat(defaultResponse.containsRecordsPendingMerge).isTrue()
+      }
+    }
   }
 
   @Nested
