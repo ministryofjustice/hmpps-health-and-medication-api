@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -71,6 +73,22 @@ tasks {
     compilerOptions {
       jvmTarget = JvmTarget.JVM_25
     }
+  }
+
+  test {
+    exclude("**/InitialiseDatabase.class")
+  }
+
+  val testSuite = testing.suites.named("test", JvmTestSuite::class)
+  register("initialiseDatabase", Test::class) {
+    description = "initialise database"
+    testClassesDirs = files(testSuite.map { it.sources.output.classesDirs })
+    classpath = files(testSuite.map { it.sources.runtimeClasspath })
+    include("**/InitialiseDatabase.class")
+  }
+
+  getByName("initialiseDatabase") {
+    onlyIf { gradle.startParameter.taskNames.contains("initialiseDatabase") }
   }
 }
 

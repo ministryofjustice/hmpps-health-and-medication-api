@@ -5,6 +5,7 @@
 [![Pipeline [test -> build -> deploy]](https://github.com/ministryofjustice/hmpps-health-and-medication-api/actions/workflows/pipeline.yml/badge.svg?branch=main)](https://github.com/ministryofjustice/hmpps-health-and-medication-api/actions/workflows/pipeline.yml)
 [![API docs](https://img.shields.io/badge/API_docs_-view-85EA2D.svg?logo=swagger)](https://health-and-medication-api-dev.hmpps.service.justice.gov.uk/swagger-ui/index.html)
 [![Event docs](https://img.shields.io/badge/Event_docs-view-85EA2D.svg)](https://studio.asyncapi.com/?readOnly&url=https://raw.githubusercontent.com/ministryofjustice/hmpps-health-and-medication-api/async-api.yml)
+[![Database schema](https://img.shields.io/badge/Database_schema-view-85EA2D.svg)](https://ministryofjustice.github.io/hmpps-health-and-medication-api/)
 
 This is a Spring Boot service, written in Kotlin, which owns health and medication data about a person in prison.
 

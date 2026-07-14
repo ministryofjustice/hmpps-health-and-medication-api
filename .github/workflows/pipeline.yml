@@ -20,6 +20,7 @@ on:
 permissions:
   contents: read
   packages: write
+  pages: write
   id-token: write
   attestations: write
 
@@ -52,6 +53,20 @@ jobs:
       postgres-db: 'health-and-medication-data'
       postgres-username: 'health-and-medication-data'
       postgres-password: 'health-and-medication-data'
+
+  schema-spy:
+    name: SchemaSpy report
+    if: github.ref == 'refs/heads/main'
+    needs:
+      - gradle-verify
+    uses: ./.github/workflows/schema-spy.yml
+    with:
+      docker_compose_file: 'docker-compose-schema-spy.yml'
+      init_db_cli: './gradlew initialiseDatabase'
+      database_name: 'health-and-medication-data'
+      database_user: 'health-and-medication-data'
+      database_password: 'health-and-medication-data'
+    secrets: inherit
 
   build:
     name: Build docker image from hmpps-github-actions
