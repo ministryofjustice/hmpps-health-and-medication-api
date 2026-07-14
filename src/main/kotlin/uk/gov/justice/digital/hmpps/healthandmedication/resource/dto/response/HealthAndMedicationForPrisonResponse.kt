@@ -14,4 +14,5 @@ data class HealthAndMedicationForPrisonDto(
 data class HealthAndMedicationForPrisonResponse(
   val content: List<HealthAndMedicationForPrisonDto>,
   val metadata: PageMeta,
+  val containsRecordsPendingMerge: Boolean = false,
 )
