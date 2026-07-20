@@ -46,7 +46,7 @@ dependencies {
   runtimeOnly("org.postgresql:postgresql:42.7.13")
 
   // Test
-  testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:2.5.0")
+  testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:3.0.0")
   testImplementation("uk.gov.justice.service.hmpps:hmpps-subject-access-request-test-support:2.6.2")
   testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
   testImplementation("org.springframework.boot:spring-boot-starter-jackson-test")
