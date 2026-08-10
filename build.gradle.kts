@@ -3,7 +3,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.2"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.4"
   kotlin("jvm") version "2.4.10"
   kotlin("plugin.spring") version "2.4.10"
   kotlin("plugin.jpa") version "2.4.10"
@@ -32,7 +32,7 @@ dependencies {
   implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:7.4.0")
 
   // OpenAPI
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0")
   constraints {
     implementation("org.webjars:swagger-ui:5.32.2")
   }
@@ -47,7 +47,7 @@ dependencies {
 
   // Test
   testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:3.0.0")
-  testImplementation("uk.gov.justice.service.hmpps:hmpps-subject-access-request-test-support:2.7.0")
+  testImplementation("uk.gov.justice.service.hmpps:hmpps-subject-access-request-test-support:2.8.0")
   testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
   testImplementation("org.springframework.boot:spring-boot-starter-jackson-test")
   testImplementation("org.springframework.boot:spring-boot-starter-webclient-test")
@@ -57,7 +57,7 @@ dependencies {
   testImplementation("org.testcontainers:localstack:1.21.4")
   testImplementation("io.mockk:mockk:1.14.11")
   testImplementation("org.wiremock:wiremock-standalone:3.13.2")
-  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.45") {
+  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.46") {
     exclude(group = "io.swagger.core.v3")
   }
   testImplementation("org.awaitility:awaitility-kotlin:4.3.0")
