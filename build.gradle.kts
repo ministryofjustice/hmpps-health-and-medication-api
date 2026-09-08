@@ -1,7 +1,7 @@
 @file:Suppress("UnstableApiUsage")
 
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.7"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.8"
   kotlin("jvm") version "2.4.10"
   kotlin("plugin.spring") version "2.4.10"
   kotlin("plugin.jpa") version "2.4.10"
@@ -55,7 +55,7 @@ dependencies {
   testImplementation("org.testcontainers:localstack:1.21.4")
   testImplementation("io.mockk:mockk:1.14.11")
   testImplementation("org.wiremock:wiremock-standalone:3.13.2")
-  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.47") {
+  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.48") {
     exclude(group = "io.swagger.core.v3")
   }
   testImplementation("org.awaitility:awaitility-kotlin:4.3.0")
